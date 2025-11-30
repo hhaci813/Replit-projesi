@@ -10,88 +10,96 @@ class AutoAnalyzer:
         self.analyzer = SymbolAnalyzer()
         self.telegram = TelegramService()
         self.is_running = False
-        self.symbol = None
-        self.analysis_count = 0
+        self.symbols = {}  # {symbol: count}
     
-    def analyze_and_send(self):
+    def analyze_and_send(self, symbol):
         """Analiz yap ve Telegram'a gönder"""
-        if not self.symbol:
-            return
+        if symbol not in self.symbols:
+            self.symbols[symbol] = 0
         
-        self.analysis_count += 1
+        self.symbols[symbol] += 1
+        count = self.symbols[symbol]
         
         # Analiz
-        if self.symbol == "XRPTRY":
-            result = self.analyzer.xrptry_manual_analysis()
-            message = f"""
-📊 OTOMATİK ANALIZ #{self.analysis_count}
+        try:
+            if symbol == "XRPTRY":
+                result = self.analyzer.xrptry_manual_analysis()
+                message = f"""
+🔍 <b>{symbol} ANALİZİ</b> #{count}
 
-{result['signal']} {self.symbol}
+{result['signal']}
 
-💰 Fiyat: ₺{result['current_price']}
-📈 Hedef: ₺{result['target']}
-🛑 Stop Loss: ₺{result['stop_loss']}
+💰 <b>Fiyat:</b> ₺{result['current_price']}
+📈 <b>Hedef:</b> ₺{result['target']}
+🛑 <b>Stop Loss:</b> ₺{result['stop_loss']}
 
-Risk/Reward: {result['risk_reward']}x
+<b>Risk/Reward:</b> {result['risk_reward']}x
+⏰ {self._get_time()}
 """
-        else:
-            result = self.analyzer.generate_signal(self.symbol)
-            if result['signal'] == "?":
-                return
+            elif symbol == "BTC":
+                result = self.analyzer.generate_signal("BTC-USD")
+                if result['signal'] == "?":
+                    return
+                
+                message = f"""
+🪙 <b>BITCOIN ANALİZİ</b> #{count}
+
+{result['signal']}
+
+💰 <b>Fiyat:</b> ${result['price']:.2f}
+📊 <b>RSI:</b> {result['rsi']:.1f}
+📈 <b>MA20:</b> ${result['ma20']:.2f}
+📉 <b>MA50:</b> ${result['ma50']:.2f}
+
+<b>Hedef:</b> ${result.get('price', 0) * 1.05:.2f}
+⏰ {self._get_time()}
+"""
+            else:
+                result = self.analyzer.generate_signal(symbol)
+                if result['signal'] == "?":
+                    return
+                
+                message = f"""
+📊 <b>{symbol} ANALİZİ</b> #{count}
+
+{result['signal']}
+
+💰 <b>Fiyat:</b> ${result['price']:.2f}
+📊 <b>RSI:</b> {result['rsi']:.1f}
+📈 <b>MA20:</b> ${result['ma20']:.2f}
+
+<b>Hedef:</b> ${result.get('price', 0) * 1.2:.2f}
+⏰ {self._get_time()}
+"""
             
-            message = f"""
-📊 OTOMATİK ANALIZ #{self.analysis_count}
-
-{result['signal']} {self.symbol}
-
-💰 Fiyat: ${result['price']:.2f}
-📊 RSI: {result['rsi']:.1f}
-
-Target: ${result.get('price', 0) * 1.2:.2f}
-"""
-        
-        # Telegram'a gönder
-        self.telegram._send_message(message)
-        print(f"✅ #{self.analysis_count} Analiz gönderildi: {self.symbol}")
+            # Telegram'a gönder
+            self.telegram._send_message(message)
+            print(f"✅ #{count} Analiz gönderildi: {symbol}")
+        except Exception as e:
+            print(f"❌ Analiz hatası {symbol}: {str(e)}")
+    
+    def _get_time(self):
+        """Saat bilgisi"""
+        from datetime import datetime
+        return datetime.now().strftime("%H:%M:%S")
     
     def start(self, symbol):
         """Otomatik analiz başlat"""
         if self.is_running:
             return "Zaten çalışıyor"
         
-        self.symbol = symbol
-        self.analysis_count = 0
-        
-        # Job ekle (her 120 saniye)
-        self.scheduler.add_job(
-            self.analyze_and_send,
-            'interval',
-            seconds=120,
-            id='auto_analyzer'
-        )
-        
-        if not self.scheduler.running:
-            self.scheduler.start()
-        
         self.is_running = True
         return f"✅ {symbol} için 2 dakikalık analiz başladı"
     
     def stop(self):
         """Otomatik analizi durdur"""
-        if not self.is_running:
-            return "Zaten durmuş"
-        
-        try:
-            self.scheduler.remove_job('auto_analyzer')
-            self.is_running = False
-            return f"⛔ Analiz durduruldu. Toplam: {self.analysis_count} analiz"
-        except:
-            return "Hata oluştu"
+        self.is_running = False
+        return "⛔ Analiz durduruldu"
     
     def status(self):
         """Durum kontrol et"""
         if self.is_running:
-            return f"🟢 ÇALIŞIYOR - {self.symbol}\nToplam: {self.analysis_count} analiz"
+            return f"🟢 ÇALIŞIYOR\nAktif: {list(self.symbols.keys())}\nToplam: {sum(self.symbols.values())} analiz"
         else:
             return "🔴 KAPALI"
 

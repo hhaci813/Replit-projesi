@@ -17,15 +17,63 @@ class AutoRunSystem:
         from ml_predictor import MLPredictor
         from multi_symbol_tracker import MultiSymbolTracker
         
-        # AutoAnalyzer - Her 2 dakika XRPTRY analiz
+        # AutoAnalyzer - Her 2 dakika AYRILI ANALIZLER
         auto_analyzer = AutoAnalyzer()
+        
+        # Bitcoin - Her 2 dakika
         self.scheduler.add_job(
-            lambda: auto_analyzer.analyze_and_send(),
+            lambda: auto_analyzer.analyze_and_send("BTC"),
+            'interval',
+            minutes=2,
+            id='auto_analyzer_btc'
+        )
+        
+        # XRPTRY - Her 2 dakika
+        self.scheduler.add_job(
+            lambda: auto_analyzer.analyze_and_send("XRPTRY"),
             'interval',
             minutes=2,
             id='auto_analyzer_xrptry'
         )
-        self.active_jobs['📊 AutoAnalyzer'] = 'Her 2 dakika'
+        
+        # AAPL (Apple) - Her 2 dakika
+        self.scheduler.add_job(
+            lambda: auto_analyzer.analyze_and_send("AAPL"),
+            'interval',
+            minutes=2,
+            id='auto_analyzer_aapl'
+        )
+        
+        # MSFT (Microsoft) - Her 2 dakika
+        self.scheduler.add_job(
+            lambda: auto_analyzer.analyze_and_send("MSFT"),
+            'interval',
+            minutes=2,
+            id='auto_analyzer_msft'
+        )
+        
+        # GOOGL (Google) - Her 2 dakika
+        self.scheduler.add_job(
+            lambda: auto_analyzer.analyze_and_send("GOOGL"),
+            'interval',
+            minutes=2,
+            id='auto_analyzer_googl'
+        )
+        
+        # ETH (Ethereum) - Her 2 dakika
+        self.scheduler.add_job(
+            lambda: auto_analyzer.analyze_and_send("ETH"),
+            'interval',
+            minutes=2,
+            id='auto_analyzer_eth'
+        )
+        
+        self.active_jobs['📊 AutoAnalyzer (BTC)'] = 'Her 2 dakika'
+        self.active_jobs['📊 AutoAnalyzer (XRPTRY)'] = 'Her 2 dakika'
+        self.active_jobs['📊 AutoAnalyzer (AAPL)'] = 'Her 2 dakika'
+        self.active_jobs['📊 AutoAnalyzer (MSFT)'] = 'Her 2 dakika'
+        self.active_jobs['📊 AutoAnalyzer (GOOGL)'] = 'Her 2 dakika'
+        self.active_jobs['📊 AutoAnalyzer (ETH)'] = 'Her 2 dakika'
         
         # AutomatedTrading - Her saat AL/SAT kontrol
         trading_engine = AutomatedTradingEngine()
