@@ -130,7 +130,7 @@ class AkilliOgrenenSistem(OgrenenSistem):
             
             return en_iyi_cevap
         else:
-            return "Bu konuyu henuz ogrenmedim. Bana ogretmek ister misin?"
+            return None
     
     def kullanim_istatistigi_guncelle(self, soru, cevap):
         """Kullanım istatistiklerini güncelle"""
@@ -266,7 +266,18 @@ def main():
             
             else:
                 cevap = sistem.cevap_ver(kullanici_girdisi)
-                print(f"Bot: {cevap}")
+                if cevap is None:
+                    print("Bot: Bu konuyu henuz ogrenmedim. Bana ogretmek ister misin?")
+                    print("Ornek: ogret <soru> -> <cevap>")
+                    ogretme_girisi = input("Cevap: ").strip()
+                    if ogretme_girisi and "->" in ogretme_girisi:
+                        soru, cevap_ogren = ogretme_girisi.split("->", 1)
+                        sistem.yeni_veri_ekle(kullanici_girdisi, cevap_ogren.strip())
+                        print(f"Bot: Tesekkurler! '{cevap_ogren.strip()}' cevapini ogrendim.")
+                    else:
+                        print("Bot: Anlasilmadi. Lutfen sonra tekrar deneyin.")
+                else:
+                    print(f"Bot: {cevap}")
                 
         except KeyboardInterrupt:
             print("\nGorusmek uzere! Veriler kaydedildi.")
