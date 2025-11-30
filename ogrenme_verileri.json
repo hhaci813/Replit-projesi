@@ -1,0 +1,21 @@
+{
+  "ogrenme_verileri": [
+    {
+      "anahtar": "merhaba",
+      "deger": "Türkçe selamlama",
+      "tarih": "2025-11-30T09:06:30.909181"
+    },
+    {
+      "anahtar": "numpy_versiyon",
+      "deger": "2.3.5",
+      "tarih": "2025-11-30T09:06:30.909196"
+    },
+    {
+      "anahtar": "python_bilgisi",
+      "deger": "Programlama dili",
+      "tarih": "2025-11-30T09:06:30.909203"
+    }
+  ],
+  "son_guncelleme": "2025-11-30T09:06:30.909205",
+  "toplam_ogrenme": 3
+}
