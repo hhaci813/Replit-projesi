@@ -1731,20 +1731,15 @@ def main():
         elif secim == "99":
             from auto_run_system import AutoRunSystem
             print("\n" + "="*80)
-            print("🚀 SEÇENEK 99: 24/7 HAFIZADAAutomasyonu")
+            print("🚀 SEÇENEK 99: 24/7 HAFIZADA AUTOMASYONU")
             print("="*80)
             
-            sub_secim = input("\n1. Başlat (1 girerek)\n2. Durdur (2 girerek)\n\nSeçim: ").strip()
-            
-            if sub_secim == "1":
-                auto_run_system = AutoRunSystem()
-                msg = auto_run_system.start_all_systems()
-                print(msg)
-                auto_run_system.keep_running()
-            elif sub_secim == "2":
-                print("Sistem durduruldu")
-            else:
-                print("Geçersiz seçim")
+            auto_run_system = AutoRunSystem()
+            msg = auto_run_system.start_all_systems()
+            print(msg)
+            print("\n✅ Otomasyonlar arka planda çalışıyor...")
+            print("🔔 Telegram mesajları her 2 dakikada gelecek\n")
+            auto_run_system.keep_running()
         elif secim == "100":
             print("\n" + "="*80)
             print("⭐ MASTER DASHBOARD - Tüm Sistem Kontrol Paneli")
