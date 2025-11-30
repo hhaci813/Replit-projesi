@@ -45,14 +45,19 @@ class AutoAnalyzer:
                 ma50 = result.get('ma50', 0)
                 source = result.get('source', 'unknown')
                 
-                price_str = PriceFetcher.format_price(price, "BTC-USD")
-                ma20_str = f"${ma20:.2f}" if ma20 else "N/A"
-                ma50_str = f"${ma50:.2f}" if ma50 else "N/A"
+                if price and price > 0:
+                    price_str = f"${price:,.0f}"
+                    ma20_str = f"${ma20:.0f}" if ma20 > 0 else "N/A"
+                    ma50_str = f"${ma50:.0f}" if ma50 > 0 else "N/A"
+                else:
+                    price_str = "🔴 Veri Alınamıyor"
+                    ma20_str = "N/A"
+                    ma50_str = "N/A"
                 
-                print(f"✅ #{count} BTC: price={price} ({source}), signal={result['signal']}")
+                print(f"✅ #{count} BTC: ${price:,.0f} ({source})")
                 
                 message = f"""
-🪙 <b>BITCOIN ANALİZİ</b> #{count}
+🪙 <b>BTC ANALİZİ</b> #{count}
 
 {result['signal']}
 
@@ -60,7 +65,6 @@ class AutoAnalyzer:
 📊 <b>RSI:</b> {rsi:.1f}
 📈 <b>MA20:</b> {ma20_str}
 📉 <b>MA50:</b> {ma50_str}
-ℹ️ <b>Kaynak:</b> {source}
 
 ⏰ {self._get_time()}
 """
@@ -71,10 +75,14 @@ class AutoAnalyzer:
                 ma20 = result.get('ma20', 0)
                 source = result.get('source', 'unknown')
                 
-                price_str = PriceFetcher.format_price(price, symbol)
-                ma20_str = f"${ma20:.2f}" if ma20 else "N/A"
+                if price and price > 0:
+                    price_str = f"${price:,.2f}"
+                    ma20_str = f"${ma20:.2f}" if ma20 > 0 else "N/A"
+                else:
+                    price_str = "🔴 Veri Alınamıyor"
+                    ma20_str = "N/A"
                 
-                print(f"✅ #{count} {symbol}: price={price} ({source}), signal={result['signal']}")
+                print(f"✅ #{count} {symbol}: ${price:,.2f} ({source})")
                 
                 message = f"""
 📊 <b>{symbol} ANALİZİ</b> #{count}
@@ -84,7 +92,6 @@ class AutoAnalyzer:
 💰 <b>Fiyat:</b> {price_str}
 📊 <b>RSI:</b> {rsi:.1f}
 📈 <b>MA20:</b> {ma20_str}
-ℹ️ <b>Kaynak:</b> {source}
 
 ⏰ {self._get_time()}
 """
