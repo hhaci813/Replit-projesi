@@ -38,42 +38,56 @@ class AutoAnalyzer:
 """
             elif symbol == "BTC":
                 result = self.analyzer.generate_signal("BTC-USD")
-                price = result.get('price', 0)
+                price = result.get('price', None)
                 rsi = result.get('rsi', 50)
-                ma20 = result.get('ma20', price)
-                ma50 = result.get('ma50', price)
+                ma20 = result.get('ma20', None)
+                ma50 = result.get('ma50', None)
+                
+                # Debug
+                print(f"🔍 DEBUG BTC: price={price}, result_keys={list(result.keys())}")
+                
+                if price is None or price == 0:
+                    price_str = "Veri Alınamıyor"
+                else:
+                    price_str = f"${price:.2f}"
                 
                 message = f"""
 🪙 <b>BITCOIN ANALİZİ</b> #{count}
 
 {result['signal']}
 
-💰 <b>Fiyat:</b> ${price:.2f}
+💰 <b>Fiyat:</b> {price_str}
 📊 <b>RSI:</b> {rsi:.1f}
-📈 <b>MA20:</b> ${ma20:.2f}
-📉 <b>MA50:</b> ${ma50:.2f}
+📈 <b>MA20:</b> {"$" + str(ma20)[:8] if ma20 else "N/A"}
+📉 <b>MA50:</b> {"$" + str(ma50)[:8] if ma50 else "N/A"}
 ℹ️ <b>Gerekçe:</b> {', '.join(result.get('reasons', [])[:2])}
 
-<b>Hedef:</b> ${price * 1.05:.2f}
 ⏰ {self._get_time()}
 """
             else:
                 result = self.analyzer.generate_signal(symbol)
-                price = result.get('price', 0)
+                price = result.get('price', None)
                 rsi = result.get('rsi', 50)
-                ma20 = result.get('ma20', price)
+                ma20 = result.get('ma20', None)
+                
+                # Debug
+                print(f"🔍 DEBUG {symbol}: price={price}, result_keys={list(result.keys())}")
+                
+                if price is None or price == 0:
+                    price_str = "Veri Alınamıyor"
+                else:
+                    price_str = f"${price:.2f}"
                 
                 message = f"""
 📊 <b>{symbol} ANALİZİ</b> #{count}
 
 {result['signal']}
 
-💰 <b>Fiyat:</b> ${price:.2f}
+💰 <b>Fiyat:</b> {price_str}
 📊 <b>RSI:</b> {rsi:.1f}
-📈 <b>MA20:</b> ${ma20:.2f}
+📈 <b>MA20:</b> {"$" + str(ma20)[:8] if ma20 else "N/A"}
 ℹ️ <b>Gerekçe:</b> {', '.join(result.get('reasons', [])[:2])}
 
-<b>Hedef:</b> ${price * 1.2:.2f}
 ⏰ {self._get_time()}
 """
             
