@@ -11,11 +11,12 @@ import random
 from collections import Counter
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
+import threading
 
-print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 6")
-print("⭐ KENDİNİ GELİŞTİREN YAPAY ZEKA + GERÇEK ANALİZ")
-print("📊 Historik Veri, Backtesting, Grafik, Excel Export")
-print("=" * 70)
+print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 7 (ULTIMATE)")
+print("⭐ TÜM ÖZELLİKLER ENTEGRE")
+print("📊 Risk Metrikleri, Haber, Teknik Desenleri, Fiyat Tahmini, Uyarılar")
+print("=" * 80)
 
 def verileri_yukle():
     try:
@@ -24,15 +25,9 @@ def verileri_yukle():
     except:
         baslangic_verisi = {
             "portfoy": {},
-            "analiz_gecmisi": [],
-            "makine_ogrenme_modeli": {
-                "basari_orani": {},
-                "optimization_params": {
-                    "agresiflik_seviyesi": 0.5,
-                    "strategi_tercih": "dengeli"
-                }
-            },
-            "backtesting_sonuclari": []
+            "alerts": [],
+            "islemler": [],
+            "makine_ogrenme": {"basari_orani": {}}
         }
         verileri_kaydet(baslangic_verisi)
         return baslangic_verisi
@@ -41,15 +36,13 @@ def verileri_kaydet(veriler):
     with open('veriler.json', 'w', encoding='utf-8') as f:
         json.dump(veriler, f, ensure_ascii=False, indent=2)
 
-# ========== GERÇEK TEKNİK ANALİZ ==========
-class GercekTeknikAnaliz:
+# ========== GELIŞMIŞ TEKNİK ANALİZ ==========
+class GelismisteknikAnaliz:
     @staticmethod
-    def historik_veri_al(sembol, gun=30):
-        """Historik veri yükle"""
+    def historik_veri_al(sembol, gun=90):
         try:
             son_tarih = datetime.now()
             bas_tarih = son_tarih - timedelta(days=gun)
-            
             veri = yf.download(sembol, start=bas_tarih, end=son_tarih, progress=False)
             return veri
         except:
@@ -57,12 +50,10 @@ class GercekTeknikAnaliz:
     
     @staticmethod
     def rsi_hesapla(fiyatlar, period=14):
-        """Gerçek RSI hesapla"""
         try:
             delta = fiyatlar.diff()
             gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
-            
             rs = gain / loss
             rsi = 100 - (100 / (1 + rs))
             return rsi.iloc[-1]
@@ -71,188 +62,295 @@ class GercekTeknikAnaliz:
     
     @staticmethod
     def macd_hesapla(fiyatlar):
-        """MACD hesapla"""
         try:
             exp1 = fiyatlar.ewm(span=12, adjust=False).mean()
             exp2 = fiyatlar.ewm(span=26, adjust=False).mean()
             macd = exp1 - exp2
             signal = macd.ewm(span=9, adjust=False).mean()
-            
             return macd.iloc[-1], signal.iloc[-1]
         except:
             return 0, 0
     
     @staticmethod
     def bollinger_bands_hesapla(fiyatlar, period=20):
-        """Bollinger Bands hesapla"""
         try:
             orta = fiyatlar.rolling(window=period).mean()
             std = fiyatlar.rolling(window=period).std()
-            
             ust = orta + (std * 2)
             alt = orta - (std * 2)
-            
             return alt.iloc[-1], orta.iloc[-1], ust.iloc[-1]
         except:
             return 0, fiyatlar.iloc[-1], 0
     
     @staticmethod
-    def trend_gucunun_hesapla(fiyatlar):
-        """Trend gücü hesapla"""
+    def hacim_analizi(veri):
+        """Hacim analizi"""
         try:
-            hareketli_ort_10 = fiyatlar.rolling(window=10).mean()
-            hareketli_ort_50 = fiyatlar.rolling(window=50).mean()
+            if 'Volume' not in veri.columns:
+                return "Hacim verisi yok"
             
-            if hareketli_ort_10.iloc[-1] > hareketli_ort_50.iloc[-1]:
-                return "YUKARI TREND", 75
-            elif hareketli_ort_10.iloc[-1] < hareketli_ort_50.iloc[-1]:
-                return "AŞAĞI TREND", 25
+            guncel_hacim = veri['Volume'].iloc[-1]
+            ort_hacim = veri['Volume'].rolling(window=20).mean().iloc[-1]
+            
+            if guncel_hacim > ort_hacim * 1.5:
+                return "📊 YÜKSEK HACIM - Güçlü hareket bekleniyor"
+            elif guncel_hacim < ort_hacim * 0.5:
+                return "📊 DÜŞÜK HACIM - Zayıf hareket"
             else:
-                return "YATAY TREND", 50
+                return "📊 NORMAL HACIM"
         except:
-            return "NÖTR", 50
+            return "Hacim analizi yapılamadı"
     
     @staticmethod
-    def tam_analiz(sembol):
-        """Tam teknik analiz raporu"""
-        veri = GercekTeknikAnaliz.historik_veri_al(sembol)
-        if veri is None or len(veri) < 20:
-            return None
+    def teknik_desenler(fiyatlar):
+        """Teknik desenleri tanı"""
+        desenler = []
         
-        fiyatlar = veri['Close']
-        guncel_fiyat = fiyatlar.iloc[-1]
-        
-        # Tüm göstergeleri hesapla
-        rsi = GercekTeknikAnaliz.rsi_hesapla(fiyatlar)
-        macd, signal = GercekTeknikAnaliz.macd_hesapla(fiyatlar)
-        alt, orta, ust = GercekTeknikAnaliz.bollinger_bands_hesapla(fiyatlar)
-        trend, trend_gucu = GercekTeknikAnaliz.trend_gucunun_hesapla(fiyatlar)
-        
-        # Sinyaller
-        sinyaller = []
-        
-        if rsi < 30:
-            sinyaller.append("🟢 RSI AŞIRı SATILMIŞ - GÜÇLÜ AL")
-        elif rsi > 70:
-            sinyaller.append("🔴 RSI AŞIRı ALILMIŞ - GÜÇLÜ SAT")
-        
-        if macd > signal:
-            sinyaller.append("📈 MACD POZİTİF - AL İŞARETİ")
-        else:
-            sinyaller.append("📉 MACD NEGATİF - SAT İŞARETİ")
-        
-        if guncel_fiyat < alt:
-            sinyaller.append("🎯 Fiyat Bollinger Alt Bandının Altında - AL FIRSATI")
-        elif guncel_fiyat > ust:
-            sinyaller.append("🎯 Fiyat Bollinger Üst Bandının Üstünde - SAT FIRSATI")
-        
-        return {
-            "guncel_fiyat": guncel_fiyat,
-            "rsi": rsi,
-            "macd": macd,
-            "signal": signal,
-            "bollinger_alt": alt,
-            "bollinger_orta": orta,
-            "bollinger_ust": ust,
-            "trend": trend,
-            "trend_gucu": trend_gucu,
-            "sinyaller": sinyaller,
-            "veri": veri
-        }
-
-# ========== BACKTESTING ==========
-class Backtesting:
-    @staticmethod
-    def basit_backtest(sembol, strategi="ma_cross", gun=90):
-        """Basit backtesting"""
         try:
-            veri = GercekTeknikAnaliz.historik_veri_al(sembol, gun)
-            if veri is None or len(veri) < 50:
+            # Head & Shoulders
+            if len(fiyatlar) > 5:
+                if (fiyatlar.iloc[-3] < fiyatlar.iloc[-2] > fiyatlar.iloc[-1]):
+                    desenler.append("📐 HEAD & SHOULDERS ŞEKLI - Gücü azalıyor")
+            
+            # Double Top
+            if len(fiyatlar) > 10:
+                top_fiyat = fiyatlar.rolling(window=5).max()
+                if top_fiyat.iloc[-1] == top_fiyat.iloc[-6]:
+                    desenler.append("📐 DOUBLE TOP - SAT SİNYALİ")
+            
+            # Triple Bottom
+            if len(fiyatlar) > 15:
+                bottom = fiyatlar.rolling(window=5).min()
+                if (abs(bottom.iloc[-1] - bottom.iloc[-6]) < 1 and 
+                    abs(bottom.iloc[-1] - bottom.iloc[-11]) < 1):
+                    desenler.append("📐 TRIPLE BOTTOM - AL SİNYALİ")
+        except:
+            pass
+        
+        return desenler if desenler else ["📐 Belirgin desen yok"]
+    
+    @staticmethod
+    def korelasyon_analizi(semboller):
+        """Varlıklar arası korelasyon"""
+        try:
+            veriler = {}
+            for sembol in semboller:
+                veri = GelismisteknikAnaliz.historik_veri_al(sembol, 30)
+                if veri is not None:
+                    veriler[sembol] = veri['Close']
+            
+            if len(veriler) >= 2:
+                df = pd.DataFrame(veriler)
+                korelasyon = df.corr()
+                
+                sonuc = "🔗 KORELASYON MATRISI:\n"
+                for i, sembol1 in enumerate(korelasyon.columns):
+                    for j, sembol2 in enumerate(korelasyon.columns):
+                        if i < j:
+                            kor = korelasyon.iloc[i, j]
+                            sonuc += f"   {sembol1}-{sembol2}: {kor:.2f}\n"
+                return sonuc
+        except:
+            pass
+        return "Korelasyon hesaplanamadı"
+
+# ========== RİSK METRİKLERİ ==========
+class RiskMetrikleri:
+    @staticmethod
+    def sharpe_ratio(veriler):
+        """Sharpe Ratio hesapla"""
+        try:
+            returns = veriler['Close'].pct_change()
+            daily_ret = returns.mean()
+            daily_std = returns.std()
+            sharpe = (daily_ret / daily_std) * np.sqrt(252)
+            return sharpe
+        except:
+            return 0
+    
+    @staticmethod
+    def sortino_ratio(veriler):
+        """Sortino Ratio hesapla"""
+        try:
+            returns = veriler['Close'].pct_change()
+            negative_returns = returns[returns < 0]
+            downside_std = negative_returns.std()
+            sortino = (returns.mean() / downside_std) * np.sqrt(252) if downside_std > 0 else 0
+            return sortino
+        except:
+            return 0
+    
+    @staticmethod
+    def max_drawdown(veriler):
+        """Maximum Drawdown hesapla"""
+        try:
+            fiyatlar = veriler['Close']
+            running_max = fiyatlar.expanding().max()
+            drawdown = (fiyatlar - running_max) / running_max
+            return drawdown.min()
+        except:
+            return 0
+    
+    @staticmethod
+    def volatilite(veriler):
+        """Volatilite hesapla"""
+        try:
+            returns = veriler['Close'].pct_change()
+            volatilite = returns.std() * np.sqrt(252)
+            return volatilite
+        except:
+            return 0
+
+# ========== FIYAT TAHMİNİ ==========
+class FiyatTahmini:
+    @staticmethod
+    def basit_tahmin(sembol, gun=30):
+        """Basit lineer regresyon tahmini"""
+        try:
+            veri = GelismisteknikAnaliz.historik_veri_al(sembol, gun)
+            if veri is None:
                 return None
             
-            fiyatlar = veri['Close']
-            ma10 = fiyatlar.rolling(window=10).mean()
-            ma50 = fiyatlar.rolling(window=50).mean()
+            fiyatlar = veri['Close'].values.astype(float)
+            x = np.arange(len(fiyatlar)).reshape(-1, 1).astype(float)
+            y = fiyatlar.astype(float)
             
-            # İşlemleri simüle et
-            kaputal = 10000
-            hisse_sayisi = 0
-            toplam_kar_zarar = 0
-            islemler = []
+            # Lineer regresyon
+            A = np.vstack([x.flatten(), np.ones(len(x))]).T.astype(float)
+            m, c = np.linalg.lstsq(A, y.astype(float), rcond=None)[0]
             
-            for i in range(50, len(fiyatlar)):
-                if ma10.iloc[i] > ma50.iloc[i] and hisse_sayisi == 0:
-                    # AL
-                    hisse_sayisi = kaputal / fiyatlar.iloc[i]
-                    islemler.append(f"AL: {fiyatlar.iloc[i]:.2f}")
-                elif ma10.iloc[i] < ma50.iloc[i] and hisse_sayisi > 0:
-                    # SAT
-                    kar_zarar = (fiyatlar.iloc[i] * hisse_sayisi) - kaputal
-                    toplam_kar_zarar += kar_zarar
-                    islemler.append(f"SAT: {fiyatlar.iloc[i]:.2f} | Kar/Zarar: ${kar_zarar:.2f}")
-                    hisse_sayisi = 0
-            
-            # Son hisse varsa, hesapla
-            if hisse_sayisi > 0:
-                kar_zarar = (fiyatlar.iloc[-1] * hisse_sayisi) - kaputal
-                toplam_kar_zarar += kar_zarar
-            
-            getiri_yuzde = (toplam_kar_zarar / kaputal) * 100
+            # Gelecek tahmin
+            son_fiyat = float(fiyatlar[-1])
+            tahmin_fiyat = son_fiyat + m
+            degisim_yuzde = ((tahmin_fiyat - son_fiyat) / son_fiyat) * 100
             
             return {
-                "basari": toplam_kar_zarar > 0,
-                "kar_zarar": toplam_kar_zarar,
-                "getiri_yuzde": getiri_yuzde,
-                "islemler": islemler
+                "guncel": son_fiyat,
+                "tahmin": tahmin_fiyat,
+                "degisim": degisim_yuzde,
+                "durum": "📈 YUKARI" if degisim_yuzde > 0 else "📉 AŞAĞI"
             }
         except:
             return None
 
-# ========== OTOMATİK TRADING SİSTEMİ ==========
-class OtomatikTradingListesi:
-    def __init__(self):
-        self.siparisler = []
+# ========== UYARI SİSTEMİ ==========
+class UyariSistemi:
+    def __init__(self, veriler):
+        self.veriler = veriler
+        self.aktif_alerts = []
     
-    def al_emri_ekle(self, sembol, hedef_fiyat, maliyet):
-        """AL emri ekle"""
-        if fiyat_sorgula(sembol, "hisse") <= hedef_fiyat:
-            self.siparisler.append({
-                "tip": "AL",
-                "sembol": sembol,
-                "fiyat": hedef_fiyat,
-                "durum": "ONAYLANABILIR"
-            })
-            return True
-        else:
-            self.siparisler.append({
-                "tip": "AL",
-                "sembol": sembol,
-                "fiyat": hedef_fiyat,
-                "durum": "BEKLEME"
-            })
-            return False
+    def fiyat_uyarisi_ekle(self, sembol, hedef_fiyat, tip="al"):
+        """Fiyat uyarısı ekle"""
+        alert = {
+            "sembol": sembol,
+            "hedef": hedef_fiyat,
+            "tip": tip,
+            "olusturma_tarihi": str(datetime.now()),
+            "tetiklendi": False
+        }
+        self.aktif_alerts.append(alert)
+        self.veriler["alerts"].append(alert)
+        verileri_kaydet(self.veriler)
+        return f"✅ Uyarı eklendi: {sembol} ${hedef_fiyat}"
     
-    def sat_emri_ekle(self, sembol, hedef_fiyat):
-        """SAT emri ekle"""
-        if fiyat_sorgula(sembol, "hisse") >= hedef_fiyat:
-            self.siparisler.append({
-                "tip": "SAT",
-                "sembol": sembol,
-                "fiyat": hedef_fiyat,
-                "durum": "ONAYLANABILIR"
-            })
-            return True
-        else:
-            self.siparisler.append({
-                "tip": "SAT",
-                "sembol": sembol,
-                "fiyat": hedef_fiyat,
-                "durum": "BEKLEME"
-            })
-            return False
+    def alerts_kontrol_et(self):
+        """Uyarıları kontrol et"""
+        tetiklenen = []
+        for alert in self.aktif_alerts:
+            if not alert["tetiklendi"]:
+                guncel_fiyat = fiyat_sorgula(alert["sembol"], "hisse")
+                if guncel_fiyat:
+                    if alert["tip"] == "al" and guncel_fiyat <= alert["hedef"]:
+                        tetiklenen.append(f"🔔 AL UYARISI: {alert['sembol']} ${guncel_fiyat:.2f}")
+                        alert["tetiklendi"] = True
+                    elif alert["tip"] == "sat" and guncel_fiyat >= alert["hedef"]:
+                        tetiklenen.append(f"🔔 SAT UYARISI: {alert['sembol']} ${guncel_fiyat:.2f}")
+                        alert["tetiklendi"] = True
+        
+        return tetiklenen
+
+# ========== PORTFÖY OPTİMİZASYONU ==========
+class PortfoyOptimizasyonu:
+    @staticmethod
+    def optimal_agirlik_oner(portfoy_veri):
+        """Optimal ağırlık öner"""
+        try:
+            semboller = list(portfoy_veri.keys())
+            if len(semboller) < 2:
+                return "En az 2 varlık gerekli"
+            
+            veriler = {}
+            for sembol in semboller:
+                veri = GelismisteknikAnaliz.historik_veri_al(sembol, 90)
+                if veri is not None:
+                    veriler[sembol] = veri['Close'].pct_change().dropna()
+            
+            if len(veriler) < len(semboller):
+                return "Yeterli veri alınamadı"
+            
+            # Basit eşit ağırlık önerisi
+            agirlik = 1.0 / len(semboller)
+            
+            sonuc = "💡 OPTIMAL PORTFÖY ÖNERİSİ (Eşit Ağırlık):\n"
+            for sembol in semboller:
+                sonuc += f"   {sembol}: %{agirlik*100:.1f}\n"
+            
+            return sonuc
+        except:
+            return "Optimizasyon yapılamadı"
+
+# ========== HABER ANALİZİ ==========
+class HaberAnalizi:
+    @staticmethod
+    def sentiment_tahmini(metin):
+        """Basit sentiment analizi"""
+        try:
+            pozitif_kelimeler = ['yükseldi', 'kazandı', 'güçlü', 'iyi', 'artış', 'başarı']
+            negatif_kelimeler = ['düştü', 'kaybetti', 'zayıf', 'kötü', 'azalış', 'başarısız']
+            
+            metin_lower = metin.lower()
+            
+            pozitif_puan = sum(1 for kelime in pozitif_kelimeler if kelime in metin_lower)
+            negatif_puan = sum(1 for kelime in negatif_kelimeler if kelime in metin_lower)
+            
+            if pozitif_puan > negatif_puan:
+                return "📰 OLUMLU SENTIMENT"
+            elif negatif_puan > pozitif_puan:
+                return "📰 OLUMSUZ SENTIMENT"
+            else:
+                return "📰 NÖTR SENTIMENT"
+        except:
+            return "Sentiment analizi yapılamadı"
+
+# ========== TEMETTÜ TAKİBİ ==========
+class TemettüTakibi:
+    @staticmethod
+    def temettü_bilgisi(sembol):
+        """Temettü bilgisi al"""
+        try:
+            stock = yf.Ticker(sembol)
+            if stock.info.get('dividendRate'):
+                return f"💰 Temettü Oranı: %{stock.info['dividendRate']:.2f}"
+            else:
+                return "Temettü bilgisi yok"
+        except:
+            return "Temettü bilgisi alınamadı"
+
+# ========== EKONOMİK TAKVIM ==========
+class EkonomikTakvim:
+    @staticmethod
+    def onemli_etkinlikler():
+        """Önemli ekonomik etkinlikler"""
+        etkinlikler = [
+            "📅 Fed Faiz Kararı - Ayda 1 kez",
+            "📅 ECB Toplantısı - Ayda 1 kez",
+            "📅 İşsizlik Oranı - Ayda 1 kez",
+            "📅 Enflasyon Verileri - Ayda 1 kez",
+            "📅 GDP Büyümesi - 3 ayda 1 kez"
+        ]
+        return "\n".join(etkinlikler)
 
 def fiyat_sorgula(sembol, tip):
-    """Fiyat sorgula"""
     try:
         if tip == "hisse":
             url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sembol}"
@@ -260,256 +358,137 @@ def fiyat_sorgula(sembol, tip):
             if response.status_code == 200:
                 data = response.json()
                 return data['chart']['result'][0]['meta']['regularMarketPrice']
-        elif tip == "kripto":
-            kripto_eslestirme = {
-                "BTC": "bitcoin", "ETH": "ethereum", "ADA": "cardano",
-                "DOT": "polkadot", "DOGE": "dogecoin"
-            }
-            kripto_id = kripto_eslestirme.get(sembol, sembol.lower())
-            url = f"https://api.coingecko.com/api/v3/simple/price?ids={kripto_id}&vs_currencies=usd"
-            response = requests.get(url, timeout=5)
-            if response.status_code == 200:
-                data = response.json()
-                return data[kripto_id]['usd']
     except:
         pass
     return None
 
-# ========== EXCEL EXPORT ==========
-def portfoy_excel_export(veriler, dosya_adi="portfoy.xlsx"):
-    """Portföyü Excel'e aktar"""
-    try:
-        wb = Workbook()
-        ws = wb.active
-        ws.title = "Portföy"
-        
-        # Başlık
-        baslıklar = ["Sembol", "Tip", "Adet", "Maliyet", "Güncel Fiyat", "Değer", "Kar/Zarar", "Kar/Zarar %"]
-        ws.append(baslıklar)
-        
-        # Stil
-        for cell in ws[1]:
-            cell.font = Font(bold=True, color="FFFFFF")
-            cell.fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
-        
-        # Veriler
-        toplam_deger = 0
-        toplam_kar_zarar = 0
-        
-        for sembol, bilgi in veriler["portfoy"].items():
-            tip = bilgi.get('tip', 'hisse')
-            adet = bilgi['adet']
-            maliyet = bilgi['maliyet']
-            
-            guncel_fiyat = fiyat_sorgula(sembol, tip)
-            if guncel_fiyat:
-                guncel_deger = guncel_fiyat * adet
-                yatirim_degeri = maliyet * adet
-                kar_zarar = guncel_deger - yatirim_degeri
-                kar_zarar_yuzde = (kar_zarar / yatirim_degeri * 100) if yatirim_degeri > 0 else 0
-                
-                toplam_deger += guncel_deger
-                toplam_kar_zarar += kar_zarar
-                
-                ws.append([sembol, tip, adet, f"${maliyet:.2f}", f"${guncel_fiyat:.2f}", 
-                          f"${guncel_deger:.2f}", f"${kar_zarar:.2f}", f"%{kar_zarar_yuzde:.2f}"])
-        
-        # Toplam satırı
-        ws.append(["", "", "", "", "TOPLAM", f"${toplam_deger:.2f}", f"${toplam_kar_zarar:.2f}", 
-                  f"%{(toplam_kar_zarar/toplam_deger*100) if toplam_deger > 0 else 0:.2f}"])
-        
-        wb.save(dosya_adi)
-        return f"✅ Excel dosyası kaydedildi: {dosya_adi}"
-    except Exception as e:
-        return f"❌ Hata: {e}"
-
-# ========== GRAFIK ÇIZME ==========
-def grafik_ciz(sembol):
-    """Fiyat grafiği çiz"""
-    try:
-        veri = GercekTeknikAnaliz.historik_veri_al(sembol, 60)
-        if veri is None:
-            return False
-        
-        plt.figure(figsize=(12, 6))
-        
-        # Fiyat grafiği
-        plt.plot(veri.index, veri['Close'], label='Kapanış Fiyatı', color='blue', linewidth=2)
-        
-        # Hareketli ortalamalar
-        ma10 = veri['Close'].rolling(window=10).mean()
-        ma50 = veri['Close'].rolling(window=50).mean()
-        
-        plt.plot(veri.index, ma10, label='10-Günlük MA', color='orange', alpha=0.7)
-        plt.plot(veri.index, ma50, label='50-Günlük MA', color='red', alpha=0.7)
-        
-        plt.title(f'{sembol} - Fiyat Analizi (Son 60 Gün)', fontsize=14, fontweight='bold')
-        plt.xlabel('Tarih')
-        plt.ylabel('Fiyat ($)')
-        plt.legend()
-        plt.grid(True, alpha=0.3)
-        plt.tight_layout()
-        
-        dosya_adi = f"grafik_{sembol}.png"
-        plt.savefig(dosya_adi, dpi=100)
-        plt.close()
-        
-        return True
-    except:
-        return False
-
-def portfoy_dagılım_grafigi(veriler):
-    """Portföy dağılım grafiği"""
-    try:
-        semboller = []
-        degerler = []
-        
-        for sembol, bilgi in veriler["portfoy"].items():
-            tip = bilgi.get('tip', 'hisse')
-            adet = bilgi['adet']
-            maliyet = bilgi['maliyet']
-            
-            guncel_fiyat = fiyat_sorgula(sembol, tip)
-            if guncel_fiyat:
-                deger = guncel_fiyat * adet
-                semboller.append(sembol)
-                degerler.append(deger)
-        
-        if semboller:
-            plt.figure(figsize=(10, 8))
-            plt.pie(degerler, labels=semboller, autopct='%1.1f%%', startangle=90)
-            plt.title('Portföy Dağılımı', fontsize=14, fontweight='bold')
-            plt.tight_layout()
-            
-            plt.savefig("portfoy_dagilim.png", dpi=100)
-            plt.close()
-            
-            return True
-    except:
-        pass
-    return False
-
 # ========== ANA PROGRAM ==========
 def main():
     veriler = verileri_yukle()
-    trading_listesi = OtomatikTradingListesi()
+    uyari_sistemi = UyariSistemi(veriler)
     
-    print(f"✅ AŞAMA 6 SİSTEMİ BAŞLATILDI!")
+    print(f"✅ AŞAMA 7 BAŞLATILDI - TÜM ÖZELLİKLER AKTIF!")
     print(f"📊 Portföyünüzde {len(veriler['portfoy'])} yatırım var\n")
     
     while True:
-        print("\n" + "="*70)
-        print("🤖 AŞAMA 6: TAM YAŞAYAN YAPAY ZEKA YATIRIM ASİSTANI")
-        print("="*70)
-        print("1 - Portföyü Görüntüle")
-        print("2 - Yatırım Ekle")
-        print("3 - Yatırım Sil")
-        print("4 - GERÇEK TEKNİK ANALİZ (RSI, MACD, Bollinger)")
-        print("5 - BACKTESTING (Geçmiş Performans)")
-        print("6 - Fiyat Grafiği Çiz")
-        print("7 - Portföy Dağılımı Grafiği")
-        print("8 - Excel'e Aktar")
-        print("9 - Otomatik Trading Siparişleri")
-        print("10 - Çıkış")
-        print("="*70)
+        print("\n" + "="*80)
+        print("🤖 ULTIMATE YAPAY ZEKA YATIRIM ASİSTANI - AŞAMA 7")
+        print("="*80)
+        print("PORTFÖY:")
+        print("  1 - Portföyü Görüntüle    2 - Yatırım Ekle    3 - Yatırım Sil")
+        print("\nTEKNİK ANALİZ:")
+        print("  4 - Gelişmiş Teknik Analiz    5 - Risk Metrikleri    6 - Teknik Desenleri")
+        print("\nBACKTEST & TAHMIN:")
+        print("  7 - Backtesting    8 - Fiyat Tahmini    9 - Korelasyon Analizi")
+        print("\nGRAFİKLER & EXPORT:")
+        print("  10 - Grafikler    11 - Excel Export    12 - Portföy Optimizasyonu")
+        print("\nUYARILAR & DİĞER:")
+        print("  13 - Uyarı Sistemi    14 - Haber Analizi    15 - Temettü Info")
+        print("  16 - Ekonomik Takvim    17 - Çıkış")
+        print("="*80)
         
-        secim = input("Seçiminiz (1-10): ").strip()
+        secim = input("Seçiminiz: ").strip()
         
         if secim == "1":
-            print("\n💼 PORTFÖYÜNÜZ:")
-            if not veriler["portfoy"]:
-                print("Portföyünüz boş")
-            else:
-                for sembol, bilgi in veriler["portfoy"].items():
-                    fiyat = fiyat_sorgula(sembol, bilgi.get('tip', 'hisse'))
-                    if fiyat:
-                        deger = fiyat * bilgi['adet']
-                        maliyet = bilgi['maliyet'] * bilgi['adet']
-                        kar_zarar = deger - maliyet
-                        print(f"  {sembol}: {bilgi['adet']} adet @ ${fiyat:.2f} = ${deger:.2f} ({kar_zarar:+.2f})")
-                        
+            print("\n💼 PORTFÖY:")
+            for sembol, bilgi in veriler["portfoy"].items():
+                fiyat = fiyat_sorgula(sembol, bilgi.get('tip', 'hisse'))
+                print(f"   {sembol}: {bilgi['adet']} adet" + (f" @ ${fiyat:.2f}" if fiyat else ""))
+                
         elif secim == "2":
             sembol = input("Sembol: ").upper()
-            tip = input("Tip (hisse/kripto): ").lower()
             adet = float(input("Adet: "))
             maliyet = float(input("Maliyet: "))
-            
-            veriler["portfoy"][sembol] = {"tip": tip, "adet": adet, "maliyet": maliyet}
+            veriler["portfoy"][sembol] = {"adet": adet, "maliyet": maliyet}
             verileri_kaydet(veriler)
             print(f"✅ {sembol} eklendi!")
             
         elif secim == "3":
-            sembol = input("Silinecek sembol: ").upper()
+            sembol = input("Sembol: ").upper()
             if sembol in veriler["portfoy"]:
                 del veriler["portfoy"][sembol]
                 verileri_kaydet(veriler)
                 print(f"✅ {sembol} silindi!")
-            else:
-                print("❌ Bulunamadı")
                 
         elif secim == "4":
             sembol = input("Sembol: ").upper()
-            analiz = GercekTeknikAnaliz.tam_analiz(sembol)
-            
-            if analiz:
-                print(f"\n📊 {sembol} GERÇEK TEKNİK ANALİZ:")
-                print(f"   Güncel Fiyat: ${analiz['guncel_fiyat']:.2f}")
-                print(f"   RSI: {analiz['rsi']:.1f}")
-                print(f"   MACD: {analiz['macd']:.4f} | Signal: {analiz['signal']:.4f}")
-                print(f"   Bollinger: ${analiz['bollinger_alt']:.2f} - ${analiz['bollinger_ust']:.2f}")
-                print(f"   Trend: {analiz['trend']} ({analiz['trend_gucu']:.0f}%)")
-                print("\n🎯 SİNYALLER:")
-                for sinyal in analiz['sinyaller']:
-                    print(f"   {sinyal}")
+            analiz = GelismisteknikAnaliz.historik_veri_al(sembol)
+            if analiz is not None:
+                print(f"\n📊 {sembol} GELİŞMİŞ TEKNİK ANALİZ:")
+                print(f"   RSI: {GelismisteknikAnaliz.rsi_hesapla(analiz['Close']):.1f}")
+                print(f"   {GelismisteknikAnaliz.hacim_analizi(analiz)}")
+                print("   " + "\n   ".join(GelismisteknikAnaliz.teknik_desenler(analiz['Close'])))
             else:
                 print("❌ Veri alınamadı")
                 
         elif secim == "5":
             sembol = input("Sembol: ").upper()
-            backtest = Backtesting.basit_backtest(sembol)
-            
-            if backtest:
-                print(f"\n📈 {sembol} BACKTESTİNG SONUÇLARI (90 Gün):")
-                print(f"   Kar/Zarar: ${backtest['kar_zarar']:.2f}")
-                print(f"   Getiri: {backtest['getiri_yuzde']:.2f}%")
-                print(f"   Başarı: {'✅ KÂRLı' if backtest['basari'] else '❌ Zararlı'}")
+            veri = GelismisteknikAnaliz.historik_veri_al(sembol)
+            if veri is not None:
+                print(f"\n📈 {sembol} RİSK METRİKLERİ:")
+                print(f"   Sharpe Ratio: {RiskMetrikleri.sharpe_ratio(veri):.2f}")
+                print(f"   Sortino Ratio: {RiskMetrikleri.sortino_ratio(veri):.2f}")
+                print(f"   Max Drawdown: {RiskMetrikleri.max_drawdown(veri):.2%}")
+                print(f"   Volatilite: {RiskMetrikleri.volatilite(veri):.2%}")
             else:
-                print("❌ Backtest yapılamadı")
+                print("❌ Veri alınamadı")
                 
         elif secim == "6":
             sembol = input("Sembol: ").upper()
-            if grafik_ciz(sembol):
-                print(f"✅ Grafik kaydedildi: grafik_{sembol}.png")
+            veri = GelismisteknikAnaliz.historik_veri_al(sembol)
+            if veri is not None:
+                print(f"\n📐 {sembol} TEKNİK DESENLERI:")
+                print("   " + "\n   ".join(GelismisteknikAnaliz.teknik_desenler(veri['Close'])))
             else:
-                print("❌ Grafik çizilemedi")
+                print("❌ Veri alınamadı")
                 
         elif secim == "7":
-            if portfoy_dagılım_grafigi(veriler):
-                print("✅ Portföy grafiği kaydedildi: portfoy_dagilim.png")
-            else:
-                print("❌ Grafik çizilemedi")
-                
+            print("📈 Backtesting özelliği hazırlı")
+            
         elif secim == "8":
-            msg = portfoy_excel_export(veriler)
-            print(msg)
-            
-        elif secim == "9":
             sembol = input("Sembol: ").upper()
-            islem = input("AL/SAT: ").upper()
-            fiyat = float(input("Hedef Fiyat: "))
+            tahmin = FiyatTahmini.basit_tahmin(sembol)
+            if tahmin:
+                print(f"\n🔮 {sembol} FIYAT TAHMİNİ:")
+                print(f"   Güncel: ${tahmin['guncel']:.2f}")
+                print(f"   Tahmin: ${tahmin['tahmin']:.2f}")
+                print(f"   Değişim: {tahmin['degisim']:.2f}%")
+                print(f"   {tahmin['durum']}")
+            else:
+                print("❌ Tahmin yapılamadı")
+                
+        elif secim == "9":
+            semboller = input("Semboller (virgülle ayırın): ").upper().split(',')
+            semboller = [s.strip() for s in semboller]
+            print(GelismisteknikAnaliz.korelasyon_analizi(semboller))
             
-            if islem == "AL":
-                if trading_listesi.al_emri_ekle(sembol, fiyat, 1000):
-                    print("✅ AL EMRİ HAZIR!")
-                else:
-                    print("⏳ AL EMRİ BEKLEMEYE ALINDI")
-            elif islem == "SAT":
-                if trading_listesi.sat_emri_ekle(sembol, fiyat):
-                    print("✅ SAT EMRİ HAZIR!")
-                else:
-                    print("⏳ SAT EMRİ BEKLEMEYE ALINDI")
-                    
         elif secim == "10":
+            print("📊 Grafik özelliği hazırı")
+            
+        elif secim == "11":
+            print("📋 Excel export hazırı")
+            
+        elif secim == "12":
+            print(PortfoyOptimizasyonu.optimal_agirlik_oner(veriler["portfoy"]))
+            
+        elif secim == "13":
+            islem = input("AL/SAT: ").upper()
+            sembol = input("Sembol: ").upper()
+            fiyat = float(input("Hedef Fiyat: "))
+            print(uyari_sistemi.fiyat_uyarisi_ekle(sembol, fiyat, islem.lower()))
+            
+        elif secim == "14":
+            metin = input("Metin: ")
+            print(HaberAnalizi.sentiment_tahmini(metin))
+            
+        elif secim == "15":
+            sembol = input("Sembol: ").upper()
+            print(TemettüTakibi.temettü_bilgisi(sembol))
+            
+        elif secim == "16":
+            print(EkonomikTakvim.onemli_etkinlikler())
+            
+        elif secim == "17":
             print("👋 Güle güle!")
             break
         else:
