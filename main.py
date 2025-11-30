@@ -1283,3 +1283,242 @@ def main():
                     if auto_analyzer.is_running:
                         auto_analyzer.stop()
                     break
+
+        elif secim == "38":
+            print("\n" + "="*80)
+            print("🤖 ML TAHMİN - LSTM/Prophet Alternatifi")
+            print("="*80)
+            
+            from ml_predictor import MLPredictor
+            predictor = MLPredictor()
+            
+            symbol = input("\nSembol: ").upper().strip()
+            print(f"\n⏳ {symbol} modeli eğitiliyor...")
+            ok, msg = predictor.train(symbol)
+            print(msg)
+            
+            if ok:
+                pred, msg = predictor.predict(symbol)
+                print(f"   {msg}")
+        
+        elif secim == "39":
+            print("\n" + "="*80)
+            print("📊 İLERİ RİSK METRİKLERİ - Sharpe, Sortino, Max Drawdown")
+            print("="*80)
+            
+            from risk_metrics import RiskMetrics
+            symbol = input("\nSembol: ").upper().strip()
+            
+            print(f"\n📈 {symbol} Risk Metrikleri:")
+            sharpe, msg = RiskMetrics.sharpe_ratio(symbol)
+            print(f"   {msg}")
+            
+            dd, msg = RiskMetrics.max_drawdown(symbol)
+            print(f"   {msg}")
+            
+            vol, msg = RiskMetrics.volatility(symbol)
+            print(f"   {msg}")
+            
+            sortino, msg = RiskMetrics.sortino_ratio(symbol)
+            print(f"   {msg}")
+        
+        elif secim == "40":
+            print("\n" + "="*80)
+            print("💹 ADVANCED BACKTESTING - Walk-Forward Analiz")
+            print("="*80)
+            
+            from advanced_backtest import AdvancedBacktest
+            backtest = AdvancedBacktest()
+            
+            symbol = input("\nSembol: ").upper().strip()
+            print(f"\n⏳ {symbol} backtest yapılıyor...")
+            result = backtest.backtest_rsi_strategy(symbol)
+            
+            print(f"   Başlangıç: ${result.get('initial', 0):.2f}")
+            print(f"   Bitiş: ${result.get('final', 0):.2f}")
+            print(f"   Kar/Zarar: {result.get('status', 'N/A')}")
+            print(f"   İşlem sayısı: {result.get('trades', 0)}")
+        
+        elif secim == "41":
+            print("\n" + "="*80)
+            print("⚖️ PORTFÖY OPTİMİZASYONU - Efficient Frontier")
+            print("="*80)
+            
+            from portfolio_optimizer import PortfolioOptimizer
+            symbols_str = input("\nSymboller (virgülle ayırarak): ").upper().strip()
+            symbols = [s.strip() for s in symbols_str.split(",")]
+            
+            print(f"\n⏳ Portföy optimize ediliyor...")
+            opt = PortfolioOptimizer.optimize_weights(symbols)
+            
+            if "error" not in opt:
+                print(f"   Beklenen Return: {opt['return']*100:.2f}%")
+                print(f"   Risk (Volatilite): {opt['risk']*100:.2f}%")
+                print(f"   Sharpe Ratio: {opt['sharpe']:.2f}")
+                print(f"   Ağırlıklar: {opt['weights']}")
+        
+        elif secim == "42":
+            print("\n" + "="*80)
+            print("🔄 BINANCE FUTURES TRADING - Leverage İşlem")
+            print("="*80)
+            
+            from futures_trader import FuturesTrader
+            futures = FuturesTrader()
+            
+            print("\n1 - Long Aç")
+            print("2 - Short Aç")
+            print("3 - Leverage Ayarla")
+            print("4 - Pozisyon Kapat")
+            
+            fut_sec = input("\nSeçim: ").strip()
+            
+            if fut_sec == "1":
+                symbol = input("Sembol: ").upper()
+                qty = float(input("Miktar: "))
+                ok, msg = futures.open_long(symbol, qty)
+                print(msg)
+            elif fut_sec == "2":
+                symbol = input("Sembol: ").upper()
+                qty = float(input("Miktar: "))
+                ok, msg = futures.open_short(symbol, qty)
+                print(msg)
+            elif fut_sec == "3":
+                symbol = input("Sembol: ").upper()
+                lev = int(input("Leverage (1-125): "))
+                ok, msg = futures.set_leverage(symbol, lev)
+                print(msg)
+            elif fut_sec == "4":
+                symbol = input("Sembol: ").upper()
+                ok, msg = futures.close_position(symbol)
+                print(msg)
+        
+        elif secim == "43":
+            print("\n" + "="*80)
+            print("💬 SOSYAL DUYGU ANALİZİ - Sentiment Analysis")
+            print("="*80)
+            
+            from social_sentiment import SocialSentiment
+            
+            print("\n1 - Metni Analiz Et")
+            print("2 - Pazar Duygusunu Gör")
+            
+            sent_sec = input("\nSeçim: ").strip()
+            
+            if sent_sec == "1":
+                text = input("Metni gir: ")
+                result = SocialSentiment.analyze_sentiment(text)
+                print(f"   {result['sentiment']} (Güven: {result['confidence']:.2f})")
+            elif sent_sec == "2":
+                symbol = input("Sembol: ").upper()
+                sentiment = SocialSentiment.get_market_sentiment(symbol)
+                print(f"   {sentiment}")
+        
+        elif secim == "44":
+            print("\n" + "="*80)
+            print("💰 VERGİ OPTİMİZASYONU - FIFO/LIFO Tracking")
+            print("="*80)
+            
+            from tax_optimizer import TaxOptimizer
+            tax = TaxOptimizer()
+            
+            print("\n1 - Alım Ekle")
+            print("2 - Vergi Hesapla")
+            print("3 - Tax Loss Harvesting")
+            
+            tax_sec = input("\nSeçim: ").strip()
+            
+            if tax_sec == "1":
+                symbol = input("Sembol: ").upper()
+                qty = float(input("Miktar: "))
+                price = float(input("Fiyat: "))
+                ok, msg = tax.add_buy(symbol, qty, price)
+                print(msg)
+            elif tax_sec == "2":
+                result = tax.calculate_tax()
+                print(f"   {result['status']}")
+            elif tax_sec == "3":
+                opt = tax.optimize_tax_loss_harvesting()
+                print(f"   Harvestable Loss: ${opt['total_harvestable_loss']:.2f}")
+        
+        elif secim == "45":
+            print("\n" + "="*80)
+            print("⛓️ ON-CHAIN ANALİZİ - Blockchain Metrikleri")
+            print("="*80)
+            
+            from onchain_analyzer import OnchainAnalyzer
+            onchain = OnchainAnalyzer()
+            
+            symbol = input("\nSembol (BTC/ETH): ").upper().strip()
+            
+            print(f"\n📊 {symbol} On-chain Analizi:")
+            
+            whale = onchain.get_whale_activity(symbol)
+            print(f"   {whale['status']}")
+            
+            active = onchain.get_active_addresses(symbol)
+            print(f"   {active['status']}")
+            
+            health = onchain.network_health(symbol)
+            print(f"   Network: {health['health']} (Score: {health['score']})")
+        
+        elif secim == "46":
+            print("\n" + "="*80)
+            print("📡 REAL-TIME WEBSOCKET STREAM")
+            print("="*80)
+            
+            from websocket_stream import WebSocketStream
+            stream = WebSocketStream()
+            
+            print("\n1 - Stream Başlat")
+            print("2 - Canlı Fiyat Al")
+            print("3 - Stream Durdur")
+            
+            ws_sec = input("\nSeçim: ").strip()
+            
+            if ws_sec == "1":
+                symbol = input("Sembol: ").upper()
+                ok, msg = stream.start_stream(symbol)
+                print(msg)
+            elif ws_sec == "2":
+                symbol = input("Sembol: ").upper()
+                data = stream.get_live_price(symbol)
+                print(f"   {data['symbol']}: ${data['price']:.2f} ({data['change']:+.2f}%)")
+            elif ws_sec == "3":
+                ok, msg = stream.stop_stream()
+                print(msg)
+        
+        elif secim == "47":
+            print("\n" + "="*80)
+            print("👁️ MULTI-SYMBOL TRACKER - Birden Fazla İzleme")
+            print("="*80)
+            
+            from multi_symbol_tracker import MultiSymbolTracker
+            tracker = MultiSymbolTracker()
+            
+            print("\n1 - Watchlist'e Ekle")
+            print("2 - Monitör Et")
+            print("3 - Uyarı Ayarla")
+            print("4 - Watchlist Gör")
+            
+            ms_sec = input("\nSeçim: ").strip()
+            
+            if ms_sec == "1":
+                symbols = input("Semboller (virgülle ayırarak): ").upper().split(",")
+                ok, msg = tracker.add_to_watchlist(symbols)
+                print(msg)
+            elif ms_sec == "2":
+                symbols = ["AAPL", "MSFT", "GOOGL"]
+                results = tracker.monitor_multiple(symbols)
+                for sym, sig in results.items():
+                    print(f"   {sym}: {sig}")
+            elif ms_sec == "3":
+                symbol = input("Sembol: ").upper()
+                high = float(input("Üst sınır: "))
+                low = float(input("Alt sınır: "))
+                ok, msg = tracker.set_alerts(symbol, high, low)
+                print(msg)
+            elif ms_sec == "4":
+                wl = tracker.get_watchlist()
+                print(f"   Toplam: {wl['count']} sembol")
+                for sym in wl['symbols']:
+                    print(f"   • {sym}")
