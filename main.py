@@ -26,6 +26,8 @@ from binance_broker_real import BinanceBrokerReal as BinanceBroker
 from real_data_broker import RealBrokerData
 from broker_persistence import BrokerPersistence
 from broker_auth import BrokerAuth
+from automated_trading_engine import AutomatedTradingEngine
+from risk_manager import RiskManager
 from scheduler_system import BrokerScheduler
 from security_system import SecurityManager
 from logging_system import LoggingManager
@@ -43,6 +45,8 @@ security = SecurityManager()
 logger = LoggingManager()
 api_manager = APIKeyManager()
 database = DatabaseManager()
+trading_engine = AutomatedTradingEngine()
+risk_manager = RiskManager()
 
 def verileri_yukle():
     try:
@@ -1078,32 +1082,44 @@ def main():
                 elif graf_secim == "6":
                     break
             
-        elif secim == "17":
-            # Son kayıtları yap
-            verileri_kaydet(veriler)
-            print("💾 Tüm veriler kalıcı olarak kaydedildi!")
-            print("✅ Backup dosyaları oluşturuldu!")
-            print("👋 Güle güle!")
-            break
-        else:
-            print("❌ Geçersiz seçim")
 
-if __name__ == "__main__":
-    main()
-
-# ========== KALICI DEPOLAMA SİSTEMİ ==========
-def tum_verileri_goster():
-    """Tüm kaydedilmiş verileri göster"""
-    veriler = verileri_yukle()
-    print("\n💾 KALICI DEPOLAMA:")
-    print(f"   ✅ Ana Dosya: veriler.json")
-    print(f"   ✅ Backup: backup_*.json (Her kaydışta otomatik)")
-    print(f"   ✅ CSV Export: portfoy_kayit.csv")
-    print(f"   ✅ Rapor: veri_raporu_*.json")
-    print(f"\n📊 MEVCUT VERİLER:")
-    print(f"   Portföy: {len(veriler.get('portfoy', {}))} yatırım")
-    print(f"   Uyarılar: {len(veriler.get('alerts', []))} uyarı")
-    print(f"   İşlemler: {len(veriler.get('islemler', []))} işlem")
-    print(f"   Toplam Kayıtlar: {len(veriler.get('kayitlar', []))} kayıt")
-    print(f"\n🕐 Son Güncelleme: {veriler.get('son_guncelleme', 'Bilinmiyor')}")
+        
+        elif secim == "34":
+            print("\n" + "="*80)
+            print("🤖 OTOMATIK TRADING ENGINE - GERÇEK PARA")
+            print("="*80)
             
+            print("\n⚠️ DIKKAT: GERÇEK PARA ile işlem yapacaksınız!")
+            print("Seçenek 31'den API key kurun.\n")
+            
+            while True:
+                print("1 - Trading BAŞLAT")
+                print("2 - Döngü Çalıştır")
+                print("3 - Kuralları Göster")
+                print("4 - Risk Kontrol")
+                print("5 - ACİL KAPAT")
+                print("6 - Geri Dön")
+                
+                auto_secim = input("\nSeçim: ").strip()
+                
+                if auto_secim == "1":
+                    print(trading_engine.start())
+                elif auto_secim == "2":
+                    if trading_engine.is_running:
+                        result = trading_engine.run_trading_cycle("alpaca")
+                        print(result)
+                elif auto_secim == "3":
+                    rules = trading_engine.rules
+                    print(f"   Semboller: {rules['symbols']}")
+                    print(f"   Stop Loss: {rules['stop_loss']}%")
+                    print(f"   Take Profit: {rules['take_profit']}%")
+                elif auto_secim == "4":
+                    print(risk_manager.check_daily_loss_limit(-1000))
+                elif auto_secim == "5":
+                    print(trading_engine.emergency_close_all())
+                elif auto_secim == "6":
+                    if trading_engine.is_running:
+                        trading_engine.stop()
+                    break
+
+        
