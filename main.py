@@ -28,6 +28,7 @@ from broker_persistence import BrokerPersistence
 from broker_auth import BrokerAuth
 from automated_trading_engine import AutomatedTradingEngine
 from risk_manager import RiskManager
+from auto_analyzer import AutoAnalyzer
 from scheduler_system import BrokerScheduler
 from security_system import SecurityManager
 from logging_system import LoggingManager
@@ -47,6 +48,7 @@ api_manager = APIKeyManager()
 database = DatabaseManager()
 trading_engine = AutomatedTradingEngine()
 risk_manager = RiskManager()
+auto_analyzer = AutoAnalyzer()
 
 def verileri_yukle():
     try:
@@ -1244,3 +1246,40 @@ def main():
                 print(f"   Sinyal: {result.get('signal', result.get('signal', '?'))}")
             else:
                 print(f"❌ Gönderme başarısız: {msg}")
+
+        elif secim == "37":
+            print("\n" + "="*80)
+            print("⚡ OTOMATİK 2 DAKİKA ANALIZ - DEVAM EDEN TELEGRAM GÖNDERİMİ")
+            print("="*80)
+            
+            while True:
+                print("\n1 - Analiz BAŞLAT (her 2 dakika)")
+                print("2 - Analiz DURDUR")
+                print("3 - Durum Kontrol")
+                print("4 - Geri Dön")
+                
+                auto_sec = input("\nSeçim: ").strip()
+                
+                if auto_sec == "1":
+                    symbol = input("Symbol (XRPTRY, AAPL, MSFT): ").upper().strip()
+                    if not symbol:
+                        print("❌ Symbol gerekli")
+                        continue
+                    
+                    result = auto_analyzer.start(symbol)
+                    print(result)
+                    print(f"⏰ İlk analiz hemen, sonrası her 2 dakikada otomatik gönderilir")
+                    
+                elif auto_sec == "2":
+                    result = auto_analyzer.stop()
+                    print(result)
+                
+                elif auto_sec == "3":
+                    status = auto_analyzer.status()
+                    print(status)
+                
+                elif auto_sec == "4":
+                    # Çıkarken durdur
+                    if auto_analyzer.is_running:
+                        auto_analyzer.stop()
+                    break
