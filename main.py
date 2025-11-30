@@ -20,6 +20,9 @@ from grafik_3d import Grafik3D
 from portfolio_rebalance import PortfolioRebalancing
 from telegram_bot import TelegramBot
 from telegram_service import TelegramService
+from broker_trading import BrokerTrading
+from alpaca_broker import AlpacaBroker
+from binance_broker import BinanceBroker
 
 print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 7 (ULTIMATE)")
 print("⭐ TÜM ÖZELLİKLER ENTEGRE")
@@ -633,6 +636,133 @@ def main():
             else:
                 print("❌ Telegram bağlantısı başarısız")
                 print("Token'ı kontrol edin")
+        
+        elif secim == "24":
+            print("\n" + "="*80)
+            print("📊 ALPACA - HİSSE TİCARETİ (Paper Trading)")
+            print("="*80)
+            
+            alpaca = AlpacaBroker()
+            
+            print("\n🔗 Alpaca Bağlantısı Kontrol Ediliyor...")
+            ok, msg = alpaca.baglanti_testi()
+            print(msg)
+            
+            if ok:
+                print("\n📮 ALPACA İŞLEMLERİ:\n")
+                
+                while True:
+                    print("1 - Bakiye Göster")
+                    print("2 - Pozisyonları Göster")
+                    print("3 - Hisse AL")
+                    print("4 - Hisse SAT")
+                    print("5 - Geri Dön")
+                    
+                    alpaca_secim = input("\nSeçim: ").strip()
+                    
+                    if alpaca_secim == "1":
+                        ok, msg = alpaca.bakiye_goster()
+                        print(msg)
+                    elif alpaca_secim == "2":
+                        ok, msg = alpaca.pozisyon_goster()
+                        print(msg)
+                    elif alpaca_secim == "3":
+                        sembol = input("Sembol (AAPL, MSFT, vb): ").upper()
+                        miktar = input("Miktar: ")
+                        ok, msg = alpaca.al(sembol, miktar)
+                        print(msg)
+                    elif alpaca_secim == "4":
+                        sembol = input("Sembol: ").upper()
+                        miktar = input("Miktar: ")
+                        ok, msg = alpaca.sat(sembol, miktar)
+                        print(msg)
+                    elif alpaca_secim == "5":
+                        break
+        
+        elif secim == "25":
+            print("\n" + "="*80)
+            print("🪙 BİNANCE - KRİPTO TİCARETİ (Testnet)")
+            print("="*80)
+            
+            binance = BinanceBroker()
+            
+            print("\n🔗 Binance Testnet Bağlantısı Kontrol Ediliyor...")
+            ok, msg = binance.baglanti_testi()
+            print(msg)
+            
+            print("\n📮 BİNANCE KRİPTO İŞLEMLERİ:\n")
+            
+            while True:
+                print("1 - Bakiye Göster")
+                print("2 - Kripto AL")
+                print("3 - Kripto SAT")
+                print("4 - Geri Dön")
+                
+                binance_secim = input("\nSeçim: ").strip()
+                
+                if binance_secim == "1":
+                    ok, msg = binance.bakiye_goster()
+                    print(msg)
+                elif binance_secim == "2":
+                    sembol = input("Sembol (BTC, ETH, vb): ").upper()
+                    miktar = input("Miktar: ")
+                    ok, msg = binance.al(sembol, miktar)
+                    print(msg)
+                elif binance_secim == "3":
+                    sembol = input("Sembol: ").upper()
+                    miktar = input("Miktar: ")
+                    ok, msg = binance.sat(sembol, miktar)
+                    print(msg)
+                elif binance_secim == "4":
+                    break
+        
+        elif secim == "26":
+            print("\n" + "="*80)
+            print("🤖 OTOMATIK TİCARET - BROKER SISTEMI")
+            print("="*80)
+            
+            trading = BrokerTrading()
+            trading.sistem_durumu()
+            
+            print("\n📮 OTOMATIK TİCARET SEÇENEKLERI:\n")
+            
+            while True:
+                print("1 - Alpaca Otomatik AL")
+                print("2 - Alpaca Otomatik SAT")
+                print("3 - Binance Otomatik AL")
+                print("4 - Binance Otomatik SAT")
+                print("5 - Stop Loss Kur")
+                print("6 - Take Profit Kur")
+                print("7 - Geri Dön")
+                
+                auto_secim = input("\nSeçim: ").strip()
+                
+                if auto_secim == "1":
+                    sembol = input("Sembol: ").upper()
+                    miktar = input("Miktar: ")
+                    ok, msg = trading.otomatik_ticaret_yap(sembol, "AL", miktar, "alpaca")
+                elif auto_secim == "2":
+                    sembol = input("Sembol: ").upper()
+                    miktar = input("Miktar: ")
+                    ok, msg = trading.otomatik_ticaret_yap(sembol, "SAT", miktar, "alpaca")
+                elif auto_secim == "3":
+                    sembol = input("Sembol: ").upper()
+                    miktar = input("Miktar: ")
+                    ok, msg = trading.otomatik_ticaret_yap(sembol, "AL", miktar, "binance")
+                elif auto_secim == "4":
+                    sembol = input("Sembol: ").upper()
+                    miktar = input("Miktar: ")
+                    ok, msg = trading.otomatik_ticaret_yap(sembol, "SAT", miktar, "binance")
+                elif auto_secim == "5":
+                    sembol = input("Sembol: ").upper()
+                    fiyat = input("Stop Loss Fiyatı: ")
+                    print(trading.otomatik_stop_loss(sembol, fiyat))
+                elif auto_secim == "6":
+                    sembol = input("Sembol: ").upper()
+                    fiyat = input("Take Profit Fiyatı: ")
+                    print(trading.otomatik_take_profit(sembol, fiyat))
+                elif auto_secim == "7":
+                    break
             
         elif secim == "17":
             # Son kayıtları yap
