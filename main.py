@@ -27,14 +27,73 @@ def verileri_yukle():
             "portfoy": {},
             "alerts": [],
             "islemler": [],
-            "makine_ogrenme": {"basari_orani": {}}
+            "makine_ogrenme": {"basari_orani": {}},
+            "olusturma_tarihi": str(datetime.now()),
+            "son_guncelleme": str(datetime.now()),
+            "kayitlar": []
         }
         verileri_kaydet(baslangic_verisi)
         return baslangic_verisi
 
 def verileri_kaydet(veriler):
-    with open('veriler.json', 'w', encoding='utf-8') as f:
-        json.dump(veriler, f, ensure_ascii=False, indent=2)
+    """Verileri hemen kaydı"""
+    try:
+        # Ana JSON dosyasına kaydet
+        with open('veriler.json', 'w', encoding='utf-8') as f:
+            json.dump(veriler, f, ensure_ascii=False, indent=2)
+        
+        # Tarihli backup yapı
+        tarih = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_dosya = f"backup_{tarih}.json"
+        with open(backup_dosya, 'w', encoding='utf-8') as f:
+            json.dump(veriler, f, ensure_ascii=False, indent=2)
+        
+        # CSV'ye de kaydet
+        csv_kayit_et(veriler)
+        
+        # İşlem kaydı ekle
+        if "kayitlar" not in veriler:
+            veriler["kayitlar"] = []
+        
+        veriler["kayitlar"].append({
+            "tip": "otomatik_kayit",
+            "tarih": str(datetime.now()),
+            "durum": "KAYDEDILDI"
+        })
+        
+        veriler["son_guncelleme"] = str(datetime.now())
+        
+    except Exception as e:
+        print(f"Kayıt hatası: {e}")
+
+def csv_kayit_et(veriler):
+    """CSV dosyasına kayıt et"""
+    try:
+        import csv
+        with open('portfoy_kayit.csv', 'w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Sembol', 'Adet', 'Maliyet', 'Tarih'])
+            for sembol, bilgi in veriler.get("portfoy", {}).items():
+                writer.writerow([sembol, bilgi.get('adet', 0), bilgi.get('maliyet', 0), datetime.now()])
+    except:
+        pass
+
+def veri_analiz_raporu():
+    """Tüm verilerin analiz raporunu oluştur"""
+    veriler = verileri_yukle()
+    rapor = {
+        "olusturma_tarihi": str(datetime.now()),
+        "toplam_yatirim": len(veriler.get("portfoy", {})),
+        "aktif_uyarilar": len(veriler.get("alerts", [])),
+        "kayitli_islemler": len(veriler.get("islemler", [])),
+        "kayit_sayisi": len(veriler.get("kayitlar", []))
+    }
+    
+    rapor_dosya = f"veri_raporu_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    with open(rapor_dosya, 'w', encoding='utf-8') as f:
+        json.dump(rapor, f, ensure_ascii=False, indent=2)
+    
+    return rapor
 
 # ========== GELIŞMIŞ TEKNİK ANALİZ ==========
 class GelismisteknikAnaliz:
@@ -384,7 +443,7 @@ def main():
         print("  10 - Grafikler    11 - Excel Export    12 - Portföy Optimizasyonu")
         print("\nUYARILAR & DİĞER:")
         print("  13 - Uyarı Sistemi    14 - Haber Analizi    15 - Temettü Info")
-        print("  16 - Ekonomik Takvim    17 - Çıkış")
+        print("  16 - Ekonomik Takvim    18 - Verileri Göster    17 - Çıkış")
         print("="*80)
         
         secim = input("Seçiminiz: ").strip()
@@ -487,8 +546,17 @@ def main():
             
         elif secim == "16":
             print(EkonomikTakvim.onemli_etkinlikler())
+        
+        elif secim == "18":
+            tum_verileri_goster()
+            rapor = veri_analiz_raporu()
+            print(f"\n✅ Veri raporu oluşturuldu!")
             
         elif secim == "17":
+            # Son kayıtları yap
+            verileri_kaydet(veriler)
+            print("💾 Tüm veriler kalıcı olarak kaydedildi!")
+            print("✅ Backup dosyaları oluşturuldu!")
             print("👋 Güle güle!")
             break
         else:
@@ -496,3 +564,19 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# ========== KALICI DEPOLAMA SİSTEMİ ==========
+def tum_verileri_goster():
+    """Tüm kaydedilmiş verileri göster"""
+    veriler = verileri_yukle()
+    print("\n💾 KALICI DEPOLAMA:")
+    print(f"   ✅ Ana Dosya: veriler.json")
+    print(f"   ✅ Backup: backup_*.json (Her kaydışta otomatik)")
+    print(f"   ✅ CSV Export: portfoy_kayit.csv")
+    print(f"   ✅ Rapor: veri_raporu_*.json")
+    print(f"\n📊 MEVCUT VERİLER:")
+    print(f"   Portföy: {len(veriler.get('portfoy', {}))} yatırım")
+    print(f"   Uyarılar: {len(veriler.get('alerts', []))} uyarı")
+    print(f"   İşlemler: {len(veriler.get('islemler', []))} işlem")
+    print(f"   Toplam Kayıtlar: {len(veriler.get('kayitlar', []))} kayıt")
+    print(f"\n🕐 Son Güncelleme: {veriler.get('son_guncelleme', 'Bilinmiyor')}")
