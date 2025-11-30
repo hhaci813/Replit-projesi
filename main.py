@@ -19,6 +19,7 @@ from advanced_ai import AdvancedAI
 from grafik_3d import Grafik3D
 from portfolio_rebalance import PortfolioRebalancing
 from telegram_bot import TelegramBot
+from telegram_service import TelegramService
 
 print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 7 (ULTIMATE)")
 print("⭐ TÜM ÖZELLİKLER ENTEGRE")
@@ -598,40 +599,40 @@ def main():
         
         elif secim == "23":
             print("\n" + "="*80)
-            print("📱 TELEGRAM BOT ENTEGRASYONu")
+            print("📱 TELEGRAM BOT ENTEGRASYONu - AKTIF")
             print("="*80)
             
-            print("\n1️⃣  Telegram Token Gir")
-            print("2️⃣  Chat ID Belirle")
-            print("3️⃣  Tavsiyeler Otomatik Gelsin\n")
+            service = TelegramService()
             
-            secim_tg = input("Seçim (Token gir/Demo göster): ").strip().lower()
+            print("\n🔗 Telegram Bağlantısı Kontrol Ediliyor...")
+            ok, msg = service.test_connection()
+            print(msg)
             
-            if secim_tg == "token gir":
-                token = input("Telegram Bot Token: ").strip()
-                chat_id = input("Telegram Chat ID: ").strip()
+            if ok:
+                print("\n📮 TELEGRAM SERVISLERI:\n")
                 
-                # Token kontrol et
-                gecerli, mesaj = TelegramBot.token_gecerliligi_kontrol(token)
-                print(mesaj)
-                
-                if gecerli:
-                    veriler['telegram'] = {
-                        'token': token,
-                        'chat_id': chat_id,
-                        'aktif': True,
-                        'kayit_tarihi': str(datetime.now())
-                    }
-                    verileri_kaydet(veriler)
-                    print("✅ Telegram yapılandırıldı!")
-                    print("🎯 Şimdi tavsiyeler Telegram'a gelecek!")
+                while True:
+                    print("1 - Tavsiye Gönder")
+                    print("2 - Haberler Gönder")
+                    print("3 - Portföy Durumu")
+                    print("4 - Geri Dön")
                     
-                    # Demo mesaj gönder
-                    bot = TelegramBot(token)
-                    result = bot.gunluk_tavsiye_gonder(chat_id)
-                    print(result['mesaj'])
+                    tg_secim = input("\nSeçim: ").strip()
+                    
+                    if tg_secim == "1":
+                        result = service.tavsiye_gonder()
+                        print(result['mesaj'])
+                    elif tg_secim == "2":
+                        result = service.haber_gonder()
+                        print(result['mesaj'])
+                    elif tg_secim == "3":
+                        result = service.portfoy_durumu_gonder()
+                        print(result['mesaj'])
+                    elif tg_secim == "4":
+                        break
             else:
-                TelegramBot.demo_calistir()
+                print("❌ Telegram bağlantısı başarısız")
+                print("Token'ı kontrol edin")
             
         elif secim == "17":
             # Son kayıtları yap
