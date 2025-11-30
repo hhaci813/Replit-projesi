@@ -1123,3 +1123,43 @@ def main():
                     break
 
         
+        elif secim == "35":
+            print("\n" + "="*80)
+            print("🔍 REAL-TIME SYMBOL ANALİZİ - Grafik Analizi")
+            print("="*80)
+            
+            from symbol_analyzer import SymbolAnalyzer
+            analyzer = SymbolAnalyzer()
+            
+            symbol = input("\nSembol (XRPTRY, AAPL, MSFT): ").upper()
+            
+            print("\n📊 Analiz Yapılıyor...\n")
+            
+            if symbol == "XRPTRY":
+                result = analyzer.xrptry_manual_analysis()
+                print(f"🎯 SİNYAL: {result['signal']}")
+                print(f"   Fiyat: ₺{result['current_price']}")
+                print(f"   Support: ₺{result['support']}")
+                print(f"   Resistance: ₺{result['resistance']}")
+                print(f"   Hedef: ₺{result['target']}")
+                print(f"   Stop Loss: ₺{result['stop_loss']}")
+                print(f"   Risk/Reward: {result['risk_reward']}x")
+            else:
+                result = analyzer.generate_signal(symbol)
+                print(f"🎯 SİNYAL: {result['signal']}")
+                if result['signal'] != "?":
+                    print(f"   RSI: {result['rsi']:.1f}")
+                    print(f"   Fiyat: ${result['price']:.2f}")
+                    print(f"   MA20: ${result['ma20']:.2f}")
+                    print(f"   MA50: ${result['ma50']:.2f}")
+            
+            print("\n📈 Nedenler:")
+            for reason in result.get('reasons', []):
+                print(f"   • {reason}")
+            
+            if "🟢" in result['signal']:
+                print("\n✅ SONUÇ: AL - Bullish momentum var")
+            elif "🔴" in result['signal']:
+                print("\n⛔ SONUÇ: SAT - Bearish sinyaller var")
+            else:
+                print("\n⏸️ SONUÇ: HOLD - Daha iyi entry'yi bekle")
