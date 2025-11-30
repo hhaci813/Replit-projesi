@@ -162,29 +162,69 @@ class AkilliOgrenenSistem(OgrenenSistem):
         print("=====================================\n")
 
 
-if __name__ == "__main__":
-    print("Akilli Ogrenen Sistem baslatiliyor...\n")
+def main():
+    print("Akilli Ogrenen Sisteme Hos Geldiniz!")
+    print("=" * 50)
     
     sistem = AkilliOgrenenSistem()
     
-    print("--- Sisteme yeni bilgiler ekleniyor ---")
-    sistem.yeni_veri_ekle("Python nedir?", "Python bir programlama dilidir", "programlama")
-    sistem.yeni_veri_ekle("Turkiye'nin baskenti neresi?", "Ankara", "cografya")
-    sistem.yeni_veri_ekle("Python kim tarafindan gelistirildi?", "Guido van Rossum", "programlama")
-    sistem.yeni_veri_ekle("En buyuk gezegen hangisi?", "Jupiter", "bilim")
+    print(f"Sistem durumu: {len(sistem.veriler['ogrenme_verileri'])} bilgi yuklendi")
+    print("Komutlar: 'cikis', 'durum', 'liste', 'ogret <soru> -> <cevap>'")
+    print("=" * 50)
     
-    print("\n--- Sorular soruluyor ---")
-    sorular = [
-        "Python nedir?",
-        "Turkiye hakkinda bilgi ver",
-        "Yapay zeka nedir?"
-    ]
-    
-    for soru in sorular:
-        print(f"\nSoru: {soru}")
-        cevap = sistem.cevap_ver(soru)
-        print(f"Cevap: {cevap}")
-    
-    sistem.durum_goster()
-    
-    print("Sistem hazir!")
+    while True:
+        try:
+            kullanici_girdisi = input("\nSen: ").strip()
+            
+            if not kullanici_girdisi:
+                continue
+            
+            if kullanici_girdisi.lower() in ['cikis', 'çıkış', 'exit', 'quit']:
+                print("Gorusmek uzere! Ogrendiklerim kaydedildi.")
+                break
+            
+            elif kullanici_girdisi.lower() == 'durum':
+                print(f"Ogrenme Durumu:")
+                print(f"   - Toplam bilgi: {sistem.veriler['toplam_ogrenme']}")
+                print(f"   - Son guncelleme: {sistem.veriler['son_guncelleme']}")
+                kategoriler = [k for k, v in sistem.model['ogrenilen_bilgiler'].items() if isinstance(v, dict)]
+                print(f"   - Kategoriler: {kategoriler}")
+            
+            elif kullanici_girdisi.lower() == 'liste':
+                print("Ogrenilen Bilgiler (son 10):")
+                son_veriler = [v for v in sistem.veriler["ogrenme_verileri"] if "soru" in v][-10:]
+                if son_veriler:
+                    for i, veri in enumerate(son_veriler, 1):
+                        kullanim = veri.get('kullanım_sayisi', 0)
+                        print(f"   {i}. {veri['soru']} -> {veri['cevap']} (Kullanim: {kullanim})")
+                else:
+                    print("   Henuz soru-cevap verisi yok.")
+            
+            elif kullanici_girdisi.lower().startswith('ogret ') or kullanici_girdisi.lower().startswith('öğret '):
+                try:
+                    _, ogretme_verisi = kullanici_girdisi.split(' ', 1)
+                    if '->' in ogretme_verisi:
+                        soru, cevap = ogretme_verisi.split('->', 1)
+                        sistem.yeni_veri_ekle(soru.strip(), cevap.strip())
+                    else:
+                        print("Hatali format! Dogru kullanim: ogret <soru> -> <cevap>")
+                except ValueError:
+                    print("Hatali format! Dogru kullanim: ogret <soru> -> <cevap>")
+            
+            else:
+                cevap = sistem.cevap_ver(kullanici_girdisi)
+                print(f"Bot: {cevap}")
+                
+        except KeyboardInterrupt:
+            print("\nGorusmek uzere! Veriler kaydedildi.")
+            break
+        except EOFError:
+            print("\nOturum sonlandirildi.")
+            break
+        except Exception as e:
+            print(f"Bir hata olustu: {e}")
+
+
+if __name__ == "__main__":
+    print("Replit kalici depolama kullaniliyor...")
+    main()
