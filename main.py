@@ -25,11 +25,23 @@ from alpaca_broker import AlpacaBroker
 from binance_broker import BinanceBroker
 from broker_persistence import BrokerPersistence
 from broker_auth import BrokerAuth
+from scheduler_system import BrokerScheduler
+from security_system import SecurityManager
+from logging_system import LoggingManager
+from api_manager import APIKeyManager
+from database_models import DatabaseManager
 
-print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 7 (ULTIMATE)")
-print("⭐ TÜM ÖZELLİKLER ENTEGRE")
-print("📊 Risk Metrikleri, Haber, Teknik Desenleri, Fiyat Tahmini, Uyarılar")
+print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 9 (PRODUCTION READY)")
+print("⭐ TÜM ÖZELLİKLER + SCHEDULER + DATABASE + SECURITY")
+print("📊 27 Seçenek + APScheduler + PostgreSQL/SQLite + Password Hashing")
 print("=" * 80)
+
+# Sistem başlatma
+scheduler = BrokerScheduler()
+security = SecurityManager()
+logger = LoggingManager()
+api_manager = APIKeyManager()
+database = DatabaseManager()
 
 def verileri_yukle():
     try:
