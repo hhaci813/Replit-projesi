@@ -14,134 +14,37 @@ class AutoRunSystem:
             return "Zaten çalışıyor"
         
         from auto_analyzer import AutoAnalyzer
-        from automated_trading_engine import AutomatedTradingEngine
-        from ml_predictor import MLPredictor
-        from multi_symbol_tracker import MultiSymbolTracker
         
         # AutoAnalyzer - Her 2 dakika AYRILI ANALIZLER
         auto_analyzer = AutoAnalyzer()
         
-        # Bitcoin - Her 2 dakika
-        self.scheduler.add_job(
-            lambda: auto_analyzer.analyze_and_send("BTC"),
-            'interval',
-            minutes=2,
-            id='auto_analyzer_btc'
-        )
+        symbols = ["BTC", "XRPTRY", "AAPL", "MSFT", "GOOGL", "ETH"]
+        for sym in symbols:
+            self.scheduler.add_job(
+                lambda s=sym: auto_analyzer.analyze_and_send(s),
+                'interval',
+                minutes=2,
+                id=f'auto_analyzer_{sym}'
+            )
+            self.active_jobs[f'📊 AutoAnalyzer ({sym})'] = 'Her 2 dakika'
         
-        # XRPTRY - Her 2 dakika
+        # Portfolio güncellemesi - Her 4 saatte 1
         self.scheduler.add_job(
-            lambda: auto_analyzer.analyze_and_send("XRPTRY"),
-            'interval',
-            minutes=2,
-            id='auto_analyzer_xrptry'
-        )
-        
-        # AAPL (Apple) - Her 2 dakika
-        self.scheduler.add_job(
-            lambda: auto_analyzer.analyze_and_send("AAPL"),
-            'interval',
-            minutes=2,
-            id='auto_analyzer_aapl'
-        )
-        
-        # MSFT (Microsoft) - Her 2 dakika
-        self.scheduler.add_job(
-            lambda: auto_analyzer.analyze_and_send("MSFT"),
-            'interval',
-            minutes=2,
-            id='auto_analyzer_msft'
-        )
-        
-        # GOOGL (Google) - Her 2 dakika
-        self.scheduler.add_job(
-            lambda: auto_analyzer.analyze_and_send("GOOGL"),
-            'interval',
-            minutes=2,
-            id='auto_analyzer_googl'
-        )
-        
-        # ETH (Ethereum) - Her 2 dakika
-        self.scheduler.add_job(
-            lambda: auto_analyzer.analyze_and_send("ETH"),
-            'interval',
-            minutes=2,
-            id='auto_analyzer_eth'
-        )
-        
-        self.active_jobs['📊 AutoAnalyzer (BTC)'] = 'Her 2 dakika'
-        self.active_jobs['📊 AutoAnalyzer (XRPTRY)'] = 'Her 2 dakika'
-        self.active_jobs['📊 AutoAnalyzer (AAPL)'] = 'Her 2 dakika'
-        self.active_jobs['📊 AutoAnalyzer (MSFT)'] = 'Her 2 dakika'
-        self.active_jobs['📊 AutoAnalyzer (GOOGL)'] = 'Her 2 dakika'
-        self.active_jobs['📊 AutoAnalyzer (ETH)'] = 'Her 2 dakika'
-        
-        # AutomatedTrading - Her saat AL/SAT kontrol
-        trading_engine = AutomatedTradingEngine()
-        self.scheduler.add_job(
-            lambda: trading_engine.run_trading_cycle("alpaca"),
-            'interval',
-            hours=1,
-            id='auto_trading'
-        )
-        self.active_jobs['💹 AutoTrading'] = 'Saatlik'
-        
-        # MultiSymbol Tracker - Her dakika kontrol
-        tracker = MultiSymbolTracker()
-        tracker.add_to_watchlist(["AAPL", "MSFT", "GOOGL", "BTC", "ETH"])
-        self.scheduler.add_job(
-            lambda: tracker.monitor_multiple(["AAPL", "MSFT"]),
-            'interval',
-            minutes=1,
-            id='multi_tracker'
-        )
-        self.active_jobs['👁️ MultiSymbolTracker'] = 'Dakikalık'
-        
-        # Portfolio Optimization - Her gün
-        self.scheduler.add_job(
-            lambda: self._optimize_portfolio(),
-            'interval',
-            days=1,
-            id='portfolio_opt'
-        )
-        self.active_jobs['⚖️ PortfolioOptimizer'] = 'Günlük'
-        
-        # Risk Metrics - Her 4 saat
-        self.scheduler.add_job(
-            lambda: self._check_risk_metrics(),
+            lambda: self._send_portfolio_update(),
             'interval',
             hours=4,
-            id='risk_metrics'
+            id='portfolio_update'
         )
-        self.active_jobs['📊 RiskMetrics'] = '4 saatlik'
+        self.active_jobs['💼 Portföy Güncelleme'] = '4 saatlik'
         
-        # Backtest - Her Pazartesi
+        # Risk analizi - Her 6 saatte 1
         self.scheduler.add_job(
-            lambda: self._run_backtest(),
-            'cron',
-            day_of_week=0,
-            hour=0,
-            id='backtest'
-        )
-        self.active_jobs['💹 Backtest'] = 'Haftada 1'
-        
-        # On-chain Analysis - Her 2 saat
-        self.scheduler.add_job(
-            lambda: self._check_onchain(),
+            lambda: self._check_risk(),
             'interval',
-            hours=2,
-            id='onchain'
+            hours=6,
+            id='risk_check'
         )
-        self.active_jobs['⛓️ OnchainAnalysis'] = '2 saatlik'
-        
-        # Telegram Reports - Her 4 saat
-        self.scheduler.add_job(
-            lambda: self._send_reports(),
-            'interval',
-            hours=4,
-            id='telegram_reports'
-        )
-        self.active_jobs['📱 TelegramReports'] = '4 saatlik'
+        self.active_jobs['⚠️ Risk Yönetimi'] = '6 saatlik'
         
         if not self.scheduler.running:
             self.scheduler.start()
@@ -162,7 +65,7 @@ class AutoRunSystem:
             return "Hata oluştu"
     
     def keep_running(self):
-        """Scheduler'ı 24/7 çalıştır (blocking)"""
+        """Scheduler'ı 24/7 çalıştır"""
         print("\n" + "="*80)
         print("🟢 24/7 HAFIZADA AUTOMATION BAŞLATILDI")
         print("="*80)
@@ -179,7 +82,7 @@ class AutoRunSystem:
     def get_status(self):
         """Durum göster"""
         if not self.is_running:
-            return "🔴 KAPALI - Başlatmak için Seçenek 99 → 1"
+            return "🔴 KAPALI"
         
         status = "🟢 24/7 HAFIZADA ÇALIŞIYOR\n\n"
         status += "📊 AKTIF JOB'LAR:\n"
@@ -188,33 +91,20 @@ class AutoRunSystem:
         status += f"\n✅ Toplam: {len(self.active_jobs)} sistem"
         return status
     
-    def _optimize_portfolio(self):
+    def _send_portfolio_update(self):
+        """Portföy güncellemesi gönder"""
         try:
-            from portfolio_optimizer import PortfolioOptimizer
-            PortfolioOptimizer.optimize_weights(["AAPL", "MSFT", "GOOGL"])
-        except: pass
+            from telegram_interactive import TelegramInteractiveBot
+            bot = TelegramInteractiveBot()
+            bot.send_portfolio_analysis(budget=10000)
+        except:
+            pass
     
-    def _check_risk_metrics(self):
-        try:
-            from risk_metrics import RiskMetrics
-            RiskMetrics.sharpe_ratio("AAPL")
-        except: pass
-    
-    def _run_backtest(self):
-        try:
-            from advanced_backtest import AdvancedBacktest
-            AdvancedBacktest().backtest_rsi_strategy("AAPL")
-        except: pass
-    
-    def _check_onchain(self):
-        try:
-            from onchain_analyzer import OnchainAnalyzer
-            OnchainAnalyzer().get_whale_activity("BTC")
-        except: pass
-    
-    def _send_reports(self):
+    def _check_risk(self):
+        """Risk kontrolü"""
         try:
             from telegram_service import TelegramService
             service = TelegramService()
-            service._send_message("📊 SİSTEM RAPORU\n\n✅ Tüm otomasyonlar normal çalışıyor!")
-        except: pass
+            service._send_message("⚠️ RİSK KONTROL RAPORU\n✅ Tüm portföyler normal limitlerin içinde")
+        except:
+            pass

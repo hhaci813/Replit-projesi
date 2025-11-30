@@ -5,18 +5,58 @@ import sys
 
 print("\n" + "="*80)
 print("🤖 AKILLI YATIRIM ASİSTANI - PRODUCTION")
-print("⭐ 24/7 TELEGRAM ANALIZI - HER 2 DAKİKA")
+print("⭐ 24/7 TELEGRAM ANALIZI + PORTFÖY MOTORü")
 print("="*80)
 
 try:
     from auto_run_system import AutoRunSystem
+    from telegram_interactive import TelegramInteractiveBot
+    from universal_portfolio_engine import UniversalPortfolioEngine
     
+    # Sistem başlat
     auto_run_system = AutoRunSystem()
     msg = auto_run_system.start_all_systems()
     print(msg)
     print("\n✅ TELEGRAM BOTUNUZ ARKA PLANDA ÇALIŞIYOR")
     print("🔔 6 SYMBOL (BTC, XRPTRY, AAPL, MSFT, GOOGL, ETH)")
-    print("⏰ HER 2 DAKİKADA ANALİZ GÖNDERİLECEK\n")
+    print("⏰ HER 2 DAKİKADA ANALİZ GÖNDERİLECEK")
+    print("💼 100+ ARAÇ PORTFÖY MOTORü AKTIF\n")
+    
+    # Hoş geldiniz mesajı gönder
+    bot = TelegramInteractiveBot()
+    welcome_msg = """
+╔═══════════════════════════════════════════╗
+║ 🤖 AKILLI YATIRIM ASİSTANI BAŞLATILDI! 🤖
+╚═══════════════════════════════════════════╝
+
+✅ Sistem 24/7 Arka Planda Çalışıyor!
+
+📊 ÖZELLIKLER:
+  • 100+ Yatırım Aracı Analizi
+  • Kişisel Portföy Tavsiyesi
+  • Her 2 dakikada Telegram Raporu
+  • Gerçek Zamanlı Fiyat Güncellemeleri
+  
+💡 KULLANMA:
+  "100000" yazarsan → $100,000 bütçe için portföy önerisi
+  "5000" yazarsan → $5,000 için tavsiye
+  Herhangi bir miktar yazabilirsin!
+  
+🚀 Sistem aktif. Yatırım aracı analizi başladı!
+"""
+    bot.telegram._send_message(welcome_msg)
+    
+    # Örnek portföy analizi gönder (1 dakika sonra)
+    import time
+    def send_sample_portfolio():
+        time.sleep(60)
+        try:
+            bot.send_portfolio_analysis(budget=10000)
+        except:
+            pass
+    
+    portfolio_thread = threading.Thread(target=send_sample_portfolio, daemon=True)
+    portfolio_thread.start()
     
     # Scheduler background thread'de çalış
     scheduler_thread = threading.Thread(
