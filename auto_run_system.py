@@ -1,5 +1,6 @@
 """24/7 Otomatik Sistem - Tüm Fonksiyonlar Arka Planda Çalışıyor"""
 from apscheduler.schedulers.background import BackgroundScheduler
+import time
 
 class AutoRunSystem:
     def __init__(self):
@@ -159,6 +160,21 @@ class AutoRunSystem:
             return "⛔ Tüm sistemler durduruldu"
         except:
             return "Hata oluştu"
+    
+    def keep_running(self):
+        """Scheduler'ı 24/7 çalıştır (blocking)"""
+        print("\n" + "="*80)
+        print("🟢 24/7 HAFIZADA AUTOMATION BAŞLATILDI")
+        print("="*80)
+        print(self.get_status())
+        print("\n⏸️ Durdur için Ctrl+C tuşlayın\n")
+        
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            self.stop_all_systems()
+            print("\n✅ Sistem durduruldu")
     
     def get_status(self):
         """Durum göster"""
