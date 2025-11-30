@@ -1,5 +1,11 @@
 {
+  "telegram": {
+    "chat_id": 8391537149,
+    "username": "Sait581",
+    "status": "BEKLEMEDE - Bot Token Gerekli",
+    "kayit_tarihi": "2025-11-30"
+  },
   "portfoy": {},
-  "ogrenilenler": [],
-  "son_guncelleme": "2025-11-30 09:33:55.117509"
+  "alerts": [],
+  "islemler": []
 }
