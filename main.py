@@ -1163,3 +1163,14 @@ def main():
                 print("\n⛔ SONUÇ: SAT - Bearish sinyaller var")
             else:
                 print("\n⏸️ SONUÇ: HOLD - Daha iyi entry'yi bekle")
+            
+            # Telegram'a gönder
+            send_telegram = input("\nTelegram'a gönder? (E/H): ").upper()
+            if send_telegram == "E":
+                from telegram_analyzer import TelegramAnalyzer
+                ta = TelegramAnalyzer()
+                ok, msg = ta.send_analysis(symbol)
+                if ok:
+                    print("✅ Analiz Telegram'a gönderildi!")
+                else:
+                    print(f"❌ Gönderme başarısız: {msg}")
