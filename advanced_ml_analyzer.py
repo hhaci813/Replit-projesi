@@ -19,6 +19,10 @@ class AdvancedMLAnalyzer:
         try:
             data = yf.download(symbol, period="180d", progress=False)
             
+            # Check if data is valid
+            if data is None or data.empty:
+                return None
+            
             # 20+ features
             data['MA5'] = data['Close'].rolling(5).mean()
             data['MA20'] = data['Close'].rolling(20).mean()
@@ -34,6 +38,10 @@ class AdvancedMLAnalyzer:
             
             X = data[['MA5', 'MA20', 'MA50', 'RSI', 'MACD', 'BB_High', 'BB_Low', 
                       'Volume_MA', 'Volatility', 'Momentum', 'ROC']].dropna().values
+            
+            if len(X) == 0:
+                return None
+                
             y = data['Close'][len(data)-len(X):].values
             
             X_scaled = self.scaler.fit_transform(X)

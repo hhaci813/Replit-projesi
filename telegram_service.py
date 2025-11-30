@@ -122,6 +122,10 @@ Rebalancing: Gerekli
 """
         return self._send_message(uyari)
     
+    def send_message(self, text):
+        """Public method to send message"""
+        return self._send_message(text)
+    
     def _send_message(self, text):
         """Mesaj gönder"""
         try:
