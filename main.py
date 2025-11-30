@@ -3,17 +3,20 @@ import os
 import requests
 import pandas as pd
 import numpy as np
+import yfinance as yf
+import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import time
 import random
 from collections import Counter
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill
 
-print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 5")
-print("⭐ KENDİNİ GELİŞTİREN YAPAY ZEKA SİSTEMİ")
-print("🧠 OTOMATIK SELF-LEARNING & SELF-OPTIMIZATION")
-print("=" * 60)
+print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 6")
+print("⭐ KENDİNİ GELİŞTİREN YAPAY ZEKA + GERÇEK ANALİZ")
+print("📊 Historik Veri, Backtesting, Grafik, Excel Export")
+print("=" * 70)
 
-# Gelişmiş veri saklama
 def verileri_yukle():
     try:
         with open('veriler.json', 'r', encoding='utf-8') as f:
@@ -24,12 +27,12 @@ def verileri_yukle():
             "analiz_gecmisi": [],
             "makine_ogrenme_modeli": {
                 "basari_orani": {},
-                "ogrenilen_patternler": [],
-                "kullanici_tercihleri": {}
+                "optimization_params": {
+                    "agresiflik_seviyesi": 0.5,
+                    "strategi_tercih": "dengeli"
+                }
             },
-            "piyasa_verileri": {},
-            "tahmin_gecmisi": [],
-            "son_guncelleme": str(datetime.now())
+            "backtesting_sonuclari": []
         }
         verileri_kaydet(baslangic_verisi)
         return baslangic_verisi
@@ -38,498 +41,377 @@ def verileri_kaydet(veriler):
     with open('veriler.json', 'w', encoding='utf-8') as f:
         json.dump(veriler, f, ensure_ascii=False, indent=2)
 
-# Gelişmiş fiyat sorgulama
-def hisse_fiyati_al(sembol):
-    try:
-        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sembol}"
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            fiyat = data['chart']['result'][0]['meta']['regularMarketPrice']
-            return fiyat
-        return None
-    except:
-        return None
-
-def kripto_fiyati_al(sembol):
-    try:
-        kripto_eslestirme = {
-            "BTC": "bitcoin", "ETH": "ethereum", "ADA": "cardano",
-            "DOT": "polkadot", "DOGE": "dogecoin", "SOL": "solana",
-            "XRP": "ripple", "LTC": "litecoin", "BNB": "binancecoin",
-            "AVAX": "avalanche-2", "MATIC": "matic-network"
-        }
-        
-        kripto_id = kripto_eslestirme.get(sembol, sembol.lower())
-        url = f"https://api.coingecko.com/api/v3/simple/price?ids={kripto_id}&vs_currencies=usd"
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            data = response.json()
-            return data[kripto_id]['usd']
-        return None
-    except:
-        return None
-
-def fiyat_sorgula(sembol, tip):
-    if tip == "hisse":
-        return hisse_fiyati_al(sembol)
-    elif tip == "kripto":
-        return kripto_fiyati_al(sembol)
-    else:
-        return None
-
-# KENDİNİ GELİŞTİREN YAPAY ZEKA SİSTEMİ
-class KendiniBulunanOgrenmeSistemi:
-    """Kendini otomatik optimize eden yapay zeka sistemi"""
-    def __init__(self, veriler):
-        self.veriler = veriler
-        self.model = veriler.get("makine_ogrenme_modeli", {})
-        
-        # Self-optimization parametreleri
-        if "optimization_params" not in self.model:
-            self.model["optimization_params"] = {
-                "agresiflik_seviyesi": 0.5,
-                "strategi_tercih": "dengeli",
-                "ogrenim_hizi": 0.1,
-                "risk_toleransi": 0.5,
-                "guclu_isaret_esigi": 0.7
-            }
-        
-        # Strateji performans takibi
-        if "strateji_performansi" not in self.model:
-            self.model["strateji_performansi"] = {
-                "agresif": {"dogru": 0, "toplam": 0},
-                "dengeli": {"dogru": 0, "toplam": 0},
-                "temkinli": {"dogru": 0, "toplam": 0}
-            }
-        
-        self.otomatik_optimizasyonu_calistir()
+# ========== GERÇEK TEKNİK ANALİZ ==========
+class GercekTeknikAnaliz:
+    @staticmethod
+    def historik_veri_al(sembol, gun=30):
+        """Historik veri yükle"""
+        try:
+            son_tarih = datetime.now()
+            bas_tarih = son_tarih - timedelta(days=gun)
+            
+            veri = yf.download(sembol, start=bas_tarih, end=son_tarih, progress=False)
+            return veri
+        except:
+            return None
     
-    def otomatik_optimizasyonu_calistir(self):
-        """Sistem kendini otomatik olarak optimize eder"""
-        if "strateji_performansi" not in self.model:
-            return
+    @staticmethod
+    def rsi_hesapla(fiyatlar, period=14):
+        """Gerçek RSI hesapla"""
+        try:
+            delta = fiyatlar.diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+            
+            rs = gain / loss
+            rsi = 100 - (100 / (1 + rs))
+            return rsi.iloc[-1]
+        except:
+            return 50
+    
+    @staticmethod
+    def macd_hesapla(fiyatlar):
+        """MACD hesapla"""
+        try:
+            exp1 = fiyatlar.ewm(span=12, adjust=False).mean()
+            exp2 = fiyatlar.ewm(span=26, adjust=False).mean()
+            macd = exp1 - exp2
+            signal = macd.ewm(span=9, adjust=False).mean()
+            
+            return macd.iloc[-1], signal.iloc[-1]
+        except:
+            return 0, 0
+    
+    @staticmethod
+    def bollinger_bands_hesapla(fiyatlar, period=20):
+        """Bollinger Bands hesapla"""
+        try:
+            orta = fiyatlar.rolling(window=period).mean()
+            std = fiyatlar.rolling(window=period).std()
+            
+            ust = orta + (std * 2)
+            alt = orta - (std * 2)
+            
+            return alt.iloc[-1], orta.iloc[-1], ust.iloc[-1]
+        except:
+            return 0, fiyatlar.iloc[-1], 0
+    
+    @staticmethod
+    def trend_gucunun_hesapla(fiyatlar):
+        """Trend gücü hesapla"""
+        try:
+            hareketli_ort_10 = fiyatlar.rolling(window=10).mean()
+            hareketli_ort_50 = fiyatlar.rolling(window=50).mean()
+            
+            if hareketli_ort_10.iloc[-1] > hareketli_ort_50.iloc[-1]:
+                return "YUKARI TREND", 75
+            elif hareketli_ort_10.iloc[-1] < hareketli_ort_50.iloc[-1]:
+                return "AŞAĞI TREND", 25
+            else:
+                return "YATAY TREND", 50
+        except:
+            return "NÖTR", 50
+    
+    @staticmethod
+    def tam_analiz(sembol):
+        """Tam teknik analiz raporu"""
+        veri = GercekTeknikAnaliz.historik_veri_al(sembol)
+        if veri is None or len(veri) < 20:
+            return None
         
-        # En başarılı stratejiyi seç
-        strateji_performansi = self.model["strateji_performansi"]
-        en_iyi_strateji = "dengeli"
-        en_yuksek_basari = 0
+        fiyatlar = veri['Close']
+        guncel_fiyat = fiyatlar.iloc[-1]
         
-        for strateji, oran in strateji_performansi.items():
-            if oran["toplam"] > 0:
-                basari = (oran["dogru"] / oran["toplam"]) * 100
-                if basari > en_yuksek_basari:
-                    en_yuksek_basari = basari
-                    en_iyi_strateji = strateji
+        # Tüm göstergeleri hesapla
+        rsi = GercekTeknikAnaliz.rsi_hesapla(fiyatlar)
+        macd, signal = GercekTeknikAnaliz.macd_hesapla(fiyatlar)
+        alt, orta, ust = GercekTeknikAnaliz.bollinger_bands_hesapla(fiyatlar)
+        trend, trend_gucu = GercekTeknikAnaliz.trend_gucunun_hesapla(fiyatlar)
         
-        # Parametreleri otomatik ayarla
-        params = self.model["optimization_params"]
+        # Sinyaller
+        sinyaller = []
         
-        if en_iyi_strateji == "agresif":
-            params["agresiflik_seviyesi"] = 0.8
-            params["strategi_tercih"] = "agresif"
-            params["ogrenim_hizi"] = 0.15
-        elif en_iyi_strateji == "temkinli":
-            params["agresiflik_seviyesi"] = 0.3
-            params["strategi_tercih"] = "temkinli"
-            params["ogrenim_hizi"] = 0.05
+        if rsi < 30:
+            sinyaller.append("🟢 RSI AŞIRı SATILMIŞ - GÜÇLÜ AL")
+        elif rsi > 70:
+            sinyaller.append("🔴 RSI AŞIRı ALILMIŞ - GÜÇLÜ SAT")
+        
+        if macd > signal:
+            sinyaller.append("📈 MACD POZİTİF - AL İŞARETİ")
         else:
-            params["agresiflik_seviyesi"] = 0.5
-            params["strategi_tercih"] = "dengeli"
-            params["ogrenim_hizi"] = 0.1
+            sinyaller.append("📉 MACD NEGATİF - SAT İŞARETİ")
         
-        self.veriler["makine_ogrenme_modeli"] = self.model
-    
-    def analiz_sonucu_ogren(self, sembol, analiz, gerceklesen_durum):
-        """Analiz sonuçlarından öğren ve kendini iyileştir"""
-        if "basari_orani" not in self.model:
-            self.model["basari_orani"] = {}
-        
-        if sembol not in self.model["basari_orani"]:
-            self.model["basari_orani"][sembol] = {"dogru": 0, "toplam": 0}
-        
-        # Başarı takibi
-        self.model["basari_orani"][sembol]["toplam"] += 1
-        if analiz["durum"] == gerceklesen_durum:
-            self.model["basari_orani"][sembol]["dogru"] += 1
-        
-        # Strateji performansını izle
-        if "strateji_performansi" not in self.model:
-            self.model["strateji_performansi"] = {
-                "agresif": {"dogru": 0, "toplam": 0},
-                "dengeli": {"dogru": 0, "toplam": 0},
-                "temkinli": {"dogru": 0, "toplam": 0}
-            }
-        
-        strateji = self.model["optimization_params"]["strategi_tercih"]
-        self.model["strateji_performansi"][strateji]["toplam"] += 1
-        if analiz["durum"] == gerceklesen_durum:
-            self.model["strateji_performansi"][strateji]["dogru"] += 1
-        
-        # Pattern kaydetme
-        pattern = {
-            "sembol": sembol,
-            "analiz": analiz["durum"],
-            "tarih": str(datetime.now()),
-            "sonuc": gerceklesen_durum,
-            "strateji": strateji
-        }
-        
-        if "ogrenilen_patternler" not in self.model:
-            self.model["ogrenilen_patternler"] = []
-        
-        self.model["ogrenilen_patternler"].append(pattern)
-        
-        # SELF-OPTIMIZATION: Kendini otomatik iyileştir
-        self.otomatik_optimizasyonu_calistir()
-        
-        # Güncellemeleri kaydet
-        self.veriler["makine_ogrenme_modeli"] = self.model
-        verileri_kaydet(self.veriler)
-    
-    def basari_orani_getir(self, sembol=None):
-        """Başarı oranlarını getir"""
-        if sembol and sembol in self.model.get("basari_orani", {}):
-            oran = self.model["basari_orani"][sembol]
-            if oran["toplam"] > 0:
-                return (oran["dogru"] / oran["toplam"]) * 100
-        return 50  # Varsayılan değer
-    
-    def gercek_teknik_analiz(self, sembol, tip):
-        """GERÇEK teknik göstergelerle analiz"""
-        fiyat = fiyat_sorgula(sembol, tip)
-        if not fiyat:
-            return {"durum": "bilinmiyor", "aciklama": "Fiyat bilgisi alınamadı"}
-        
-        analiz_sonuclari = []
-        
-        # RSI Hesapla
-        rsi = self._rsi_hesapla(sembol, tip)
-        if rsi:
-            analiz_sonuclari.append(f"📊 RSI: {rsi:.1f}")
-            if rsi < 30:
-                analiz_sonuclari.append("🟢 RSI AŞIRı SATILMIŞ - AL SİNYALİ")
-            elif rsi > 70:
-                analiz_sonuclari.append("🔴 RSI AŞIRı ALILMIŞ - SAT SİNYALİ")
-        
-        # Volatilite Hesapla
-        volatilite = self._volatilite_hesapla(sembol, tip)
-        if volatilite:
-            analiz_sonuclari.append(f"📈 Volatilite: %{volatilite:.2f}")
-            if volatilite > 5:
-                analiz_sonuclari.append("⚠️ YÜKSEK VOLATİLİTE - RİSK VAR")
-        
-        # Trend Analizi
-        trend = self._trend_analizi(sembol, tip)
-        analiz_sonuclari.append(f"📉 Trend: {trend}")
-        
-        # Destek/Direnç
-        destek_direnç = self._destek_direnç_hesapla(sembol, tip, fiyat)
-        analiz_sonuclari.append(f"🎯 Destek: ${destek_direnç['destek']:.2f}, Direnç: ${destek_direnç['direnç']:.2f}")
+        if guncel_fiyat < alt:
+            sinyaller.append("🎯 Fiyat Bollinger Alt Bandının Altında - AL FIRSATI")
+        elif guncel_fiyat > ust:
+            sinyaller.append("🎯 Fiyat Bollinger Üst Bandının Üstünde - SAT FIRSATI")
         
         return {
-            "durum": "analiz_tamamlandi",
-            "aciklama": "\n".join(analiz_sonuclari),
+            "guncel_fiyat": guncel_fiyat,
             "rsi": rsi,
-            "volatilite": volatilite,
-            "trend": trend
+            "macd": macd,
+            "signal": signal,
+            "bollinger_alt": alt,
+            "bollinger_orta": orta,
+            "bollinger_ust": ust,
+            "trend": trend,
+            "trend_gucu": trend_gucu,
+            "sinyaller": sinyaller,
+            "veri": veri
         }
-    
-    def _rsi_hesapla(self, sembol, tip):
-        """Relative Strength Index hesapla"""
+
+# ========== BACKTESTING ==========
+class Backtesting:
+    @staticmethod
+    def basit_backtest(sembol, strategi="ma_cross", gun=90):
+        """Basit backtesting"""
         try:
-            faktor = random.uniform(20, 80)
-            return faktor
-        except:
-            return None
-    
-    def _volatilite_hesapla(self, sembol, tip):
-        """Volatilite ölçümü (standart sapma)"""
-        try:
-            volatilite = random.uniform(0.5, 8)
-            return volatilite
-        except:
-            return None
-    
-    def _trend_analizi(self, sembol, tip):
-        """Trend yönü analizi"""
-        rastgele = random.random()
-        if rastgele > 0.6:
-            return "📈 YUKARI TREND - AL SİNYALİ"
-        elif rastgele < 0.4:
-            return "📉 AŞAĞI TREND - SAT SİNYALİ"
-        else:
-            return "➡️ YATAY TREND - BEKLEME"
-    
-    def _destek_direnç_hesapla(self, sembol, tip, guncel_fiyat):
-        """Destek ve direnç seviyeleri"""
-        veri_araligi = guncel_fiyat * 0.1
-        destek = guncel_fiyat - veri_araligi
-        direnç = guncel_fiyat + veri_araligi
-        return {"destek": destek, "direnç": direnç}
-    
-    def akilli_teknik_analiz(self, sembol, tip):
-        """Makine öğrenmesi + GERÇEK teknik analiz"""
-        gerçek_analiz = self.gercek_teknik_analiz(sembol, tip)
-        
-        # ML destekli karar
-        fiyat = fiyat_sorgula(sembol, tip)
-        if fiyat:
-            basari_orani = self.basari_orani_getir(sembol)
-            ml_karar = self._gelismis_analiz_algoritmasi(sembol, fiyat, basari_orani)
+            veri = GercekTeknikAnaliz.historik_veri_al(sembol, gun)
+            if veri is None or len(veri) < 50:
+                return None
+            
+            fiyatlar = veri['Close']
+            ma10 = fiyatlar.rolling(window=10).mean()
+            ma50 = fiyatlar.rolling(window=50).mean()
+            
+            # İşlemleri simüle et
+            kaputal = 10000
+            hisse_sayisi = 0
+            toplam_kar_zarar = 0
+            islemler = []
+            
+            for i in range(50, len(fiyatlar)):
+                if ma10.iloc[i] > ma50.iloc[i] and hisse_sayisi == 0:
+                    # AL
+                    hisse_sayisi = kaputal / fiyatlar.iloc[i]
+                    islemler.append(f"AL: {fiyatlar.iloc[i]:.2f}")
+                elif ma10.iloc[i] < ma50.iloc[i] and hisse_sayisi > 0:
+                    # SAT
+                    kar_zarar = (fiyatlar.iloc[i] * hisse_sayisi) - kaputal
+                    toplam_kar_zarar += kar_zarar
+                    islemler.append(f"SAT: {fiyatlar.iloc[i]:.2f} | Kar/Zarar: ${kar_zarar:.2f}")
+                    hisse_sayisi = 0
+            
+            # Son hisse varsa, hesapla
+            if hisse_sayisi > 0:
+                kar_zarar = (fiyatlar.iloc[-1] * hisse_sayisi) - kaputal
+                toplam_kar_zarar += kar_zarar
+            
+            getiri_yuzde = (toplam_kar_zarar / kaputal) * 100
             
             return {
-                "durum": ml_karar["durum"],
-                "aciklama": f"🤖 {ml_karar['aciklama']}\n\n📊 TEKNIK ANALİZ:\n{gerçek_analiz['aciklama']}",
-                "teknik_veri": gerçek_analiz
+                "basari": toplam_kar_zarar > 0,
+                "kar_zarar": toplam_kar_zarar,
+                "getiri_yuzde": getiri_yuzde,
+                "islemler": islemler
             }
-        
-        return gerçek_analiz
-    
-    def _gelismis_analiz_algoritmasi(self, sembol, fiyat, basari_orani):
-        """SELF-OPTIMIZING analiz algoritması"""
-        rastgele_faktor = random.random()
-        
-        # Optimize edilen parametreleri kullan
-        params = self.model["optimization_params"]
-        agresiflik = params["agresiflik_seviyesi"]
-        esik = params["guclu_isaret_esigi"]
-        
-        # Adaptif eşikler
-        al_esigi = 0.5 + (agresiflik * 0.3)
-        sat_esigi = 0.5 - (agresiflik * 0.3)
-        
-        # Dinamik analiz - sistem kendini optimize ediyor
-        if basari_orani > 75:
-            # ÇOK YÜKSEK BAŞARI - Agresif ol
-            if rastgele_faktor > al_esigi:
-                return {"durum": "güçlü_al", "aciklama": f"🚀 GÜÇLÜ AL (%{basari_orani:.1f} başarı) - Sistem çok başarılı!"}
-            elif rastgele_faktor > 0.45:
-                return {"durum": "zayif_al", "aciklama": f"📈 Zayıf al (%{basari_orani:.1f} başarı)"}
-            else:
-                return {"durum": "nötr", "aciklama": f"⚪ Nötr (%{basari_orani:.1f} başarı)"}
-        elif basari_orani > 60:
-            # ORTA BAŞARI - Dengeli ol
-            if rastgele_faktor > 0.65:
-                return {"durum": "zayif_al", "aciklama": f"📈 Zayıf al (%{basari_orani:.1f} başarı) - Umut verici"}
-            elif rastgele_faktor > 0.35:
-                return {"durum": "nötr", "aciklama": f"⚪ Nötr (%{basari_orani:.1f} başarı) - Bekle"}
-            else:
-                return {"durum": "zayif_sat", "aciklama": f"📉 Zayıf sat (%{basari_orani:.1f} başarı)"}
-        else:
-            # DÜŞÜK BAŞARI - Temkinli ol
-            if rastgele_faktor > 0.7:
-                return {"durum": "nötr", "aciklama": f"⚪ Nötr (%{basari_orani:.1f} başarı) - Çok dikkatli"}
-            elif rastgele_faktor > 0.4:
-                return {"durum": "zayif_sat", "aciklama": f"📉 Zayıf sat (%{basari_orani:.1f} başarı) - Riskli"}
-            else:
-                return {"durum": "zayif_sat", "aciklama": f"📉 Zayıf sat (%{basari_orani:.1f} başarı) - Gözlemle"}
+        except:
+            return None
 
-# GELİŞMİŞ ANALİZ FONKSİYONLARI
-def gelismis_portfoy_analizi(veriler):
-    """Gelişmiş portföy analizi"""
-    portfoy = veriler["portfoy"]
-    if not portfoy:
-        return {"risk_seviyesi": "düşük", "aciklama": "Portföy boş", "kripto_orani": 0, "hisse_orani": 0, "cesitlilik": 0}
+# ========== OTOMATİK TRADING SİSTEMİ ==========
+class OtomatikTradingListesi:
+    def __init__(self):
+        self.siparisler = []
     
-    toplam_deger = 0
-    kripto_orani = 0
-    hisse_orani = 0
-    cesitlilik = len(portfoy)
-    
-    performans_analizi = []
-    
-    for sembol, bilgi in portfoy.items():
-        tip = bilgi.get('tip', 'hisse')
-        adet = bilgi['adet']
-        maliyet = bilgi['maliyet']
-        yatirim_degeri = maliyet * adet
-        toplam_deger += yatirim_degeri
-        
-        guncel_fiyat = fiyat_sorgula(sembol, tip)
-        if guncel_fiyat:
-            guncel_deger = guncel_fiyat * adet
-            kar_zarar = guncel_deger - yatirim_degeri
-            kar_zarar_yuzde = (kar_zarar / yatirim_degeri) * 100
-            
-            performans_analizi.append({
+    def al_emri_ekle(self, sembol, hedef_fiyat, maliyet):
+        """AL emri ekle"""
+        if fiyat_sorgula(sembol, "hisse") <= hedef_fiyat:
+            self.siparisler.append({
+                "tip": "AL",
                 "sembol": sembol,
-                "tip": tip,
-                "kar_zarar_yuzde": kar_zarar_yuzde,
-                "agirlik": yatirim_degeri / toplam_deger if toplam_deger > 0 else 0
+                "fiyat": hedef_fiyat,
+                "durum": "ONAYLANABILIR"
             })
-        
-        if tip == "kripto":
-            kripto_orani += yatirim_degeri
+            return True
         else:
-            hisse_orani += yatirim_degeri
+            self.siparisler.append({
+                "tip": "AL",
+                "sembol": sembol,
+                "fiyat": hedef_fiyat,
+                "durum": "BEKLEME"
+            })
+            return False
     
-    if toplam_deger > 0:
-        kripto_orani = (kripto_orani / toplam_deger) * 100
-        hisse_orani = (hisse_orani / toplam_deger) * 100
-    else:
-        kripto_orani = hisse_orani = 0
-    
-    # Performans analizi
-    en_iyi_performans = max(performans_analizi, key=lambda x: x["kar_zarar_yuzde"]) if performans_analizi else None
-    en_kotu_performans = min(performans_analizi, key=lambda x: x["kar_zarar_yuzde"]) if performans_analizi else None
-    
-    # Risk hesaplama
-    if kripto_orani > 60:
-        risk = "çok_yüksek"
-        aciklama = f"🚨 ÇOK YÜKSEK RİSK: %{kripto_orani:.1f} kripto - Acil çeşitlendirme gerekli"
-    elif kripto_orani > 40:
-        risk = "yüksek"
-        aciklama = f"⚠️ YÜKSEK RİSK: %{kripto_orani:.1f} kripto - Çeşitlendirme önerilir"
-    elif kripto_orani > 20:
-        risk = "orta"
-        aciklama = f"🟡 ORTA RİSK: %{kripto_orani:.1f} kripto - Dengeli"
-    else:
-        risk = "düşük"
-        aciklama = f"🟢 DÜŞÜK RİSK: %{kripto_orani:.1f} kripto - İyi dengelenmiş"
-    
-    return {
-        "risk_seviyesi": risk,
-        "aciklama": aciklama,
-        "kripto_orani": kripto_orani,
-        "hisse_orani": hisse_orani,
-        "cesitlilik": cesitlilik,
-        "en_iyi_performans": en_iyi_performans,
-        "en_kotu_performans": en_kotu_performans,
-        "performans_analizi": performans_analizi
-    }
-
-def portfoy_tahmini_yap(veriler):
-    """Portföy gelecek tahmini"""
-    portfoy = veriler["portfoy"]
-    if not portfoy:
-        return {"tahmin": "Portföy boş", "guven": 0}
-    
-    # Basit tahmin algoritması
-    toplam_tahmin = 0
-    guven_seviyesi = 0
-    
-    for sembol, bilgi in portfoy.items():
-        tip = bilgi.get('tip', 'hisse')
-        
-        # Sembol tipine göre tahmin
-        if tip == "kripto":
-            tahmin = random.uniform(-10, 20)
-            guven = random.uniform(0.5, 0.7)
+    def sat_emri_ekle(self, sembol, hedef_fiyat):
+        """SAT emri ekle"""
+        if fiyat_sorgula(sembol, "hisse") >= hedef_fiyat:
+            self.siparisler.append({
+                "tip": "SAT",
+                "sembol": sembol,
+                "fiyat": hedef_fiyat,
+                "durum": "ONAYLANABILIR"
+            })
+            return True
         else:
-            tahmin = random.uniform(-5, 15)
-            guven = random.uniform(0.6, 0.8)
-        
-        toplam_tahmin += tahmin
-        guven_seviyesi += guven
-    
-    ortalama_tahmin = toplam_tahmin / len(portfoy)
-    ortalama_guven = guven_seviyesi / len(portfoy)
-    
-    if ortalama_tahmin > 10:
-        durum = "ÇOK OLUMLU"
-    elif ortalama_tahmin > 5:
-        durum = "OLUMLU"
-    elif ortalama_tahmin > 0:
-        durum = "HAFİF OLUMLU"
-    elif ortalama_tahmin > -5:
-        durum = "NÖTR"
-    else:
-        durum = "OLUMSUZ"
-    
-    tahmin_kaydi = {
-        "tahmin": durum,
-        "yuzde_tahmin": ortalama_tahmin,
-        "guven_seviyesi": ortalama_guven,
-        "tarih": str(datetime.now())
-    }
-    
-    # Tahmin geçmişine kaydet
-    if "tahmin_gecmisi" not in veriler:
-        veriler["tahmin_gecmisi"] = []
-    veriler["tahmin_gecmisi"].append(tahmin_kaydi)
-    
-    if len(veriler["tahmin_gecmisi"]) > 20:
-        veriler["tahmin_gecmisi"] = veriler["tahmin_gecmisi"][-20:]
-    
-    verileri_kaydet(veriler)
-    
-    return {
-        "tahmin": durum,
-        "yuzde_tahmin": ortalama_tahmin,
-        "guven_seviyesi": ortalama_guven,
-        "aciklama": f"Önümüzdeki dönem için {durum} tahmini (%{ortalama_tahmin:.1f} getiri)"
-    }
+            self.siparisler.append({
+                "tip": "SAT",
+                "sembol": sembol,
+                "fiyat": hedef_fiyat,
+                "durum": "BEKLEME"
+            })
+            return False
 
-def yapay_zeka_tavsiyeleri(veriler):
-    """Yapay zeka destekli tavsiyeler"""
-    portfoy_analizi = gelismis_portfoy_analizi(veriler)
-    tavsiyeler = []
-    
-    # Risk bazlı tavsiyeler
-    risk = portfoy_analizi["risk_seviyesi"]
-    if risk in ["yüksek", "çok_yüksek"]:
-        tavsiyeler.append("🚨 RİSK YÖNETİMİ: Kripto oranınız çok yüksek, acil çeşitlendirme gerekli")
-        tavsiyeler.append("📊 DENGELİ PORTFÖY: Hisse senetleri ve ETF'ler ekleyin")
-    
-    # Performans bazlı tavsiyeler
-    if portfoy_analizi.get("en_iyi_performans"):
-        en_iyi = portfoy_analizi["en_iyi_performans"]
-        tavsiyeler.append(f"⭐ EN BAŞARILI: {en_iyi['sembol']} (%{en_iyi['kar_zarar_yuzde']:.1f}) - Kar realizasyonu düşünün")
-    
-    if portfoy_analizi.get("en_kotu_performans"):
-        en_kotu = portfoy_analizi["en_kotu_performans"]
-        if en_kotu['kar_zarar_yuzde'] < -10:
-            tavsiyeler.append(f"🔻 ZARARDA: {en_kotu['sembol']} (%{en_kotu['kar_zarar_yuzde']:.1f}) - Stop-loss değerlendirin")
-    
-    # Çeşitlilik tavsiyeleri
-    if portfoy_analizi["cesitlilik"] < 3:
-        tavsiyeler.append("🌍 ÇEŞİTLENDİRME: En az 3-5 farklı varlık ekleyin")
-        tavsiyeler.append("💡 ÖNERİLER: AAPL (teknoloji), JNJ (sağlık), VOO (ETF)")
-    
-    # Makine öğrenmesi tavsiyeleri
-    ml_model = veriler.get("makine_ogrenme_modeli", {})
-    basari_oranlari = ml_model.get("basari_orani", {})
-    
-    if basari_oranlari:
-        en_basarili = max(basari_oranlari.items(), 
-                         key=lambda x: x[1]["dogru"]/x[1]["toplam"] if x[1]["toplam"] > 0 else 0)
-        sembol, oran = en_basarili
-        basari_yuzde = (oran["dogru"] / oran["toplam"]) * 100 if oran["toplam"] > 0 else 0
-        
-        if basari_yuzde > 70:
-            tavsiyeler.append(f"🎯 YÜKSEK DOĞRULUK: {sembol} analizlerimiz %{basari_yuzde:.1f} doğru - Bu sembole odaklanın")
-    
-    return tavsiyeler
+def fiyat_sorgula(sembol, tip):
+    """Fiyat sorgula"""
+    try:
+        if tip == "hisse":
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sembol}"
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                return data['chart']['result'][0]['meta']['regularMarketPrice']
+        elif tip == "kripto":
+            kripto_eslestirme = {
+                "BTC": "bitcoin", "ETH": "ethereum", "ADA": "cardano",
+                "DOT": "polkadot", "DOGE": "dogecoin"
+            }
+            kripto_id = kripto_eslestirme.get(sembol, sembol.lower())
+            url = f"https://api.coingecko.com/api/v3/simple/price?ids={kripto_id}&vs_currencies=usd"
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                return data[kripto_id]['usd']
+    except:
+        pass
+    return None
 
-# Ana program
+# ========== EXCEL EXPORT ==========
+def portfoy_excel_export(veriler, dosya_adi="portfoy.xlsx"):
+    """Portföyü Excel'e aktar"""
+    try:
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Portföy"
+        
+        # Başlık
+        baslıklar = ["Sembol", "Tip", "Adet", "Maliyet", "Güncel Fiyat", "Değer", "Kar/Zarar", "Kar/Zarar %"]
+        ws.append(baslıklar)
+        
+        # Stil
+        for cell in ws[1]:
+            cell.font = Font(bold=True, color="FFFFFF")
+            cell.fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+        
+        # Veriler
+        toplam_deger = 0
+        toplam_kar_zarar = 0
+        
+        for sembol, bilgi in veriler["portfoy"].items():
+            tip = bilgi.get('tip', 'hisse')
+            adet = bilgi['adet']
+            maliyet = bilgi['maliyet']
+            
+            guncel_fiyat = fiyat_sorgula(sembol, tip)
+            if guncel_fiyat:
+                guncel_deger = guncel_fiyat * adet
+                yatirim_degeri = maliyet * adet
+                kar_zarar = guncel_deger - yatirim_degeri
+                kar_zarar_yuzde = (kar_zarar / yatirim_degeri * 100) if yatirim_degeri > 0 else 0
+                
+                toplam_deger += guncel_deger
+                toplam_kar_zarar += kar_zarar
+                
+                ws.append([sembol, tip, adet, f"${maliyet:.2f}", f"${guncel_fiyat:.2f}", 
+                          f"${guncel_deger:.2f}", f"${kar_zarar:.2f}", f"%{kar_zarar_yuzde:.2f}"])
+        
+        # Toplam satırı
+        ws.append(["", "", "", "", "TOPLAM", f"${toplam_deger:.2f}", f"${toplam_kar_zarar:.2f}", 
+                  f"%{(toplam_kar_zarar/toplam_deger*100) if toplam_deger > 0 else 0:.2f}"])
+        
+        wb.save(dosya_adi)
+        return f"✅ Excel dosyası kaydedildi: {dosya_adi}"
+    except Exception as e:
+        return f"❌ Hata: {e}"
+
+# ========== GRAFIK ÇIZME ==========
+def grafik_ciz(sembol):
+    """Fiyat grafiği çiz"""
+    try:
+        veri = GercekTeknikAnaliz.historik_veri_al(sembol, 60)
+        if veri is None:
+            return False
+        
+        plt.figure(figsize=(12, 6))
+        
+        # Fiyat grafiği
+        plt.plot(veri.index, veri['Close'], label='Kapanış Fiyatı', color='blue', linewidth=2)
+        
+        # Hareketli ortalamalar
+        ma10 = veri['Close'].rolling(window=10).mean()
+        ma50 = veri['Close'].rolling(window=50).mean()
+        
+        plt.plot(veri.index, ma10, label='10-Günlük MA', color='orange', alpha=0.7)
+        plt.plot(veri.index, ma50, label='50-Günlük MA', color='red', alpha=0.7)
+        
+        plt.title(f'{sembol} - Fiyat Analizi (Son 60 Gün)', fontsize=14, fontweight='bold')
+        plt.xlabel('Tarih')
+        plt.ylabel('Fiyat ($)')
+        plt.legend()
+        plt.grid(True, alpha=0.3)
+        plt.tight_layout()
+        
+        dosya_adi = f"grafik_{sembol}.png"
+        plt.savefig(dosya_adi, dpi=100)
+        plt.close()
+        
+        return True
+    except:
+        return False
+
+def portfoy_dagılım_grafigi(veriler):
+    """Portföy dağılım grafiği"""
+    try:
+        semboller = []
+        degerler = []
+        
+        for sembol, bilgi in veriler["portfoy"].items():
+            tip = bilgi.get('tip', 'hisse')
+            adet = bilgi['adet']
+            maliyet = bilgi['maliyet']
+            
+            guncel_fiyat = fiyat_sorgula(sembol, tip)
+            if guncel_fiyat:
+                deger = guncel_fiyat * adet
+                semboller.append(sembol)
+                degerler.append(deger)
+        
+        if semboller:
+            plt.figure(figsize=(10, 8))
+            plt.pie(degerler, labels=semboller, autopct='%1.1f%%', startangle=90)
+            plt.title('Portföy Dağılımı', fontsize=14, fontweight='bold')
+            plt.tight_layout()
+            
+            plt.savefig("portfoy_dagilim.png", dpi=100)
+            plt.close()
+            
+            return True
+    except:
+        pass
+    return False
+
+# ========== ANA PROGRAM ==========
 def main():
     veriler = verileri_yukle()
-    ml_sistemi = KendiniBulunanOgrenmeSistemi(veriler)
+    trading_listesi = OtomatikTradingListesi()
     
-    print(f"✅ MAKİNE ÖĞRENMESİ SİSTEMİ AKTİF!")
-    print(f"📊 Portföyünüzde {len(veriler['portfoy'])} yatırım var")
-    
-    # Makine öğrenmesi istatistikleri
-    basari_oranlari = veriler.get("makine_ogrenme_modeli", {}).get("basari_orani", {})
-    if basari_oranlari:
-        print(f"🎯 Sistem {len(basari_oranlari)} sembolü öğreniyor")
+    print(f"✅ AŞAMA 6 SİSTEMİ BAŞLATILDI!")
+    print(f"📊 Portföyünüzde {len(veriler['portfoy'])} yatırım var\n")
     
     while True:
-        print("\n" + "="*60)
-        print("🤖 YAPAY ZEKA YATIRIM ASİSTANI - AŞAMA 4")
-        print("="*60)
+        print("\n" + "="*70)
+        print("🤖 AŞAMA 6: TAM YAŞAYAN YAPAY ZEKA YATIRIM ASİSTANI")
+        print("="*70)
         print("1 - Portföyü Görüntüle")
-        print("2 - Yatırım Ekle") 
+        print("2 - Yatırım Ekle")
         print("3 - Yatırım Sil")
-        print("4 - Fiyat Sorgula")
-        print("5 - GERÇEK TEKNİK ANALİZ (RSI, Volatilite, Trend)")
-        print("6 - GELİŞMİŞ RİSK ANALİZİ")
-        print("7 - YAPAY ZEKA TAVSİYELERİ")
-        print("8 - PORTFÖY TAHMİNİ")
-        print("9 - SİSTEM İSTATİSTİKLERİ")
+        print("4 - GERÇEK TEKNİK ANALİZ (RSI, MACD, Bollinger)")
+        print("5 - BACKTESTING (Geçmiş Performans)")
+        print("6 - Fiyat Grafiği Çiz")
+        print("7 - Portföy Dağılımı Grafiği")
+        print("8 - Excel'e Aktar")
+        print("9 - Otomatik Trading Siparişleri")
         print("10 - Çıkış")
-        print("="*60)
+        print("="*70)
         
         secim = input("Seçiminiz (1-10): ").strip()
         
@@ -538,165 +420,100 @@ def main():
             if not veriler["portfoy"]:
                 print("Portföyünüz boş")
             else:
-                toplam_kar_zarar = 0
-                toplam_yatirim = 0
-                
                 for sembol, bilgi in veriler["portfoy"].items():
-                    tip = bilgi.get('tip', 'hisse')
-                    adet = bilgi['adet']
-                    maliyet = bilgi['maliyet']
-                    
-                    guncel_fiyat = fiyat_sorgula(sembol, tip)
-                    
-                    if guncel_fiyat:
-                        guncel_deger = guncel_fiyat * adet
-                        yatirim_degeri = maliyet * adet
-                        kar_zarar = guncel_deger - yatirim_degeri
-                        kar_zarar_yuzde = (kar_zarar / yatirim_degeri) * 100
+                    fiyat = fiyat_sorgula(sembol, bilgi.get('tip', 'hisse'))
+                    if fiyat:
+                        deger = fiyat * bilgi['adet']
+                        maliyet = bilgi['maliyet'] * bilgi['adet']
+                        kar_zarar = deger - maliyet
+                        print(f"  {sembol}: {bilgi['adet']} adet @ ${fiyat:.2f} = ${deger:.2f} ({kar_zarar:+.2f})")
                         
-                        toplam_kar_zarar += kar_zarar
-                        toplam_yatirim += yatirim_degeri
-                        
-                        durum = "🟢" if kar_zarar >= 0 else "🔴"
-                        print(f"{durum} {sembol} ({tip}):")
-                        print(f"   Adet: {adet}")
-                        print(f"   Maliyet: ${maliyet:.2f}")
-                        print(f"   Güncel: ${guncel_fiyat:.2f}")
-                        print(f"   Kar/Zarar: ${kar_zarar:.2f} (%{kar_zarar_yuzde:.2f})")
-                        
-                        # Makine öğrenmesi başarı oranı
-                        basari = ml_sistemi.basari_orani_getir(sembol)
-                        if basari != 50:
-                            print(f"   🎯 Analiz Başarısı: %{basari:.1f}")
-                        print()
-                    else:
-                        print(f"❓ {sembol}: Fiyat bilgisi alınamadı")
-                
-                if toplam_yatirim > 0:
-                    print(f"📊 TOPLAM DURUM:")
-                    print(f"   Toplam Yatırım: ${toplam_yatirim:.2f}")
-                    print(f"   Toplam Kar/Zarar: ${toplam_kar_zarar:.2f}")
-                    getiri_orani = (toplam_kar_zarar / toplam_yatirim) * 100
-                    print(f"   Getiri Oranı: %{getiri_orani:.2f}")
-                    
         elif secim == "2":
-            print("\n➕ YENİ YATIRIM EKLE")
-            sembol = input("Sembol (Örnek: AAPL, BTC): ").upper()
+            sembol = input("Sembol: ").upper()
             tip = input("Tip (hisse/kripto): ").lower()
             adet = float(input("Adet: "))
-            maliyet = float(input("Maliyet ($): "))
+            maliyet = float(input("Maliyet: "))
             
-            guncel_fiyat = fiyat_sorgula(sembol, tip)
-            if guncel_fiyat:
-                print(f"💰 Güncel fiyat: ${guncel_fiyat:.2f}")
-            
-            veriler["portfoy"][sembol] = {
-                "tip": tip,
-                "adet": adet,
-                "maliyet": maliyet,
-                "tarih": str(datetime.now())
-            }
-            veriler["son_guncelleme"] = str(datetime.now())
+            veriler["portfoy"][sembol] = {"tip": tip, "adet": adet, "maliyet": maliyet}
             verileri_kaydet(veriler)
-            print(f"✅ {sembol} portföye eklendi!")
+            print(f"✅ {sembol} eklendi!")
             
         elif secim == "3":
-            print("\n🗑️ YATIRIM SİL")
             sembol = input("Silinecek sembol: ").upper()
             if sembol in veriler["portfoy"]:
                 del veriler["portfoy"][sembol]
                 verileri_kaydet(veriler)
-                print(f"✅ {sembol} portföyden silindi!")
+                print(f"✅ {sembol} silindi!")
             else:
-                print("❌ Bu sembol portföyde bulunamadı")
+                print("❌ Bulunamadı")
                 
         elif secim == "4":
-            print("\n💰 FİYAT SORGULA")
             sembol = input("Sembol: ").upper()
-            tip = input("Tip (hisse/kripto): ").lower()
+            analiz = GercekTeknikAnaliz.tam_analiz(sembol)
             
-            fiyat = fiyat_sorgula(sembol, tip)
-            if fiyat:
-                print(f"💰 {sembol} güncel fiyat: ${fiyat:.2f}")
+            if analiz:
+                print(f"\n📊 {sembol} GERÇEK TEKNİK ANALİZ:")
+                print(f"   Güncel Fiyat: ${analiz['guncel_fiyat']:.2f}")
+                print(f"   RSI: {analiz['rsi']:.1f}")
+                print(f"   MACD: {analiz['macd']:.4f} | Signal: {analiz['signal']:.4f}")
+                print(f"   Bollinger: ${analiz['bollinger_alt']:.2f} - ${analiz['bollinger_ust']:.2f}")
+                print(f"   Trend: {analiz['trend']} ({analiz['trend_gucu']:.0f}%)")
+                print("\n🎯 SİNYALLER:")
+                for sinyal in analiz['sinyaller']:
+                    print(f"   {sinyal}")
             else:
-                print(f"❌ {sembol} fiyatı alınamadı")
+                print("❌ Veri alınamadı")
                 
         elif secim == "5":
-            print("\n🧠 GERÇEK TEKNİK ANALİZ + YAPAY ZEKA")
             sembol = input("Sembol: ").upper()
-            tip = input("Tip (hisse/kripto): ").lower()
+            backtest = Backtesting.basit_backtest(sembol)
             
-            fiyat = fiyat_sorgula(sembol, tip)
-            if fiyat:
-                print(f"💰 Güncel fiyat: ${fiyat:.2f}")
-                print("⏳ Analiz yapılıyor...\n")
-                
-                # Gerçek teknik analiz + ML
-                analiz = ml_sistemi.akilli_teknik_analiz(sembol, tip)
-                print(analiz['aciklama'])
-                
-                # Kullanıcı geri bildirimi
-                print("\n📝 Analiz doğru muydu? (e/h): ")
-                geri_bildirim = input().lower()
-                if geri_bildirim == 'e':
-                    ml_sistemi.analiz_sonucu_ogren(sembol, analiz, analiz["durum"])
-                    print("✅ Teşekkürler! Sistem öğrendi ve daha zeki hale geldi!")
-                elif geri_bildirim == 'h':
-                    ters_durum = "nötr" if analiz["durum"] != "nötr" else "zayif_al"
-                    ml_sistemi.analiz_sonucu_ogren(sembol, analiz, ters_durum)
-                    print("✅ Teşekkürler! Sistem hatayı düzelttiğini öğrenecek.")
+            if backtest:
+                print(f"\n📈 {sembol} BACKTESTİNG SONUÇLARI (90 Gün):")
+                print(f"   Kar/Zarar: ${backtest['kar_zarar']:.2f}")
+                print(f"   Getiri: {backtest['getiri_yuzde']:.2f}%")
+                print(f"   Başarı: {'✅ KÂRLı' if backtest['basari'] else '❌ Zararlı'}")
             else:
-                print(f"❌ {sembol} fiyatı alınamadı")
+                print("❌ Backtest yapılamadı")
                 
         elif secim == "6":
-            print("\n⚠️  GELİŞMİŞ RİSK ANALİZİ")
-            analiz = gelismis_portfoy_analizi(veriler)
-            print(f"Risk Seviyesi: {analiz['risk_seviyesi'].upper()}")
-            print(f"Açıklama: {analiz['aciklama']}")
-            print(f"Kripto Oranı: %{analiz['kripto_orani']:.1f}")
-            print(f"Hisse Oranı: %{analiz['hisse_orani']:.1f}")
-            print(f"Çeşitlilik: {analiz['cesitlilik']} farklı varlık")
-            
-            if analiz.get('en_iyi_performans'):
-                print(f"⭐ En İyi Performans: {analiz['en_iyi_performans']['sembol']} (%{analiz['en_iyi_performans']['kar_zarar_yuzde']:.1f})")
-            if analiz.get('en_kotu_performans'):
-                print(f"🔻 En Kötü Performans: {analiz['en_kotu_performans']['sembol']} (%{analiz['en_kotu_performans']['kar_zarar_yuzde']:.1f})")
-            
-        elif secim == "7":
-            print("\n💡 YAPAY ZEKA TAVSİYELERİ")
-            tavsiyeler = yapay_zeka_tavsiyeleri(veriler)
-            if tavsiyeler:
-                for i, tavsiye in enumerate(tavsiyeler, 1):
-                    print(f"{i}. {tavsiye}")
+            sembol = input("Sembol: ").upper()
+            if grafik_ciz(sembol):
+                print(f"✅ Grafik kaydedildi: grafik_{sembol}.png")
             else:
-                print("✅ Portföyünüz dengeli görünüyor!")
+                print("❌ Grafik çizilemedi")
+                
+        elif secim == "7":
+            if portfoy_dagılım_grafigi(veriler):
+                print("✅ Portföy grafiği kaydedildi: portfoy_dagilim.png")
+            else:
+                print("❌ Grafik çizilemedi")
                 
         elif secim == "8":
-            print("\n🔮 PORTFÖY TAHMİNİ")
-            tahmin = portfoy_tahmini_yap(veriler)
-            print(f"Tahmin: {tahmin['tahmin']}")
-            print(f"Açıklama: {tahmin['aciklama']}")
-            print(f"Güven Seviyesi: %{tahmin['guven_seviyesi']*100:.1f}")
+            msg = portfoy_excel_export(veriler)
+            print(msg)
             
         elif secim == "9":
-            print("\n📊 SİSTEM İSTATİSTİKLERİ")
-            basari_oranlari = veriler.get("makine_ogrenme_modeli", {}).get("basari_orani", {})
-            if basari_oranlari:
-                print("🎯 Sembollerin Analiz Başarı Oranları:")
-                for sembol, oran in basari_oranlari.items():
-                    if oran["toplam"] > 0:
-                        yuzde = (oran["dogru"] / oran["toplam"]) * 100
-                        print(f"   {sembol}: %{yuzde:.1f} ({oran['dogru']}/{oran['toplam']})")
-            else:
-                print("Henüz istatistik yok")
+            sembol = input("Sembol: ").upper()
+            islem = input("AL/SAT: ").upper()
+            fiyat = float(input("Hedef Fiyat: "))
             
+            if islem == "AL":
+                if trading_listesi.al_emri_ekle(sembol, fiyat, 1000):
+                    print("✅ AL EMRİ HAZIR!")
+                else:
+                    print("⏳ AL EMRİ BEKLEMEYE ALINDI")
+            elif islem == "SAT":
+                if trading_listesi.sat_emri_ekle(sembol, fiyat):
+                    print("✅ SAT EMRİ HAZIR!")
+                else:
+                    print("⏳ SAT EMRİ BEKLEMEYE ALINDI")
+                    
         elif secim == "10":
-            print("👋 Güle güle! Verileriniz kaydedildi.")
+            print("👋 Güle güle!")
             break
-            
         else:
-            print("❌ Geçersiz seçim! 1-10 arası bir sayı girin.")
+            print("❌ Geçersiz seçim")
 
-# Programı başlat
 if __name__ == "__main__":
     main()
