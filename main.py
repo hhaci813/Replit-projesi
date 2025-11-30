@@ -162,6 +162,59 @@ class AkilliOgrenenSistem(OgrenenSistem):
         print("=====================================\n")
 
 
+class GelismisOgrenenSistem(AkilliOgrenenSistem):
+    def __init__(self):
+        super().__init__()
+        self.otomatik_yedekleme()
+    
+    def otomatik_yedekleme(self):
+        """Otomatik yedekleme oluştur"""
+        import shutil
+        import time
+        
+        try:
+            son_yedekleme = self.veriler.get("son_yedekleme", 0)
+            simdiki_zaman = time.time()
+            
+            if simdiki_zaman - son_yedekleme > 604800:  # 7 gun
+                if os.path.exists(self.veri_dosyasi):
+                    yedek_dosya = f"yedek_{int(simdiki_zaman)}.json"
+                    shutil.copy2(self.veri_dosyasi, yedek_dosya)
+                    self.veriler["son_yedekleme"] = simdiki_zaman
+                    self.verileri_kaydet()
+                    print("Otomatik yedekleme tamamlandi")
+                
+        except Exception as e:
+            print(f"Yedekleme hatasi: {e}")
+    
+    def bilgi_sil(self, soru):
+        """Öğrenilmiş bilgiyi sil"""
+        onceki_sayi = len(self.veriler["ogrenme_verileri"])
+        self.veriler["ogrenme_verileri"] = [
+            v for v in self.veriler["ogrenme_verileri"] 
+            if not ("soru" in v and v["soru"].lower() == soru.lower())
+        ]
+        
+        silinen = onceki_sayi - len(self.veriler["ogrenme_verileri"])
+        if silinen > 0:
+            self.veriler["toplam_ogrenme"] -= silinen
+            self.verileri_kaydet()
+            self.modeli_yeniden_olustur()
+            print(f"'{soru}' bilgisi silindi")
+        else:
+            print(f"'{soru}' bulunamadi")
+    
+    def modeli_yeniden_olustur(self):
+        """Modeli sıfırdan oluştur"""
+        self.model = {"ogrenilen_bilgiler": {}, "istatistikler": {}}
+        
+        for veri in self.veriler["ogrenme_verileri"]:
+            if "soru" in veri:
+                self.model_guncelle(veri["soru"], veri["cevap"], veri.get("kategori", "genel"))
+        
+        self.modeli_kaydet()
+
+
 def main():
     print("Akilli Ogrenen Sisteme Hos Geldiniz!")
     print("=" * 50)
