@@ -5,7 +5,7 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 class PriceFetcher:
-    """Gerçek zamanlı online fiyat - CoinGecko + Finnhub + Web Scraping"""
+    """Gerçek zamanlı online fiyat - BTCTurk + CoinGecko + Web Scraping"""
     
     SESSION = requests.Session()
     RETRIES = Retry(total=3, backoff_factor=0.3, status_forcelist=(500, 502, 504))
@@ -14,11 +14,33 @@ class PriceFetcher:
     
     CRYPTO_MAP = {'BTC-USD': 'bitcoin', 'ETH-USD': 'ethereum'}
     
+    # BTCTurk pairs
+    BTCTURK_PAIRS = {
+        'BTC-USD': 'BTCUSD',
+        'XRPTRY': 'XRPTRY',
+    }
+    
     @staticmethod
     def get_price(symbol):
         """Online'dan gerçek fiyat al"""
         try:
-            # 1. KRIPTO - CoinGecko
+            # 1. BTCTurk (Türkiye merkezli - en güvenilir)
+            if symbol in PriceFetcher.BTCTURK_PAIRS:
+                pair = PriceFetcher.BTCTURK_PAIRS[symbol]
+                resp = PriceFetcher.SESSION.get(
+                    f"https://api.btcturk.com/api/v2/ticker?pairSymbol={pair}",
+                    timeout=5
+                )
+                if resp.status_code == 200:
+                    data = resp.json().get('data', [{}])[0]
+                    price = float(data.get('last', 0))
+                    if price > 0:
+                        return price, "BTCTurk"
+        except:
+            pass
+        
+        try:
+            # 2. KRIPTO - CoinGecko
             if symbol in PriceFetcher.CRYPTO_MAP:
                 coin = PriceFetcher.CRYPTO_MAP[symbol]
                 resp = PriceFetcher.SESSION.get(
