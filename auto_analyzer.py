@@ -3,6 +3,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from symbol_analyzer import SymbolAnalyzer
 from telegram_service import TelegramService
 from price_fetcher import PriceFetcher
+from trade_history import TradeHistory
 import time
 
 class AutoAnalyzer:
@@ -96,9 +97,10 @@ class AutoAnalyzer:
 ⏰ {self._get_time()}
 """
             
-            # Telegram'a gönder
+            # Telegram'a gönder + Trade history kayıt
             self.telegram._send_message(message)
-            print(f"✅ #{count} Analiz gönderildi: {symbol}")
+            TradeHistory.log_trade(symbol, result['signal'], price, result['signal'], rsi)
+            print(f"✅ #{count} {symbol}: Analiz gönderildi + Kayıt yapıldı")
         except Exception as e:
             print(f"❌ Analiz hatası {symbol}: {str(e)}")
     
