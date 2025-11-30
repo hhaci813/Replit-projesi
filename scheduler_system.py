@@ -1,6 +1,7 @@
 """APScheduler - 24/7 Otomatik İşlem Sistemi"""
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime
 import json
 import os
@@ -23,6 +24,27 @@ class BrokerScheduler:
             self.scheduler.shutdown()
             self.is_running = False
             print("⛔ APScheduler durduruldu")
+    
+    def schedule_every_2_minutes(self):
+        """Her 2 dakikada bir XRPTRY analizi Telegram'a gönder"""
+        from telegram_analyzer import TelegramAnalyzer
+        
+        def send_analysis():
+            try:
+                analyzer = TelegramAnalyzer()
+                ok, msg = analyzer.send_analysis("XRPTRY")
+                status = "✅" if ok else "❌"
+                print(f"{status} 2-dakika analiz gönderildi - {datetime.now()}")
+            except Exception as e:
+                print(f"❌ Analiz hatası: {str(e)}")
+        
+        self.scheduler.add_job(
+            send_analysis,
+            IntervalTrigger(minutes=2),
+            id='analysis_every_2min',
+            name='2-Dakika Analiz',
+            replace_existing=True
+        )
     
     def schedule_daily_tavsiye(self):
         """Her gün 09:00'da tavsiye gönder"""
@@ -99,6 +121,7 @@ class BrokerScheduler:
 if __name__ == "__main__":
     scheduler = BrokerScheduler()
     scheduler.start()
+    scheduler.schedule_every_2_minutes()
     scheduler.schedule_daily_tavsiye()
     scheduler.schedule_hourly_check()
     scheduler.schedule_trading_hours()
