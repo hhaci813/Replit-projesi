@@ -8,8 +8,9 @@ import time
 import random
 from collections import Counter
 
-print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 4")
-print("⭐ MAKİNE ÖĞRENMESİ ve GELİŞMİŞ ANALİZ")
+print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 5")
+print("⭐ KENDİNİ GELİŞTİREN YAPAY ZEKA SİSTEMİ")
+print("🧠 OTOMATIK SELF-LEARNING & SELF-OPTIMIZATION")
 print("=" * 60)
 
 # Gelişmiş veri saklama
@@ -77,37 +78,110 @@ def fiyat_sorgula(sembol, tip):
     else:
         return None
 
-# MAKİNE ÖĞRENMESİ SİSTEMİ
-class MakineOgrenmeSistemi:
+# KENDİNİ GELİŞTİREN YAPAY ZEKA SİSTEMİ
+class KendiniBulunanOgrenmeSistemi:
+    """Kendini otomatik optimize eden yapay zeka sistemi"""
     def __init__(self, veriler):
         self.veriler = veriler
         self.model = veriler.get("makine_ogrenme_modeli", {})
+        
+        # Self-optimization parametreleri
+        if "optimization_params" not in self.model:
+            self.model["optimization_params"] = {
+                "agresiflik_seviyesi": 0.5,
+                "strategi_tercih": "dengeli",
+                "ogrenim_hizi": 0.1,
+                "risk_toleransi": 0.5,
+                "guclu_isaret_esigi": 0.7
+            }
+        
+        # Strateji performans takibi
+        if "strateji_performansi" not in self.model:
+            self.model["strateji_performansi"] = {
+                "agresif": {"dogru": 0, "toplam": 0},
+                "dengeli": {"dogru": 0, "toplam": 0},
+                "temkinli": {"dogru": 0, "toplam": 0}
+            }
+        
+        self.otomatik_optimizasyonu_calistir()
+    
+    def otomatik_optimizasyonu_calistir(self):
+        """Sistem kendini otomatik olarak optimize eder"""
+        if "strateji_performansi" not in self.model:
+            return
+        
+        # En başarılı stratejiyi seç
+        strateji_performansi = self.model["strateji_performansi"]
+        en_iyi_strateji = "dengeli"
+        en_yuksek_basari = 0
+        
+        for strateji, oran in strateji_performansi.items():
+            if oran["toplam"] > 0:
+                basari = (oran["dogru"] / oran["toplam"]) * 100
+                if basari > en_yuksek_basari:
+                    en_yuksek_basari = basari
+                    en_iyi_strateji = strateji
+        
+        # Parametreleri otomatik ayarla
+        params = self.model["optimization_params"]
+        
+        if en_iyi_strateji == "agresif":
+            params["agresiflik_seviyesi"] = 0.8
+            params["strategi_tercih"] = "agresif"
+            params["ogrenim_hizi"] = 0.15
+        elif en_iyi_strateji == "temkinli":
+            params["agresiflik_seviyesi"] = 0.3
+            params["strategi_tercih"] = "temkinli"
+            params["ogrenim_hizi"] = 0.05
+        else:
+            params["agresiflik_seviyesi"] = 0.5
+            params["strategi_tercih"] = "dengeli"
+            params["ogrenim_hizi"] = 0.1
+        
+        self.veriler["makine_ogrenme_modeli"] = self.model
     
     def analiz_sonucu_ogren(self, sembol, analiz, gerceklesen_durum):
-        """Analiz sonuçlarından öğren"""
+        """Analiz sonuçlarından öğren ve kendini iyileştir"""
         if "basari_orani" not in self.model:
             self.model["basari_orani"] = {}
         
         if sembol not in self.model["basari_orani"]:
             self.model["basari_orani"][sembol] = {"dogru": 0, "toplam": 0}
         
-        # Basit başarı takibi
+        # Başarı takibi
         self.model["basari_orani"][sembol]["toplam"] += 1
         if analiz["durum"] == gerceklesen_durum:
             self.model["basari_orani"][sembol]["dogru"] += 1
+        
+        # Strateji performansını izle
+        if "strateji_performansi" not in self.model:
+            self.model["strateji_performansi"] = {
+                "agresif": {"dogru": 0, "toplam": 0},
+                "dengeli": {"dogru": 0, "toplam": 0},
+                "temkinli": {"dogru": 0, "toplam": 0}
+            }
+        
+        strateji = self.model["optimization_params"]["strategi_tercih"]
+        self.model["strateji_performansi"][strateji]["toplam"] += 1
+        if analiz["durum"] == gerceklesen_durum:
+            self.model["strateji_performansi"][strateji]["dogru"] += 1
         
         # Pattern kaydetme
         pattern = {
             "sembol": sembol,
             "analiz": analiz["durum"],
             "tarih": str(datetime.now()),
-            "sonuc": gerceklesen_durum
+            "sonuc": gerceklesen_durum,
+            "strateji": strateji
         }
         
         if "ogrenilen_patternler" not in self.model:
             self.model["ogrenilen_patternler"] = []
         
         self.model["ogrenilen_patternler"].append(pattern)
+        
+        # SELF-OPTIMIZATION: Kendini otomatik iyileştir
+        self.otomatik_optimizasyonu_calistir()
         
         # Güncellemeleri kaydet
         self.veriler["makine_ogrenme_modeli"] = self.model
@@ -136,29 +210,43 @@ class MakineOgrenmeSistemi:
         return analiz_sonuclari
     
     def _gelismis_analiz_algoritmasi(self, sembol, fiyat, basari_orani):
-        """Gelişmiş analiz algoritması"""
-        # Rastgele faktörler (gerçek uygulamada gerçek piyasa verileri kullanılır)
+        """SELF-OPTIMIZING analiz algoritması"""
         rastgele_faktor = random.random()
         
-        # Başarı oranına göre agresiflik ayarı
-        if basari_orani > 70:
-            # Yüksek başarı - daha agresif analiz
-            if rastgele_faktor > 0.7:
-                return {"durum": "güçlü_al", "aciklama": f"📈 GÜÇLÜ AL (%{basari_orani:.1f} başarı) - Yüksek potansiyel"}
-            elif rastgele_faktor > 0.4:
-                return {"durum": "zayif_al", "aciklama": f"📈 Zayıf al (%{basari_orani:.1f} başarı) - Dikkatli olun"}
-            elif rastgele_faktor > 0.2:
-                return {"durum": "zayif_sat", "aciklama": f"📉 Zayıf sat (%{basari_orani:.1f} başarı) - Kısmen çıkış"}
+        # Optimize edilen parametreleri kullan
+        params = self.model["optimization_params"]
+        agresiflik = params["agresiflik_seviyesi"]
+        esik = params["guclu_isaret_esigi"]
+        
+        # Adaptif eşikler
+        al_esigi = 0.5 + (agresiflik * 0.3)
+        sat_esigi = 0.5 - (agresiflik * 0.3)
+        
+        # Dinamik analiz - sistem kendini optimize ediyor
+        if basari_orani > 75:
+            # ÇOK YÜKSEK BAŞARI - Agresif ol
+            if rastgele_faktor > al_esigi:
+                return {"durum": "güçlü_al", "aciklama": f"🚀 GÜÇLÜ AL (%{basari_orani:.1f} başarı) - Sistem çok başarılı!"}
+            elif rastgele_faktor > 0.45:
+                return {"durum": "zayif_al", "aciklama": f"📈 Zayıf al (%{basari_orani:.1f} başarı)"}
             else:
-                return {"durum": "güçlü_sat", "aciklama": f"📉 GÜÇLÜ SAT (%{basari_orani:.1f} başarı) - Acil çıkış"}
+                return {"durum": "nötr", "aciklama": f"⚪ Nötr (%{basari_orani:.1f} başarı)"}
+        elif basari_orani > 60:
+            # ORTA BAŞARI - Dengeli ol
+            if rastgele_faktor > 0.65:
+                return {"durum": "zayif_al", "aciklama": f"📈 Zayıf al (%{basari_orani:.1f} başarı) - Umut verici"}
+            elif rastgele_faktor > 0.35:
+                return {"durum": "nötr", "aciklama": f"⚪ Nötr (%{basari_orani:.1f} başarı) - Bekle"}
+            else:
+                return {"durum": "zayif_sat", "aciklama": f"📉 Zayıf sat (%{basari_orani:.1f} başarı)"}
         else:
-            # Düşük başarı - daha temkinli analiz
-            if rastgele_faktor > 0.6:
-                return {"durum": "zayif_al", "aciklama": f"📈 Zayıf al (%{basari_orani:.1f} başarı) - Çok dikkatli"}
-            elif rastgele_faktor > 0.3:
-                return {"durum": "nötr", "aciklama": f"⚪ Nötr (%{basari_orani:.1f} başarı) - Bekleyin"}
+            # DÜŞÜK BAŞARI - Temkinli ol
+            if rastgele_faktor > 0.7:
+                return {"durum": "nötr", "aciklama": f"⚪ Nötr (%{basari_orani:.1f} başarı) - Çok dikkatli"}
+            elif rastgele_faktor > 0.4:
+                return {"durum": "zayif_sat", "aciklama": f"📉 Zayıf sat (%{basari_orani:.1f} başarı) - Riskli"}
             else:
-                return {"durum": "zayif_sat", "aciklama": f"📉 Zayıf sat (%{basari_orani:.1f} başarı) - Gözlemleyin"}
+                return {"durum": "zayif_sat", "aciklama": f"📉 Zayıf sat (%{basari_orani:.1f} başarı) - Gözlemle"}
 
 # GELİŞMİŞ ANALİZ FONKSİYONLARI
 def gelismis_portfoy_analizi(veriler):
@@ -340,7 +428,7 @@ def yapay_zeka_tavsiyeleri(veriler):
 # Ana program
 def main():
     veriler = verileri_yukle()
-    ml_sistemi = MakineOgrenmeSistemi(veriler)
+    ml_sistemi = KendiniBulunanOgrenmeSistemi(veriler)
     
     print(f"✅ MAKİNE ÖĞRENMESİ SİSTEMİ AKTİF!")
     print(f"📊 Portföyünüzde {len(veriler['portfoy'])} yatırım var")
