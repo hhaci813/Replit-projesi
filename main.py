@@ -829,6 +829,217 @@ def main():
                 
                 elif hesap_secim == "7":
                     break
+        
+        elif secim == "28":
+            print("\n" + "="*80)
+            print("⏰ APScheduler - 24/7 OTOMATIK İŞLEMLER")
+            print("="*80)
+            
+            print("\n📅 ZAMANLANMIŞ İŞLERİ YÖNET:\n")
+            
+            while True:
+                print("1 - Scheduler'ı Başlat")
+                print("2 - Zamanlanmış İşleri Göster")
+                print("3 - Günlük Tavsiye Kur (09:00)")
+                print("4 - Saatlik Kontrol Kur")
+                print("5 - Market Trading Kur (15 dk)")
+                print("6 - Günlük Rapor Kur (17:00)")
+                print("7 - İşi Kaldır")
+                print("8 - Scheduler'ı Durdur")
+                print("9 - Geri Dön")
+                
+                sched_secim = input("\nSeçim: ").strip()
+                
+                if sched_secim == "1":
+                    scheduler.start()
+                    print("✅ Scheduler başlatıldı - 24/7 otomatik işlemler başlıyor...")
+                elif sched_secim == "2":
+                    print(scheduler.list_jobs())
+                elif sched_secim == "3":
+                    scheduler.schedule_daily_tavsiye()
+                    print("✅ Günlük tavsiye 09:00'da gönderilecek")
+                elif sched_secim == "4":
+                    scheduler.schedule_hourly_check()
+                    print("✅ Saatlik fiyat kontrolü kuruldu")
+                elif sched_secim == "5":
+                    scheduler.schedule_trading_hours()
+                    print("✅ Market trading (15 dk) kuruldu")
+                elif sched_secim == "6":
+                    scheduler.schedule_daily_report()
+                    print("✅ Günlük rapor 17:00'de oluşturulacak")
+                elif sched_secim == "7":
+                    job_id = input("İşin ID'sini girin: ")
+                    print(scheduler.remove_job(job_id))
+                elif sched_secim == "8":
+                    scheduler.stop()
+                    print("⛔ Scheduler durduruldu")
+                elif sched_secim == "9":
+                    break
+        
+        elif secim == "29":
+            print("\n" + "="*80)
+            print("🔐 GÜVENLİK YÖNETİMİ - Password Hashing + Encryption")
+            print("="*80)
+            
+            print("\n🛡️ GÜVENLİK AYARLARI:\n")
+            
+            while True:
+                print("1 - Şifre Hash'le")
+                print("2 - Şifre Doğrula")
+                print("3 - API Key'i Şifrele")
+                print("4 - Dosya Şifrele")
+                print("5 - Geri Dön")
+                
+                sec_secim = input("\nSeçim: ").strip()
+                
+                if sec_secim == "1":
+                    password = input("Şifre: ")
+                    hashed = security.hash_password(password)
+                    print(f"✅ Hash'lenmiş: {hashed[:50]}...")
+                elif sec_secim == "2":
+                    password = input("Şifre: ")
+                    hashed = input("Hash: ")
+                    if security.verify_password(password, hashed):
+                        print("✅ Şifre DOĞRU")
+                    else:
+                        print("❌ Şifre YANLIŞ")
+                elif sec_secim == "3":
+                    api_key = input("API Key: ")
+                    encrypted = security.encrypt_api_key(api_key)
+                    print(f"✅ Şifreli: {encrypted[:50]}...")
+                elif sec_secim == "4":
+                    file_path = input("Dosya yolu: ")
+                    security.encrypt_file(file_path)
+                    print(f"✅ {file_path} şifreli olarak kaydedildi")
+                elif sec_secim == "5":
+                    break
+        
+        elif secim == "30":
+            print("\n" + "="*80)
+            print("📋 LOGGING - Son Log'ları Görüntüle")
+            print("="*80)
+            
+            print("\n📊 SON LOG GÖSTERİLERİ:\n")
+            
+            while True:
+                print("1 - Son 10 Log Göster")
+                print("2 - Son 20 Log Göster")
+                print("3 - Son 50 Log Göster")
+                print("4 - Trade Log'u Ekle")
+                print("5 - Error Log'u Ekle")
+                print("6 - Geri Dön")
+                
+                log_secim = input("\nSeçim: ").strip()
+                
+                if log_secim == "1":
+                    logs = logger.get_recent_logs(lines=10)
+                    print(logs)
+                elif log_secim == "2":
+                    logs = logger.get_recent_logs(lines=20)
+                    print(logs)
+                elif log_secim == "3":
+                    logs = logger.get_recent_logs(lines=50)
+                    print(logs)
+                elif log_secim == "4":
+                    symbol = input("Sembol: ").upper()
+                    trade_type = input("Tür (AL/SAT): ").upper()
+                    quantity = float(input("Miktar: "))
+                    price = float(input("Fiyat: "))
+                    logger.log_trade("manual", symbol, trade_type, quantity, price, "test")
+                    print("✅ Trade log'u eklendi")
+                elif log_secim == "5":
+                    error_msg = input("Error mesajı: ")
+                    logger.log_error(error_msg)
+                    print("✅ Error log'u eklendi")
+                elif log_secim == "6":
+                    break
+        
+        elif secim == "31":
+            print("\n" + "="*80)
+            print("🔑 API KEY YÖNETİMİ - Real Broker Bağlantıları")
+            print("="*80)
+            
+            print("\n⚙️ API KEY KURULUMU:\n")
+            
+            while True:
+                print("1 - API Key Durumunu Kontrol Et")
+                print("2 - Alpaca API Key Kur")
+                print("3 - Binance API Key Kur")
+                print("4 - Alpaca Key'lerini Görüntüle")
+                print("5 - Binance Key'lerini Görüntüle")
+                print("6 - Geri Dön")
+                
+                api_secim = input("\nSeçim: ").strip()
+                
+                if api_secim == "1":
+                    print(api_manager.verify_keys())
+                elif api_secim == "2":
+                    api_key = input("Alpaca API Key: ")
+                    secret_key = input("Alpaca Secret Key: ")
+                    api_manager.set_alpaca_keys(api_key, secret_key)
+                elif api_secim == "3":
+                    api_key = input("Binance API Key: ")
+                    secret_key = input("Binance Secret Key: ")
+                    api_manager.set_binance_keys(api_key, secret_key)
+                elif api_secim == "4":
+                    keys = api_manager.get_alpaca_keys()
+                    print(f"✅ Alpaca API Key: {keys['api_key'][:20]}..." if keys['api_key'] else "❌ Set değil")
+                elif api_secim == "5":
+                    keys = api_manager.get_binance_keys()
+                    print(f"✅ Binance API Key: {keys['api_key'][:20]}..." if keys['api_key'] else "❌ Set değil")
+                elif api_secim == "6":
+                    break
+        
+        elif secim == "32":
+            print("\n" + "="*80)
+            print("💾 DATABASE - Trade History ve Veriler")
+            print("="*80)
+            
+            print("\n📊 DATABASE OPERASYONLARı:\n")
+            
+            while True:
+                print("1 - Son Trade'leri Göster")
+                print("2 - Yeni Trade Ekle")
+                print("3 - Database Bilgisi")
+                print("4 - Trade İstatistikleri")
+                print("5 - Geri Dön")
+                
+                db_secim = input("\nSeçim: ").strip()
+                
+                if db_secim == "1":
+                    trades = database.get_trades(limit=10)
+                    if trades:
+                        print("\n📋 SON 10 TRADE:")
+                        for trade in trades:
+                            print(f"• {trade[1]} {trade[3]} {trade[2]} x{trade[4]} @ ${trade[5]}")
+                    else:
+                        print("Trade yok")
+                elif db_secim == "2":
+                    broker = input("Broker (alpaca/binance): ").lower()
+                    symbol = input("Sembol: ").upper()
+                    trade_type = input("Tür (AL/SAT): ").upper()
+                    quantity = float(input("Miktar: "))
+                    price = float(input("Fiyat: "))
+                    result = database.add_trade(broker, symbol, trade_type, quantity, price)
+                    print(result)
+                elif db_secim == "3":
+                    print(f"""
+✅ DATABASE BILGISI:
+   Type: SQLite
+   Dosya: broker.db
+   Tablolar: trades, users, portfolio, logs
+   Status: AKTIF
+                    """)
+                elif db_secim == "4":
+                    trades = database.get_trades(limit=100)
+                    if trades:
+                        print(f"📊 Toplam Trade: {len(trades)}")
+                        print(f"   AL: {sum(1 for t in trades if t[3] == 'AL')}")
+                        print(f"   SAT: {sum(1 for t in trades if t[3] == 'SAT')}")
+                    else:
+                        print("Trade istatistiği yok")
+                elif db_secim == "5":
+                    break
             
         elif secim == "17":
             # Son kayıtları yap
