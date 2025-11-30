@@ -1522,3 +1522,36 @@ def main():
                 print(f"   Toplam: {wl['count']} sembol")
                 for sym in wl['symbols']:
                     print(f"   • {sym}")
+
+        elif secim == "99":
+            print("\n" + "="*80)
+            print("⚙️ SİSTEM OTOMASYONu - 24/7 HAFIZADA ÇALIŞ")
+            print("="*80)
+            
+            from auto_run_system import AutoRunSystem
+            
+            # Global instance var mı kontrol et
+            try:
+                auto_system
+            except:
+                auto_system = AutoRunSystem()
+            
+            print("\n1 - Tüm Sistemleri Başlat (24/7)")
+            print("2 - Tüm Sistemleri Durdur")
+            print("3 - Durum Kontrol")
+            print("4 - Geri Dön")
+            
+            auto_sec = input("\nSeçim: ").strip()
+            
+            if auto_sec == "1":
+                msg = auto_system.start_all_systems()
+                print(msg)
+                print("\n📊 ÇALIŞAN SİSTEMLER:")
+                print(auto_system.get_status())
+            elif auto_sec == "2":
+                msg = auto_system.stop_all_systems()
+                print(msg)
+            elif auto_sec == "3":
+                print(auto_system.get_status())
+            elif auto_sec == "4":
+                pass
