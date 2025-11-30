@@ -47,10 +47,13 @@ class AdvancedMLAnalyzer:
             X_scaled = self.scaler.fit_transform(X)
             self.ensemble.fit(X_scaled, y)
             
-            last_row = X_scaled[-1].reshape(1, -1)
+            last_row = X_scaled[-1:].reshape(1, -1)
             prediction = self.ensemble.predict(last_row)[0]
             
-            current = data['Close'].iloc[-1]
+            current_price = data['Close'].iloc[-1]
+            if pd.isna(current_price):
+                return None
+            current = float(current_price)
             confidence = min(0.999, 0.95 + abs((prediction - current) / current))
             
             return {

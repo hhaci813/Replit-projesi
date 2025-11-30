@@ -8,7 +8,9 @@ class SymbolAnalyzer:
         """AL/SAT sinyali ver"""
         try:
             data = yf.download(symbol, period="3mo", progress=False)
-            if data.empty or len(data) < 20:
+            
+            # Null checks
+            if data is None or data.empty or len(data) < 20:
                 return {"signal": "?", "reason": "Veri yok"}
             
             # RSI hesapla (NaN handling ile)
@@ -17,18 +19,25 @@ class SymbolAnalyzer:
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
             rs = gain / loss
             rsi_series = 100 - (100 / (1 + rs))
-            rsi = rsi_series.dropna().iloc[-1] if len(rsi_series.dropna()) > 0 else 50
+            rsi_clean = rsi_series.dropna()
+            rsi = float(rsi_clean.iloc[-1]) if len(rsi_clean) > 0 else 50.0
             
             # MACD
             exp1 = data['Close'].ewm(span=12).mean()
             exp2 = data['Close'].ewm(span=26).mean()
             macd = exp1 - exp2
-            signal = macd.ewm(span=9).mean()
+            signal_line = macd.ewm(span=9).mean()
             
-            # MA
-            ma20 = data['Close'].rolling(20).mean().iloc[-1]
-            ma50 = data['Close'].rolling(50).mean().iloc[-1]
-            price = data['Close'].iloc[-1]
+            # MA - safe indexing
+            ma20_vals = data['Close'].rolling(20).mean()
+            ma50_vals = data['Close'].rolling(50).mean()
+            
+            if ma20_vals.isna().all() or ma50_vals.isna().all():
+                return {"signal": "?", "reason": "MA hesaplanamadı"}
+            
+            ma20 = float(ma20_vals.iloc[-1])
+            ma50 = float(ma50_vals.iloc[-1])
+            price = float(data['Close'].iloc[-1])
             
             score = 0
             reasons = []
@@ -40,7 +49,10 @@ class SymbolAnalyzer:
                 score -= 2
                 reasons.append(f"RSI {rsi:.1f} - Overbought")
             
-            if macd.iloc[-1] > signal.iloc[-1]:
+            macd_last = float(macd.iloc[-1])
+            signal_last = float(signal_line.iloc[-1])
+            
+            if macd_last > signal_last:
                 score += 1
                 reasons.append("MACD Bullish")
             else:
