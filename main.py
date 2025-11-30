@@ -1042,6 +1042,42 @@ def main():
                 elif db_secim == "5":
                     break
             
+        elif secim == "33":
+            print("\n" + "="*80)
+            print("📊 GRAFİK ANALİZİ - Technical Analysis")
+            print("="*80)
+            
+            from grafik_analiz import GrafikAnaliz
+            grafik_analiz = GrafikAnaliz()
+            
+            print("\n🎨 GRAFİK TÜRÜ SEÇ:\n")
+            while True:
+                print("1 - Bollinger Bands")
+                print("2 - MACD")
+                print("3 - RSI")
+                print("4 - Candlestick")
+                print("5 - Hareketli Ortalamalar")
+                print("6 - Geri Dön")
+                
+                graf_secim = input("\nSeçim: ").strip()
+                if graf_secim == "1":
+                    symbol = input("Sembol: ").upper()
+                    print(grafik_analiz.bollinger_bands_grafik(symbol))
+                elif graf_secim == "2":
+                    symbol = input("Sembol: ").upper()
+                    print(grafik_analiz.macd_grafik(symbol))
+                elif graf_secim == "3":
+                    symbol = input("Sembol: ").upper()
+                    print(grafik_analiz.rsi_grafik(symbol))
+                elif graf_secim == "4":
+                    symbol = input("Sembol: ").upper()
+                    print(grafik_analiz.candlestick_grafik(symbol))
+                elif graf_secim == "5":
+                    symbol = input("Sembol: ").upper()
+                    print(grafik_analiz.hareketli_ortalama_grafik(symbol))
+                elif graf_secim == "6":
+                    break
+            
         elif secim == "17":
             # Son kayıtları yap
             verileri_kaydet(veriler)
@@ -1070,3 +1106,4 @@ def tum_verileri_goster():
     print(f"   İşlemler: {len(veriler.get('islemler', []))} işlem")
     print(f"   Toplam Kayıtlar: {len(veriler.get('kayitlar', []))} kayıt")
     print(f"\n🕐 Son Güncelleme: {veriler.get('son_guncelleme', 'Bilinmiyor')}")
+            
