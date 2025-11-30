@@ -2,16 +2,25 @@
 import yfinance as yf
 import pandas as pd
 from datetime import datetime
+from price_fetcher import PriceFetcher
 
 class SymbolAnalyzer:
     def generate_signal(self, symbol):
         """AL/SAT sinyali ver"""
         try:
+            # Gerçek fiyat al
+            real_price, source = PriceFetcher.get_price(symbol)
+            
             data = yf.download(symbol, period="3mo", progress=False)
             
             # Null checks
             if data is None or data.empty or len(data) < 20:
-                return {"signal": "?", "reason": "Veri yok"}
+                return {
+                    "signal": "?", 
+                    "reason": "Veri yok",
+                    "price": real_price if real_price else 0,
+                    "source": source
+                }
             
             # RSI hesapla (NaN handling ile)
             delta = data['Close'].diff()
@@ -37,7 +46,11 @@ class SymbolAnalyzer:
             
             ma20: float = float(ma20_vals.iloc[-1])
             ma50: float = float(ma50_vals.iloc[-1])
-            price: float = float(data['Close'].iloc[-1])
+            # Gerçek fiyat varsa onu kullan, yoksa yfinance'dan al
+            if real_price and real_price > 0:
+                price = real_price
+            else:
+                price: float = float(data['Close'].iloc[-1])
             
             score = 0
             reasons = []
@@ -80,7 +93,8 @@ class SymbolAnalyzer:
                 "price": float(price),
                 "ma20": float(ma20),
                 "ma50": float(ma50),
-                "reasons": reasons
+                "reasons": reasons,
+                "source": source
             }
         except Exception as e:
             return {"signal": "?", "reason": str(e)[:50]}

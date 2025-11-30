@@ -2,6 +2,7 @@
 from apscheduler.schedulers.background import BackgroundScheduler
 from symbol_analyzer import SymbolAnalyzer
 from telegram_service import TelegramService
+from price_fetcher import PriceFetcher
 import time
 
 class AutoAnalyzer:
@@ -38,18 +39,17 @@ class AutoAnalyzer:
 """
             elif symbol == "BTC":
                 result = self.analyzer.generate_signal("BTC-USD")
-                price = result.get('price', None)
+                price = result.get('price', 0)
                 rsi = result.get('rsi', 50)
-                ma20 = result.get('ma20', None)
-                ma50 = result.get('ma50', None)
+                ma20 = result.get('ma20', 0)
+                ma50 = result.get('ma50', 0)
+                source = result.get('source', 'unknown')
                 
-                # Debug
-                print(f"🔍 DEBUG BTC: price={price}, result_keys={list(result.keys())}")
+                price_str = PriceFetcher.format_price(price, "BTC-USD")
+                ma20_str = f"${ma20:.2f}" if ma20 else "N/A"
+                ma50_str = f"${ma50:.2f}" if ma50 else "N/A"
                 
-                if price is None or price == 0:
-                    price_str = "Veri Alınamıyor"
-                else:
-                    price_str = f"${price:.2f}"
+                print(f"✅ #{count} BTC: price={price} ({source}), signal={result['signal']}")
                 
                 message = f"""
 🪙 <b>BITCOIN ANALİZİ</b> #{count}
@@ -58,25 +58,23 @@ class AutoAnalyzer:
 
 💰 <b>Fiyat:</b> {price_str}
 📊 <b>RSI:</b> {rsi:.1f}
-📈 <b>MA20:</b> {"$" + str(ma20)[:8] if ma20 else "N/A"}
-📉 <b>MA50:</b> {"$" + str(ma50)[:8] if ma50 else "N/A"}
-ℹ️ <b>Gerekçe:</b> {', '.join(result.get('reasons', [])[:2])}
+📈 <b>MA20:</b> {ma20_str}
+📉 <b>MA50:</b> {ma50_str}
+ℹ️ <b>Kaynak:</b> {source}
 
 ⏰ {self._get_time()}
 """
             else:
                 result = self.analyzer.generate_signal(symbol)
-                price = result.get('price', None)
+                price = result.get('price', 0)
                 rsi = result.get('rsi', 50)
-                ma20 = result.get('ma20', None)
+                ma20 = result.get('ma20', 0)
+                source = result.get('source', 'unknown')
                 
-                # Debug
-                print(f"🔍 DEBUG {symbol}: price={price}, result_keys={list(result.keys())}")
+                price_str = PriceFetcher.format_price(price, symbol)
+                ma20_str = f"${ma20:.2f}" if ma20 else "N/A"
                 
-                if price is None or price == 0:
-                    price_str = "Veri Alınamıyor"
-                else:
-                    price_str = f"${price:.2f}"
+                print(f"✅ #{count} {symbol}: price={price} ({source}), signal={result['signal']}")
                 
                 message = f"""
 📊 <b>{symbol} ANALİZİ</b> #{count}
@@ -85,8 +83,8 @@ class AutoAnalyzer:
 
 💰 <b>Fiyat:</b> {price_str}
 📊 <b>RSI:</b> {rsi:.1f}
-📈 <b>MA20:</b> {"$" + str(ma20)[:8] if ma20 else "N/A"}
-ℹ️ <b>Gerekçe:</b> {', '.join(result.get('reasons', [])[:2])}
+📈 <b>MA20:</b> {ma20_str}
+ℹ️ <b>Kaynak:</b> {source}
 
 ⏰ {self._get_time()}
 """
