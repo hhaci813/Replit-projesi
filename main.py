@@ -2,7 +2,9 @@ import json
 import pickle
 import numpy as np
 from datetime import datetime
+from collections import Counter
 import os
+
 
 class OgrenenSistem:
     def __init__(self):
@@ -70,17 +72,119 @@ class OgrenenSistem:
         print("============================\n")
 
 
-if __name__ == "__main__":
-    print("Öğrenen Sistem başlatılıyor...")
-    sistem = OgrenenSistem()
+class AkilliOgrenenSistem(OgrenenSistem):
+    def __init__(self):
+        super().__init__()
     
-    sistem.bilgi_ekle("merhaba", "Türkçe selamlama")
-    sistem.bilgi_ekle("numpy_versiyon", np.__version__)
-    sistem.bilgi_ekle("python_bilgisi", "Programlama dili")
+    def yeni_veri_ekle(self, soru, cevap, kategori="genel"):
+        """Sisteme yeni veri ekle"""
+        yeni_veri = {
+            "soru": soru,
+            "cevap": cevap,
+            "kategori": kategori,
+            "zaman": datetime.now().isoformat(),
+            "kullanım_sayisi": 0
+        }
+        
+        self.veriler["ogrenme_verileri"].append(yeni_veri)
+        self.veriler["toplam_ogrenme"] += 1
+        self.veriler["son_guncelleme"] = datetime.now().isoformat()
+        
+        self.model_guncelle(soru, cevap, kategori)
+        
+        self.verileri_kaydet()
+        self.modeli_kaydet()
+        
+        print(f"Yeni bilgi ogrenildi: {soru} -> {cevap}")
+    
+    def model_guncelle(self, soru, cevap, kategori):
+        """Öğrenme modelini güncelle"""
+        if kategori not in self.model["ogrenilen_bilgiler"]:
+            self.model["ogrenilen_bilgiler"][kategori] = {}
+        
+        anahtar_kelimeler = soru.lower().split()
+        for kelime in anahtar_kelimeler:
+            if len(kelime) > 2:
+                if kelime not in self.model["ogrenilen_bilgiler"][kategori]:
+                    self.model["ogrenilen_bilgiler"][kategori][kelime] = []
+                
+                if cevap not in self.model["ogrenilen_bilgiler"][kategori][kelime]:
+                    self.model["ogrenilen_bilgiler"][kategori][kelime].append(cevap)
+    
+    def cevap_ver(self, soru):
+        """Soruyu değerlendir ve cevap ver"""
+        soru_lower = soru.lower()
+        bulunan_cevaplar = []
+        
+        for kategori, bilgiler in self.model["ogrenilen_bilgiler"].items():
+            if isinstance(bilgiler, dict):
+                for kelime, cevaplar in bilgiler.items():
+                    if isinstance(cevaplar, list) and kelime in soru_lower:
+                        bulunan_cevaplar.extend(cevaplar)
+        
+        if bulunan_cevaplar:
+            cevap_sayilari = Counter(bulunan_cevaplar)
+            en_iyi_cevap = cevap_sayilari.most_common(1)[0][0]
+            
+            self.kullanim_istatistigi_guncelle(soru_lower, en_iyi_cevap)
+            
+            return en_iyi_cevap
+        else:
+            return "Bu konuyu henuz ogrenmedim. Bana ogretmek ister misin?"
+    
+    def kullanim_istatistigi_guncelle(self, soru, cevap):
+        """Kullanım istatistiklerini güncelle"""
+        for veri in self.veriler["ogrenme_verileri"]:
+            if "soru" in veri and veri["soru"].lower() == soru and veri.get("cevap") == cevap:
+                veri["kullanım_sayisi"] = veri.get("kullanım_sayisi", 0) + 1
+                break
+        
+        self.verileri_kaydet()
+    
+    def durum_goster(self):
+        """Akıllı sistemin durumunu göster"""
+        print("\n=== Akilli Ogrenen Sistem Durumu ===")
+        print(f"Toplam ogrenme sayisi: {self.veriler['toplam_ogrenme']}")
+        print(f"Son guncelleme: {self.veriler['son_guncelleme']}")
+        
+        kategori_sayisi = sum(1 for k, v in self.model["ogrenilen_bilgiler"].items() if isinstance(v, dict))
+        print(f"Kategori sayisi: {kategori_sayisi}")
+        
+        if self.model["ogrenilen_bilgiler"]:
+            print("\nKategoriler ve Bilgiler:")
+            for kategori, bilgiler in self.model["ogrenilen_bilgiler"].items():
+                if isinstance(bilgiler, dict):
+                    print(f"\n  [{kategori.upper()}]")
+                    for kelime, cevaplar in bilgiler.items():
+                        if isinstance(cevaplar, list):
+                            for cevap in cevaplar:
+                                print(f"    - {kelime}: {cevap}")
+        print("=====================================\n")
+
+
+if __name__ == "__main__":
+    print("Akilli Ogrenen Sistem baslatiliyor...\n")
+    
+    sistem = AkilliOgrenenSistem()
+    
+    print("--- Sisteme yeni bilgiler ekleniyor ---")
+    sistem.yeni_veri_ekle("Python nedir?", "Python bir programlama dilidir", "programlama")
+    sistem.yeni_veri_ekle("Turkiye'nin baskenti neresi?", "Ankara", "cografya")
+    sistem.yeni_veri_ekle("Python kim tarafindan gelistirildi?", "Guido van Rossum", "programlama")
+    sistem.yeni_veri_ekle("En buyuk gezegen hangisi?", "Jupiter", "bilim")
+    
+    print("\n--- Sorular soruluyor ---")
+    sorular = [
+        "Python nedir?",
+        "Turkiye hakkinda bilgi ver",
+        "Yapay zeka nedir?"
+    ]
+    
+    for soru in sorular:
+        print(f"\nSoru: {soru}")
+        cevap = sistem.cevap_ver(soru)
+        print(f"Cevap: {cevap}")
     
     sistem.durum_goster()
     
-    sistem.verileri_kaydet()
-    sistem.modeli_kaydet()
-    
-    print("Veriler ve model kaydedildi!")
+    print("Sistem hazir!")
