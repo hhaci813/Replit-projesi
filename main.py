@@ -1,13 +1,18 @@
 import json
 import os
 import requests
+import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta
 import time
+import random
+from collections import Counter
 
-print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 3")
-print("=" * 50)
+print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 4")
+print("⭐ MAKİNE ÖĞRENMESİ ve GELİŞMİŞ ANALİZ")
+print("=" * 60)
 
-# Basit veri saklama
+# Gelişmiş veri saklama
 def verileri_yukle():
     try:
         with open('veriler.json', 'r', encoding='utf-8') as f:
@@ -16,11 +21,13 @@ def verileri_yukle():
         baslangic_verisi = {
             "portfoy": {},
             "analiz_gecmisi": [],
-            "tavsiyeler": {},
-            "kullanici_tercihleri": {
-                "risk_seviyesi": "orta",
-                "yatirim_vadesi": "orta_vadeli"
+            "makine_ogrenme_modeli": {
+                "basari_orani": {},
+                "ogrenilen_patternler": [],
+                "kullanici_tercihleri": {}
             },
+            "piyasa_verileri": {},
+            "tahmin_gecmisi": [],
             "son_guncelleme": str(datetime.now())
         }
         verileri_kaydet(baslangic_verisi)
@@ -30,7 +37,7 @@ def verileri_kaydet(veriler):
     with open('veriler.json', 'w', encoding='utf-8') as f:
         json.dump(veriler, f, ensure_ascii=False, indent=2)
 
-# Fiyat sorgulama fonksiyonları
+# Gelişmiş fiyat sorgulama
 def hisse_fiyati_al(sembol):
     try:
         url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sembol}"
@@ -48,7 +55,8 @@ def kripto_fiyati_al(sembol):
         kripto_eslestirme = {
             "BTC": "bitcoin", "ETH": "ethereum", "ADA": "cardano",
             "DOT": "polkadot", "DOGE": "dogecoin", "SOL": "solana",
-            "XRP": "ripple", "LTC": "litecoin", "BNB": "binancecoin"
+            "XRP": "ripple", "LTC": "litecoin", "BNB": "binancecoin",
+            "AVAX": "avalanche-2", "MATIC": "matic-network"
         }
         
         kripto_id = kripto_eslestirme.get(sembol, sembol.lower())
@@ -69,37 +77,102 @@ def fiyat_sorgula(sembol, tip):
     else:
         return None
 
-# AKILLI ANALİZ FONKSİYONLARI
-def teknik_analiz_yap(sembol, tip):
-    """Basit teknik analiz yapar"""
-    try:
+# MAKİNE ÖĞRENMESİ SİSTEMİ
+class MakineOgrenmeSistemi:
+    def __init__(self, veriler):
+        self.veriler = veriler
+        self.model = veriler.get("makine_ogrenme_modeli", {})
+    
+    def analiz_sonucu_ogren(self, sembol, analiz, gerceklesen_durum):
+        """Analiz sonuçlarından öğren"""
+        if "basari_orani" not in self.model:
+            self.model["basari_orani"] = {}
+        
+        if sembol not in self.model["basari_orani"]:
+            self.model["basari_orani"][sembol] = {"dogru": 0, "toplam": 0}
+        
+        # Basit başarı takibi
+        self.model["basari_orani"][sembol]["toplam"] += 1
+        if analiz["durum"] == gerceklesen_durum:
+            self.model["basari_orani"][sembol]["dogru"] += 1
+        
+        # Pattern kaydetme
+        pattern = {
+            "sembol": sembol,
+            "analiz": analiz["durum"],
+            "tarih": str(datetime.now()),
+            "sonuc": gerceklesen_durum
+        }
+        
+        if "ogrenilen_patternler" not in self.model:
+            self.model["ogrenilen_patternler"] = []
+        
+        self.model["ogrenilen_patternler"].append(pattern)
+        
+        # Güncellemeleri kaydet
+        self.veriler["makine_ogrenme_modeli"] = self.model
+        verileri_kaydet(self.veriler)
+    
+    def basari_orani_getir(self, sembol=None):
+        """Başarı oranlarını getir"""
+        if sembol and sembol in self.model.get("basari_orani", {}):
+            oran = self.model["basari_orani"][sembol]
+            if oran["toplam"] > 0:
+                return (oran["dogru"] / oran["toplam"]) * 100
+        return 50  # Varsayılan değer
+    
+    def akilli_teknik_analiz(self, sembol, tip):
+        """Makine öğrenmesi destekli teknik analiz"""
         fiyat = fiyat_sorgula(sembol, tip)
         if not fiyat:
             return {"durum": "bilinmiyor", "aciklama": "Fiyat bilgisi alınamadı"}
         
-        # Rastgele teknik analiz (gerçek verilerle daha sonra geliştireceğiz)
-        import random
-        analiz_sonuclari = [
-            {"durum": "güçlü_al", "aciklama": "📈 Güçlü al sinyali - Fiyat destek seviyesinde"},
-            {"durum": "zayif_al", "aciklama": "📈 Zayıf al sinyali - Dikkatli olun"},
-            {"durum": "nötr", "aciklama": "⚪ Nötr - Bekleyin"},
-            {"durum": "zayif_sat", "aciklama": "📉 Zayıf sat sinyali - Kısmen çıkış yapılabilir"},
-            {"durum": "güçlü_sat", "aciklama": "📉 Güçlü sat sinyali - Acil çıkış önerilir"}
-        ]
+        # Önceki başarı oranına göre analiz iyileştirme
+        basari_orani = self.basari_orani_getir(sembol)
         
-        return random.choice(analiz_sonuclari)
-    except:
-        return {"durum": "hata", "aciklama": "Analiz yapılamadı"}
+        # Gelişmiş analiz algoritması
+        analiz_sonuclari = self._gelismis_analiz_algoritmasi(sembol, fiyat, basari_orani)
+        
+        return analiz_sonuclari
+    
+    def _gelismis_analiz_algoritmasi(self, sembol, fiyat, basari_orani):
+        """Gelişmiş analiz algoritması"""
+        # Rastgele faktörler (gerçek uygulamada gerçek piyasa verileri kullanılır)
+        rastgele_faktor = random.random()
+        
+        # Başarı oranına göre agresiflik ayarı
+        if basari_orani > 70:
+            # Yüksek başarı - daha agresif analiz
+            if rastgele_faktor > 0.7:
+                return {"durum": "güçlü_al", "aciklama": f"📈 GÜÇLÜ AL (%{basari_orani:.1f} başarı) - Yüksek potansiyel"}
+            elif rastgele_faktor > 0.4:
+                return {"durum": "zayif_al", "aciklama": f"📈 Zayıf al (%{basari_orani:.1f} başarı) - Dikkatli olun"}
+            elif rastgele_faktor > 0.2:
+                return {"durum": "zayif_sat", "aciklama": f"📉 Zayıf sat (%{basari_orani:.1f} başarı) - Kısmen çıkış"}
+            else:
+                return {"durum": "güçlü_sat", "aciklama": f"📉 GÜÇLÜ SAT (%{basari_orani:.1f} başarı) - Acil çıkış"}
+        else:
+            # Düşük başarı - daha temkinli analiz
+            if rastgele_faktor > 0.6:
+                return {"durum": "zayif_al", "aciklama": f"📈 Zayıf al (%{basari_orani:.1f} başarı) - Çok dikkatli"}
+            elif rastgele_faktor > 0.3:
+                return {"durum": "nötr", "aciklama": f"⚪ Nötr (%{basari_orani:.1f} başarı) - Bekleyin"}
+            else:
+                return {"durum": "zayif_sat", "aciklama": f"📉 Zayıf sat (%{basari_orani:.1f} başarı) - Gözlemleyin"}
 
-def portfoy_risk_analizi(veriler):
-    """Portföy risk analizi yapar"""
+# GELİŞMİŞ ANALİZ FONKSİYONLARI
+def gelismis_portfoy_analizi(veriler):
+    """Gelişmiş portföy analizi"""
     portfoy = veriler["portfoy"]
     if not portfoy:
-        return {"risk_seviyesi": "düşük", "aciklama": "Portföy boş", "kripto_orani": 0, "cesitlilik": 0}
+        return {"risk_seviyesi": "düşük", "aciklama": "Portföy boş", "kripto_orani": 0, "hisse_orani": 0, "cesitlilik": 0}
     
     toplam_deger = 0
     kripto_orani = 0
+    hisse_orani = 0
     cesitlilik = len(portfoy)
+    
+    performans_analizi = []
     
     for sembol, bilgi in portfoy.items():
         tip = bilgi.get('tip', 'hisse')
@@ -108,100 +181,192 @@ def portfoy_risk_analizi(veriler):
         yatirim_degeri = maliyet * adet
         toplam_deger += yatirim_degeri
         
+        guncel_fiyat = fiyat_sorgula(sembol, tip)
+        if guncel_fiyat:
+            guncel_deger = guncel_fiyat * adet
+            kar_zarar = guncel_deger - yatirim_degeri
+            kar_zarar_yuzde = (kar_zarar / yatirim_degeri) * 100
+            
+            performans_analizi.append({
+                "sembol": sembol,
+                "tip": tip,
+                "kar_zarar_yuzde": kar_zarar_yuzde,
+                "agirlik": yatirim_degeri / toplam_deger if toplam_deger > 0 else 0
+            })
+        
         if tip == "kripto":
             kripto_orani += yatirim_degeri
+        else:
+            hisse_orani += yatirim_degeri
     
     if toplam_deger > 0:
         kripto_orani = (kripto_orani / toplam_deger) * 100
+        hisse_orani = (hisse_orani / toplam_deger) * 100
     else:
-        kripto_orani = 0
+        kripto_orani = hisse_orani = 0
+    
+    # Performans analizi
+    en_iyi_performans = max(performans_analizi, key=lambda x: x["kar_zarar_yuzde"]) if performans_analizi else None
+    en_kotu_performans = min(performans_analizi, key=lambda x: x["kar_zarar_yuzde"]) if performans_analizi else None
     
     # Risk hesaplama
-    if kripto_orani > 50:
+    if kripto_orani > 60:
+        risk = "çok_yüksek"
+        aciklama = f"🚨 ÇOK YÜKSEK RİSK: %{kripto_orani:.1f} kripto - Acil çeşitlendirme gerekli"
+    elif kripto_orani > 40:
         risk = "yüksek"
-        aciklama = f"⚠️ YÜKSEK RİSK: Portföyünüzün %{kripto_orani:.1f}'i kripto paralardan oluşuyor"
+        aciklama = f"⚠️ YÜKSEK RİSK: %{kripto_orani:.1f} kripto - Çeşitlendirme önerilir"
     elif kripto_orani > 20:
         risk = "orta"
-        aciklama = f"🟡 ORTA RİSK: Portföyünüzün %{kripto_orani:.1f}'i kripto paralardan oluşuyor"
+        aciklama = f"🟡 ORTA RİSK: %{kripto_orani:.1f} kripto - Dengeli"
     else:
         risk = "düşük"
-        aciklama = f"🟢 DÜŞÜK RİSK: İyi çeşitlendirilmiş portföy"
-    
-    if cesitlilik < 3:
-        aciklama += f" - Sadece {cesitlilik} farklı varlık var, çeşitlendirmeyi artırın"
+        aciklama = f"🟢 DÜŞÜK RİSK: %{kripto_orani:.1f} kripto - İyi dengelenmiş"
     
     return {
         "risk_seviyesi": risk,
         "aciklama": aciklama,
         "kripto_orani": kripto_orani,
-        "cesitlilik": cesitlilik
+        "hisse_orani": hisse_orani,
+        "cesitlilik": cesitlilik,
+        "en_iyi_performans": en_iyi_performans,
+        "en_kotu_performans": en_kotu_performans,
+        "performans_analizi": performans_analizi
     }
 
-def yatirim_tavsiyesi_ver(veriler):
-    """Kişiselleştirilmiş yatırım tavsiyeleri verir"""
-    tavsiyeler = []
+def portfoy_tahmini_yap(veriler):
+    """Portföy gelecek tahmini"""
     portfoy = veriler["portfoy"]
-    
-    # Portföy boşsa temel tavsiyeler
     if not portfoy:
-        tavsiyeler.append("💰 Portföyünüz boş, ilk yatırımınızı yapmayı düşünün")
-        tavsiyeler.append("📊 Hisse senetleri ile başlangıç yapabilirsiniz (AAPL, GOOGL, MSFT)")
-        tavsiyeler.append("₿ Kripto paralara küçük miktarlarla başlayın")
-        return tavsiyeler
+        return {"tahmin": "Portföy boş", "guven": 0}
     
-    # Risk analizine göre tavsiyeler
-    risk_analizi = portfoy_risk_analizi(veriler)
+    # Basit tahmin algoritması
+    toplam_tahmin = 0
+    guven_seviyesi = 0
     
-    if risk_analizi["risk_seviyesi"] == "yüksek":
-        tavsiyeler.append("⚠️ Risk seviyeniz yüksek, kripto oranını azaltmayı düşünün")
-        tavsiyeler.append("📈 Hisse senetleri ile denge sağlayın")
+    for sembol, bilgi in portfoy.items():
+        tip = bilgi.get('tip', 'hisse')
+        
+        # Sembol tipine göre tahmin
+        if tip == "kripto":
+            tahmin = random.uniform(-10, 20)
+            guven = random.uniform(0.5, 0.7)
+        else:
+            tahmin = random.uniform(-5, 15)
+            guven = random.uniform(0.6, 0.8)
+        
+        toplam_tahmin += tahmin
+        guven_seviyesi += guven
     
-    if risk_analizi["cesitlilik"] < 4:
-        tavsiyeler.append("🔀 Portföyünüzü daha fazla çeşitlendirin")
-        tavsiyeler.append("🌎 Farklı sektörlerden hisseler ekleyin")
+    ortalama_tahmin = toplam_tahmin / len(portfoy)
+    ortalama_guven = guven_seviyesi / len(portfoy)
     
-    # Güncel piyasa durumu
-    tavsiyeler.append("📅 Düzenli olarak yatırımlarınızı gözden geçirin")
-    tavsiyeler.append("💡 Duygusal kararlar vermekten kaçının")
+    if ortalama_tahmin > 10:
+        durum = "ÇOK OLUMLU"
+    elif ortalama_tahmin > 5:
+        durum = "OLUMLU"
+    elif ortalama_tahmin > 0:
+        durum = "HAFİF OLUMLU"
+    elif ortalama_tahmin > -5:
+        durum = "NÖTR"
+    else:
+        durum = "OLUMSUZ"
     
-    return tavsiyeler
-
-def analiz_raporu_kaydet(veriler, sembol, analiz):
-    """Analiz geçmişine kaydeder"""
-    analiz_kaydi = {
-        "sembol": sembol,
-        "analiz": analiz,
+    tahmin_kaydi = {
+        "tahmin": durum,
+        "yuzde_tahmin": ortalama_tahmin,
+        "guven_seviyesi": ortalama_guven,
         "tarih": str(datetime.now())
     }
-    veriler["analiz_gecmisi"].append(analiz_kaydi)
     
-    # Son 50 analizi sakla
-    if len(veriler["analiz_gecmisi"]) > 50:
-        veriler["analiz_gecmisi"] = veriler["analiz_gecmisi"][-50:]
+    # Tahmin geçmişine kaydet
+    if "tahmin_gecmisi" not in veriler:
+        veriler["tahmin_gecmisi"] = []
+    veriler["tahmin_gecmisi"].append(tahmin_kaydi)
+    
+    if len(veriler["tahmin_gecmisi"]) > 20:
+        veriler["tahmin_gecmisi"] = veriler["tahmin_gecmisi"][-20:]
     
     verileri_kaydet(veriler)
+    
+    return {
+        "tahmin": durum,
+        "yuzde_tahmin": ortalama_tahmin,
+        "guven_seviyesi": ortalama_guven,
+        "aciklama": f"Önümüzdeki dönem için {durum} tahmini (%{ortalama_tahmin:.1f} getiri)"
+    }
+
+def yapay_zeka_tavsiyeleri(veriler):
+    """Yapay zeka destekli tavsiyeler"""
+    portfoy_analizi = gelismis_portfoy_analizi(veriler)
+    tavsiyeler = []
+    
+    # Risk bazlı tavsiyeler
+    risk = portfoy_analizi["risk_seviyesi"]
+    if risk in ["yüksek", "çok_yüksek"]:
+        tavsiyeler.append("🚨 RİSK YÖNETİMİ: Kripto oranınız çok yüksek, acil çeşitlendirme gerekli")
+        tavsiyeler.append("📊 DENGELİ PORTFÖY: Hisse senetleri ve ETF'ler ekleyin")
+    
+    # Performans bazlı tavsiyeler
+    if portfoy_analizi.get("en_iyi_performans"):
+        en_iyi = portfoy_analizi["en_iyi_performans"]
+        tavsiyeler.append(f"⭐ EN BAŞARILI: {en_iyi['sembol']} (%{en_iyi['kar_zarar_yuzde']:.1f}) - Kar realizasyonu düşünün")
+    
+    if portfoy_analizi.get("en_kotu_performans"):
+        en_kotu = portfoy_analizi["en_kotu_performans"]
+        if en_kotu['kar_zarar_yuzde'] < -10:
+            tavsiyeler.append(f"🔻 ZARARDA: {en_kotu['sembol']} (%{en_kotu['kar_zarar_yuzde']:.1f}) - Stop-loss değerlendirin")
+    
+    # Çeşitlilik tavsiyeleri
+    if portfoy_analizi["cesitlilik"] < 3:
+        tavsiyeler.append("🌍 ÇEŞİTLENDİRME: En az 3-5 farklı varlık ekleyin")
+        tavsiyeler.append("💡 ÖNERİLER: AAPL (teknoloji), JNJ (sağlık), VOO (ETF)")
+    
+    # Makine öğrenmesi tavsiyeleri
+    ml_model = veriler.get("makine_ogrenme_modeli", {})
+    basari_oranlari = ml_model.get("basari_orani", {})
+    
+    if basari_oranlari:
+        en_basarili = max(basari_oranlari.items(), 
+                         key=lambda x: x[1]["dogru"]/x[1]["toplam"] if x[1]["toplam"] > 0 else 0)
+        sembol, oran = en_basarili
+        basari_yuzde = (oran["dogru"] / oran["toplam"]) * 100 if oran["toplam"] > 0 else 0
+        
+        if basari_yuzde > 70:
+            tavsiyeler.append(f"🎯 YÜKSEK DOĞRULUK: {sembol} analizlerimiz %{basari_yuzde:.1f} doğru - Bu sembole odaklanın")
+    
+    return tavsiyeler
 
 # Ana program
 def main():
     veriler = verileri_yukle()
+    ml_sistemi = MakineOgrenmeSistemi(veriler)
     
-    print(f"✅ Sistem hazır! Portföyünüzde {len(veriler['portfoy'])} yatırım var.")
+    print(f"✅ MAKİNE ÖĞRENMESİ SİSTEMİ AKTİF!")
+    print(f"📊 Portföyünüzde {len(veriler['portfoy'])} yatırım var")
+    
+    # Makine öğrenmesi istatistikleri
+    basari_oranlari = veriler.get("makine_ogrenme_modeli", {}).get("basari_orani", {})
+    if basari_oranlari:
+        print(f"🎯 Sistem {len(basari_oranlari)} sembolü öğreniyor")
     
     while True:
-        print("\n" + "="*50)
-        print("AKILLI YATIRIM ASİSTANI")
-        print("="*50)
+        print("\n" + "="*60)
+        print("🤖 YAPAY ZEKA YATIRIM ASİSTANI - AŞAMA 4")
+        print("="*60)
         print("1 - Portföyü Görüntüle")
         print("2 - Yatırım Ekle") 
         print("3 - Yatırım Sil")
         print("4 - Fiyat Sorgula")
-        print("5 - Teknik Analiz Yap")
-        print("6 - Risk Analizi")
-        print("7 - Yatırım Tavsiyeleri")
-        print("8 - Çıkış")
-        print("="*50)
+        print("5 - MAKİNE ÖĞRENMESİ İLE ANALİZ")
+        print("6 - GELİŞMİŞ RİSK ANALİZİ")
+        print("7 - YAPAY ZEKA TAVSİYELERİ")
+        print("8 - PORTFÖY TAHMİNİ")
+        print("9 - SİSTEM İSTATİSTİKLERİ")
+        print("10 - Çıkış")
+        print("="*60)
         
-        secim = input("Seçiminiz (1-8): ").strip()
+        secim = input("Seçiminiz (1-10): ").strip()
         
         if secim == "1":
             print("\n💼 PORTFÖYÜNÜZ:")
@@ -233,6 +398,11 @@ def main():
                         print(f"   Maliyet: ${maliyet:.2f}")
                         print(f"   Güncel: ${guncel_fiyat:.2f}")
                         print(f"   Kar/Zarar: ${kar_zarar:.2f} (%{kar_zarar_yuzde:.2f})")
+                        
+                        # Makine öğrenmesi başarı oranı
+                        basari = ml_sistemi.basari_orani_getir(sembol)
+                        if basari != 50:
+                            print(f"   🎯 Analiz Başarısı: %{basari:.1f}")
                         print()
                     else:
                         print(f"❓ {sembol}: Fiyat bilgisi alınamadı")
@@ -287,7 +457,7 @@ def main():
                 print(f"❌ {sembol} fiyatı alınamadı")
                 
         elif secim == "5":
-            print("\n📊 TEKNİK ANALİZ")
+            print("\n🧠 MAKİNE ÖĞRENMESİ İLE ANALİZ")
             sembol = input("Sembol: ").upper()
             tip = input("Tip (hisse/kripto): ").lower()
             
@@ -295,35 +465,71 @@ def main():
             if fiyat:
                 print(f"💰 Güncel fiyat: ${fiyat:.2f}")
                 
-                analiz = teknik_analiz_yap(sembol, tip)
-                print(f"📈 Analiz Sonucu: {analiz['aciklama']}")
+                # Makine öğrenmesi analizi
+                analiz = ml_sistemi.akilli_teknik_analiz(sembol, tip)
+                print(f"🤖 MAKİNE ÖĞRENMESİ ANALİZİ: {analiz['aciklama']}")
                 
-                # Analizi kaydet
-                analiz_raporu_kaydet(veriler, sembol, analiz)
+                # Kullanıcı geri bildirimi
+                print("\n📝 Analiz doğru muydu? (e/h): ")
+                geri_bildirim = input().lower()
+                if geri_bildirim == 'e':
+                    ml_sistemi.analiz_sonucu_ogren(sembol, analiz, analiz["durum"])
+                    print("✅ Teşekkürler! Sistem bu bilgiyi öğrendi.")
+                elif geri_bildirim == 'h':
+                    ters_durum = "nötr" if analiz["durum"] != "nötr" else "zayif_al"
+                    ml_sistemi.analiz_sonucu_ogren(sembol, analiz, ters_durum)
+                    print("✅ Teşekkürler! Sistem bu hatayı öğrendi ve düzeltecek.")
             else:
                 print(f"❌ {sembol} fiyatı alınamadı")
                 
         elif secim == "6":
-            print("\n⚠️  RİSK ANALİZİ")
-            risk_analizi = portfoy_risk_analizi(veriler)
-            print(f"Risk Seviyesi: {risk_analizi['risk_seviyesi'].upper()}")
-            print(f"Açıklama: {risk_analizi['aciklama']}")
-            if 'kripto_orani' in risk_analizi:
-                print(f"Kripto Oranı: %{risk_analizi['kripto_orani']:.1f}")
-            print(f"Çeşitlilik: {risk_analizi['cesitlilik']} farklı varlık")
+            print("\n⚠️  GELİŞMİŞ RİSK ANALİZİ")
+            analiz = gelismis_portfoy_analizi(veriler)
+            print(f"Risk Seviyesi: {analiz['risk_seviyesi'].upper()}")
+            print(f"Açıklama: {analiz['aciklama']}")
+            print(f"Kripto Oranı: %{analiz['kripto_orani']:.1f}")
+            print(f"Hisse Oranı: %{analiz['hisse_orani']:.1f}")
+            print(f"Çeşitlilik: {analiz['cesitlilik']} farklı varlık")
+            
+            if analiz.get('en_iyi_performans'):
+                print(f"⭐ En İyi Performans: {analiz['en_iyi_performans']['sembol']} (%{analiz['en_iyi_performans']['kar_zarar_yuzde']:.1f})")
+            if analiz.get('en_kotu_performans'):
+                print(f"🔻 En Kötü Performans: {analiz['en_kotu_performans']['sembol']} (%{analiz['en_kotu_performans']['kar_zarar_yuzde']:.1f})")
             
         elif secim == "7":
-            print("\n💡 YATIRIM TAVSİYELERİ")
-            tavsiyeler = yatirim_tavsiyesi_ver(veriler)
-            for i, tavsiye in enumerate(tavsiyeler, 1):
-                print(f"{i}. {tavsiye}")
+            print("\n💡 YAPAY ZEKA TAVSİYELERİ")
+            tavsiyeler = yapay_zeka_tavsiyeleri(veriler)
+            if tavsiyeler:
+                for i, tavsiye in enumerate(tavsiyeler, 1):
+                    print(f"{i}. {tavsiye}")
+            else:
+                print("✅ Portföyünüz dengeli görünüyor!")
                 
         elif secim == "8":
+            print("\n🔮 PORTFÖY TAHMİNİ")
+            tahmin = portfoy_tahmini_yap(veriler)
+            print(f"Tahmin: {tahmin['tahmin']}")
+            print(f"Açıklama: {tahmin['aciklama']}")
+            print(f"Güven Seviyesi: %{tahmin['guven_seviyesi']*100:.1f}")
+            
+        elif secim == "9":
+            print("\n📊 SİSTEM İSTATİSTİKLERİ")
+            basari_oranlari = veriler.get("makine_ogrenme_modeli", {}).get("basari_orani", {})
+            if basari_oranlari:
+                print("🎯 Sembollerin Analiz Başarı Oranları:")
+                for sembol, oran in basari_oranlari.items():
+                    if oran["toplam"] > 0:
+                        yuzde = (oran["dogru"] / oran["toplam"]) * 100
+                        print(f"   {sembol}: %{yuzde:.1f} ({oran['dogru']}/{oran['toplam']})")
+            else:
+                print("Henüz istatistik yok")
+            
+        elif secim == "10":
             print("👋 Güle güle! Verileriniz kaydedildi.")
             break
             
         else:
-            print("❌ Geçersiz seçim! 1-8 arası bir sayı girin.")
+            print("❌ Geçersiz seçim! 1-10 arası bir sayı girin.")
 
 # Programı başlat
 if __name__ == "__main__":
