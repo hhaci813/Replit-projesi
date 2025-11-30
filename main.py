@@ -18,6 +18,7 @@ from sentiment_analysis import SocialSentiment
 from advanced_ai import AdvancedAI
 from grafik_3d import Grafik3D
 from portfolio_rebalance import PortfolioRebalancing
+from telegram_bot import TelegramBot
 
 print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 7 (ULTIMATE)")
 print("⭐ TÜM ÖZELLİKLER ENTEGRE")
@@ -449,7 +450,7 @@ def main():
         print("  10 - Grafikler    11 - Excel Export    12 - Portföy Optimizasyonu")
         print("\nYENİ ÖZELLİKLER:")
         print("  19 - Sosyal Medya Sentiment    20 - İleri AI Modelleri    21 - 3D Grafikler")
-        print("  22 - Portfolio Rebalancing")
+        print("  22 - Portfolio Rebalancing     23 - Telegram Entegrasyonu")
         
         print("\nUYARILAR & DİĞER:")
         print("  13 - Uyarı Sistemi    14 - Haber Analizi    15 - Temettü Info")
@@ -594,6 +595,43 @@ def main():
             print("⚙️ PORTFÖY REBALANCING - OTOMATIK DENGE")
             print("="*80)
             rapor = PortfolioRebalancing.rebalancing_raporu_uret()
+        
+        elif secim == "23":
+            print("\n" + "="*80)
+            print("📱 TELEGRAM BOT ENTEGRASYONu")
+            print("="*80)
+            
+            print("\n1️⃣  Telegram Token Gir")
+            print("2️⃣  Chat ID Belirle")
+            print("3️⃣  Tavsiyeler Otomatik Gelsin\n")
+            
+            secim_tg = input("Seçim (Token gir/Demo göster): ").strip().lower()
+            
+            if secim_tg == "token gir":
+                token = input("Telegram Bot Token: ").strip()
+                chat_id = input("Telegram Chat ID: ").strip()
+                
+                # Token kontrol et
+                gecerli, mesaj = TelegramBot.token_gecerliligi_kontrol(token)
+                print(mesaj)
+                
+                if gecerli:
+                    veriler['telegram'] = {
+                        'token': token,
+                        'chat_id': chat_id,
+                        'aktif': True,
+                        'kayit_tarihi': str(datetime.now())
+                    }
+                    verileri_kaydet(veriler)
+                    print("✅ Telegram yapılandırıldı!")
+                    print("🎯 Şimdi tavsiyeler Telegram'a gelecek!")
+                    
+                    # Demo mesaj gönder
+                    bot = TelegramBot(token)
+                    result = bot.gunluk_tavsiye_gonder(chat_id)
+                    print(result['mesaj'])
+            else:
+                TelegramBot.demo_calistir()
             
         elif secim == "17":
             # Son kayıtları yap

@@ -42,6 +42,14 @@ def index():
             <h1>🤖 YAPAY ZEKA YATIRIM ASİSTANI - WEB DASHBOARD</h1>
             
             <div class="dashboard">
+                <div class="card" style="grid-column: 1 / 4; background: #1a3a1a; border: 2px solid #00ff00;">
+                    <h2>📱 Telegram Entegrasyonu</h2>
+                    <input type="text" id="telegram-token" placeholder="Telegram Bot Token (123456:ABC-DEF...)">
+                    <input type="text" id="telegram-chat" placeholder="Telegram Chat ID">
+                    <button onclick="telegramAyarla()">Telegram Bağla</button>
+                    <p id="telegram-status" class="status"></p>
+                </div>
+                
                 <div class="card portfoy">
                     <h2>💼 Portföy</h2>
                     <div id="portfoy">Yükleniyor...</div>
@@ -69,6 +77,25 @@ def index():
         </div>
         
         <script>
+            async function telegramAyarla() {
+                const token = document.getElementById('telegram-token').value;
+                const chatId = document.getElementById('telegram-chat').value;
+                
+                if (!token || !chatId) {
+                    document.getElementById('telegram-status').textContent = '❌ Token ve Chat ID gerekli';
+                    return;
+                }
+                
+                const res = await fetch('/api/telegram-ayarla', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({token, chat_id: chatId})
+                });
+                
+                const data = await res.json();
+                document.getElementById('telegram-status').textContent = data.mesaj;
+            }
+            
             async function yenile() {
                 const res = await fetch('/api/portfoy');
                 const data = await res.json();
@@ -122,6 +149,32 @@ def api_ekle():
         json.dump(veriler, f)
     
     return jsonify({"status": "ok"})
+
+@app.route('/api/telegram-ayarla', methods=['POST'])
+def telegram_ayarla():
+    """Telegram token'ı ayarla"""
+    data = request.json
+    token = data.get('token')
+    chat_id = data.get('chat_id')
+    
+    from telegram_bot import TelegramBot
+    
+    # Token geçerliliğini kontrol et
+    gecerli, mesaj = TelegramBot.token_gecerliligi_kontrol(token)
+    
+    if gecerli:
+        veriler = verileri_yukle()
+        veriler['telegram'] = {
+            'token': token,
+            'chat_id': chat_id,
+            'aktif': True
+        }
+        with open('veriler.json', 'w') as f:
+            json.dump(veriler, f)
+        
+        return jsonify({"status": "ok", "mesaj": "✅ Telegram yapılandırıldı"})
+    else:
+        return jsonify({"status": "error", "mesaj": mesaj})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
