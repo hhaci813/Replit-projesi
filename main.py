@@ -1,294 +1,184 @@
 import json
-import pickle
-import numpy as np
-from datetime import datetime
-from collections import Counter
 import os
+import requests
+from datetime import datetime
 
+print("🤖 YATIRIM ASİSTANI - AŞAMA 2")
+print("=" * 50)
 
-class OgrenenSistem:
-    def __init__(self):
-        self.veri_dosyasi = "ogrenme_verileri.json"
-        self.model_dosyasi = "ogrenme_modeli.pkl"
-        self.veriler = self.verileri_yukle()
-        self.model = self.modeli_yukle()
-        
-    def verileri_yukle(self):
-        """Kayıtlı verileri yükle"""
-        try:
-            with open(self.veri_dosyasi, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except FileNotFoundError:
-            return {
-                "ogrenme_verileri": [],
-                "son_guncelleme": datetime.now().isoformat(),
-                "toplam_ogrenme": 0
-            }
-    
-    def modeli_yukle(self):
-        """Kayıtlı modeli yükle"""
-        try:
-            with open(self.model_dosyasi, 'rb') as f:
-                return pickle.load(f)
-        except FileNotFoundError:
-            return {"ogrenilen_bilgiler": {}, "istatistikler": {}}
-    
-    def verileri_kaydet(self):
-        """Verileri dosyaya kaydet"""
-        with open(self.veri_dosyasi, 'w', encoding='utf-8') as f:
-            json.dump(self.veriler, f, ensure_ascii=False, indent=2)
-    
-    def modeli_kaydet(self):
-        """Modeli dosyaya kaydet"""
-        with open(self.model_dosyasi, 'wb') as f:
-            pickle.dump(self.model, f)
+# Basit veri saklama
+def verileri_yukle():
+    try:
+        with open('veriler.json', 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except:
+        baslangic_verisi = {
+            "portfoy": {},
+            "ogrenilenler": [],
+            "son_guncelleme": str(datetime.now())
+        }
+        verileri_kaydet(baslangic_verisi)
+        return baslangic_verisi
 
-    def bilgi_ekle(self, anahtar, deger):
-        """Yeni bilgi ekle"""
-        self.model["ogrenilen_bilgiler"][anahtar] = deger
-        self.veriler["ogrenme_verileri"].append({
-            "anahtar": anahtar,
-            "deger": deger,
-            "tarih": datetime.now().isoformat()
-        })
-        self.veriler["toplam_ogrenme"] += 1
-        self.veriler["son_guncelleme"] = datetime.now().isoformat()
-        print(f"Bilgi eklendi: {anahtar} = {deger}")
+def verileri_kaydet(veriler):
+    with open('veriler.json', 'w', encoding='utf-8') as f:
+        json.dump(veriler, f, ensure_ascii=False, indent=2)
 
-    def bilgi_getir(self, anahtar):
-        """Kayıtlı bilgiyi getir"""
-        return self.model["ogrenilen_bilgiler"].get(anahtar, None)
+# Fiyat sorgulama fonksiyonları
+def hisse_fiyati_al(sembol):
+    """Hisse fiyatını al"""
+    try:
+        url = f"https://query1.finance.yahoo.com/v8/finance/chart/{sembol}"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            fiyat = data['chart']['result'][0]['meta']['regularMarketPrice']
+            return fiyat
+        return None
+    except:
+        return None
 
-    def durum_goster(self):
-        """Sistemin durumunu göster"""
-        print("\n=== Öğrenen Sistem Durumu ===")
-        print(f"Toplam öğrenme sayısı: {self.veriler['toplam_ogrenme']}")
-        print(f"Son güncelleme: {self.veriler['son_guncelleme']}")
-        print(f"Kayıtlı bilgi sayısı: {len(self.model['ogrenilen_bilgiler'])}")
-        if self.model["ogrenilen_bilgiler"]:
-            print("\nÖğrenilen Bilgiler:")
-            for anahtar, deger in self.model["ogrenilen_bilgiler"].items():
-                print(f"  - {anahtar}: {deger}")
-        print("============================\n")
-
-
-class AkilliOgrenenSistem(OgrenenSistem):
-    def __init__(self):
-        super().__init__()
-    
-    def yeni_veri_ekle(self, soru, cevap, kategori="genel"):
-        """Sisteme yeni veri ekle"""
-        yeni_veri = {
-            "soru": soru,
-            "cevap": cevap,
-            "kategori": kategori,
-            "zaman": datetime.now().isoformat(),
-            "kullanım_sayisi": 0
+def kripto_fiyati_al(sembol):
+    """Kripto fiyatını al"""
+    try:
+        # Örnek kriptolar için basit eşleme
+        kripto_eslestirme = {
+            "BTC": "bitcoin",
+            "ETH": "ethereum", 
+            "ADA": "cardano",
+            "DOT": "polkadot",
+            "DOGE": "dogecoin"
         }
         
-        self.veriler["ogrenme_verileri"].append(yeni_veri)
-        self.veriler["toplam_ogrenme"] += 1
-        self.veriler["son_guncelleme"] = datetime.now().isoformat()
-        
-        self.model_guncelle(soru, cevap, kategori)
-        
-        self.verileri_kaydet()
-        self.modeli_kaydet()
-        
-        print(f"Yeni bilgi ogrenildi: {soru} -> {cevap}")
-    
-    def model_guncelle(self, soru, cevap, kategori):
-        """Öğrenme modelini güncelle"""
-        if kategori not in self.model["ogrenilen_bilgiler"]:
-            self.model["ogrenilen_bilgiler"][kategori] = {}
-        
-        anahtar_kelimeler = soru.lower().split()
-        for kelime in anahtar_kelimeler:
-            if len(kelime) > 2:
-                if kelime not in self.model["ogrenilen_bilgiler"][kategori]:
-                    self.model["ogrenilen_bilgiler"][kategori][kelime] = []
-                
-                if cevap not in self.model["ogrenilen_bilgiler"][kategori][kelime]:
-                    self.model["ogrenilen_bilgiler"][kategori][kelime].append(cevap)
-    
-    def cevap_ver(self, soru):
-        """Soruyu değerlendir ve cevap ver"""
-        soru_lower = soru.lower()
-        bulunan_cevaplar = []
-        
-        for kategori, bilgiler in self.model["ogrenilen_bilgiler"].items():
-            if isinstance(bilgiler, dict):
-                for kelime, cevaplar in bilgiler.items():
-                    if isinstance(cevaplar, list) and kelime in soru_lower:
-                        bulunan_cevaplar.extend(cevaplar)
-        
-        if bulunan_cevaplar:
-            cevap_sayilari = Counter(bulunan_cevaplar)
-            en_iyi_cevap = cevap_sayilari.most_common(1)[0][0]
-            
-            self.kullanim_istatistigi_guncelle(soru_lower, en_iyi_cevap)
-            
-            return en_iyi_cevap
-        else:
-            return None
-    
-    def kullanim_istatistigi_guncelle(self, soru, cevap):
-        """Kullanım istatistiklerini güncelle"""
-        for veri in self.veriler["ogrenme_verileri"]:
-            if "soru" in veri and veri["soru"].lower() == soru and veri.get("cevap") == cevap:
-                veri["kullanım_sayisi"] = veri.get("kullanım_sayisi", 0) + 1
-                break
-        
-        self.verileri_kaydet()
-    
-    def durum_goster(self):
-        """Akıllı sistemin durumunu göster"""
-        print("\n=== Akilli Ogrenen Sistem Durumu ===")
-        print(f"Toplam ogrenme sayisi: {self.veriler['toplam_ogrenme']}")
-        print(f"Son guncelleme: {self.veriler['son_guncelleme']}")
-        
-        kategori_sayisi = sum(1 for k, v in self.model["ogrenilen_bilgiler"].items() if isinstance(v, dict))
-        print(f"Kategori sayisi: {kategori_sayisi}")
-        
-        if self.model["ogrenilen_bilgiler"]:
-            print("\nKategoriler ve Bilgiler:")
-            for kategori, bilgiler in self.model["ogrenilen_bilgiler"].items():
-                if isinstance(bilgiler, dict):
-                    print(f"\n  [{kategori.upper()}]")
-                    for kelime, cevaplar in bilgiler.items():
-                        if isinstance(cevaplar, list):
-                            for cevap in cevaplar:
-                                print(f"    - {kelime}: {cevap}")
-        print("=====================================\n")
+        kripto_id = kripto_eslestirme.get(sembol, sembol.lower())
+        url = f"https://api.coingecko.com/api/v3/simple/price?ids={kripto_id}&vs_currencies=usd"
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return data[kripto_id]['usd']
+        return None
+    except:
+        return None
 
+def fiyat_sorgula(sembol, tip):
+    """Sembolün fiyatını sorgula"""
+    if tip == "hisse":
+        return hisse_fiyati_al(sembol)
+    elif tip == "kripto":
+        return kripto_fiyati_al(sembol)
+    else:
+        return None
 
-class GelismisOgrenenSistem(AkilliOgrenenSistem):
-    def __init__(self):
-        super().__init__()
-        self.otomatik_yedekleme()
-    
-    def otomatik_yedekleme(self):
-        """Otomatik yedekleme oluştur"""
-        import shutil
-        import time
-        
-        try:
-            son_yedekleme = self.veriler.get("son_yedekleme", 0)
-            simdiki_zaman = time.time()
-            
-            if simdiki_zaman - son_yedekleme > 604800:  # 7 gun
-                if os.path.exists(self.veri_dosyasi):
-                    yedek_dosya = f"yedek_{int(simdiki_zaman)}.json"
-                    shutil.copy2(self.veri_dosyasi, yedek_dosya)
-                    self.veriler["son_yedekleme"] = simdiki_zaman
-                    self.verileri_kaydet()
-                    print("Otomatik yedekleme tamamlandi")
-                
-        except Exception as e:
-            print(f"Yedekleme hatasi: {e}")
-    
-    def bilgi_sil(self, soru):
-        """Öğrenilmiş bilgiyi sil"""
-        onceki_sayi = len(self.veriler["ogrenme_verileri"])
-        self.veriler["ogrenme_verileri"] = [
-            v for v in self.veriler["ogrenme_verileri"] 
-            if not ("soru" in v and v["soru"].lower() == soru.lower())
-        ]
-        
-        silinen = onceki_sayi - len(self.veriler["ogrenme_verileri"])
-        if silinen > 0:
-            self.veriler["toplam_ogrenme"] -= silinen
-            self.verileri_kaydet()
-            self.modeli_yeniden_olustur()
-            print(f"'{soru}' bilgisi silindi")
-        else:
-            print(f"'{soru}' bulunamadi")
-    
-    def modeli_yeniden_olustur(self):
-        """Modeli sıfırdan oluştur"""
-        self.model = {"ogrenilen_bilgiler": {}, "istatistikler": {}}
-        
-        for veri in self.veriler["ogrenme_verileri"]:
-            if "soru" in veri:
-                self.model_guncelle(veri["soru"], veri["cevap"], veri.get("kategori", "genel"))
-        
-        self.modeli_kaydet()
-
-
+# Ana program
 def main():
-    print("Akilli Ogrenen Sisteme Hos Geldiniz!")
-    print("=" * 50)
+    veriler = verileri_yukle()
     
-    sistem = AkilliOgrenenSistem()
-    
-    print(f"Sistem durumu: {len(sistem.veriler['ogrenme_verileri'])} bilgi yuklendi")
-    print("Komutlar: 'cikis', 'durum', 'liste', 'ogret <soru> -> <cevap>'")
-    print("=" * 50)
+    print("✅ Sistem hazır! Portföyünüzde", len(veriler["portfoy"]), "yatırım var.")
     
     while True:
-        try:
-            kullanici_girdisi = input("\nSen: ").strip()
-            
-            if not kullanici_girdisi:
-                continue
-            
-            if kullanici_girdisi.lower() in ['cikis', 'çıkış', 'exit', 'quit']:
-                print("Gorusmek uzere! Ogrendiklerim kaydedildi.")
-                break
-            
-            elif kullanici_girdisi.lower() == 'durum':
-                print(f"Ogrenme Durumu:")
-                print(f"   - Toplam bilgi: {sistem.veriler['toplam_ogrenme']}")
-                print(f"   - Son guncelleme: {sistem.veriler['son_guncelleme']}")
-                kategoriler = [k for k, v in sistem.model['ogrenilen_bilgiler'].items() if isinstance(v, dict)]
-                print(f"   - Kategoriler: {kategoriler}")
-            
-            elif kullanici_girdisi.lower() == 'liste':
-                print("Ogrenilen Bilgiler (son 10):")
-                son_veriler = [v for v in sistem.veriler["ogrenme_verileri"] if "soru" in v][-10:]
-                if son_veriler:
-                    for i, veri in enumerate(son_veriler, 1):
-                        kullanim = veri.get('kullanım_sayisi', 0)
-                        print(f"   {i}. {veri['soru']} -> {veri['cevap']} (Kullanim: {kullanim})")
-                else:
-                    print("   Henuz soru-cevap verisi yok.")
-            
-            elif kullanici_girdisi.lower().startswith('ogret ') or kullanici_girdisi.lower().startswith('öğret '):
-                try:
-                    _, ogretme_verisi = kullanici_girdisi.split(' ', 1)
-                    if '->' in ogretme_verisi:
-                        soru, cevap = ogretme_verisi.split('->', 1)
-                        sistem.yeni_veri_ekle(soru.strip(), cevap.strip())
-                    else:
-                        print("Hatali format! Dogru kullanim: ogret <soru> -> <cevap>")
-                except ValueError:
-                    print("Hatali format! Dogru kullanim: ogret <soru> -> <cevap>")
-            
+        print("\n" + "="*50)
+        print("NE YAPMAK İSTERSİNİZ?")
+        print("1 - Portföyü Görüntüle (Güncel Fiyatlarla)")
+        print("2 - Yatırım Ekle") 
+        print("3 - Yatırım Sil")
+        print("4 - Fiyat Sorgula")
+        print("5 - Çıkış")
+        print("="*50)
+        
+        secim = input("Seçiminiz (1-5): ").strip()
+        
+        if secim == "1":
+            print("\n💼 PORTFÖYÜNÜZ (Güncel Fiyatlarla):")
+            if not veriler["portfoy"]:
+                print("Portföyünüz boş")
             else:
-                cevap = sistem.cevap_ver(kullanici_girdisi)
-                if cevap is None:
-                    print("Bot: Bu konuyu henuz ogrenmedim. Bana ogretmek ister misin?")
-                    print("Ornek: ogret <soru> -> <cevap>")
-                    ogretme_girisi = input("Cevap: ").strip()
-                    if ogretme_girisi and "->" in ogretme_girisi:
-                        soru, cevap_ogren = ogretme_girisi.split("->", 1)
-                        sistem.yeni_veri_ekle(kullanici_girdisi, cevap_ogren.strip())
-                        print(f"Bot: Tesekkurler! '{cevap_ogren.strip()}' cevapini ogrendim.")
-                    else:
-                        print("Bot: Anlasilmadi. Lutfen sonra tekrar deneyin.")
-                else:
-                    print(f"Bot: {cevap}")
+                toplam_kar_zarar = 0
+                toplam_yatirim = 0
                 
-        except KeyboardInterrupt:
-            print("\nGorusmek uzere! Veriler kaydedildi.")
+                for sembol, bilgi in veriler["portfoy"].items():
+                    tip = bilgi.get('tip', 'hisse')
+                    adet = bilgi['adet']
+                    maliyet = bilgi['maliyet']
+                    
+                    # Güncel fiyatı al
+                    guncel_fiyat = fiyat_sorgula(sembol, tip)
+                    
+                    if guncel_fiyat:
+                        guncel_deger = guncel_fiyat * adet
+                        yatirim_degeri = maliyet * adet
+                        kar_zarar = guncel_deger - yatirim_degeri
+                        kar_zarar_yuzde = (kar_zarar / yatirim_degeri) * 100
+                        
+                        toplam_kar_zarar += kar_zarar
+                        toplam_yatirim += yatirim_degeri
+                        
+                        durum = "🟢" if kar_zarar >= 0 else "🔴"
+                        print(f"{durum} {sembol} ({tip}):")
+                        print(f"   Adet: {adet}")
+                        print(f"   Maliyet: ${maliyet:.2f}")
+                        print(f"   Güncel: ${guncel_fiyat:.2f}")
+                        print(f"   Kar/Zarar: ${kar_zarar:.2f} (%{kar_zarar_yuzde:.2f})")
+                        print()
+                    else:
+                        print(f"❓ {sembol}: Fiyat bilgisi alınamadı")
+                
+                if toplam_yatirim > 0:
+                    print(f"📊 TOPLAM DURUM:")
+                    print(f"   Toplam Yatırım: ${toplam_yatirim:.2f}")
+                    print(f"   Toplam Kar/Zarar: ${toplam_kar_zarar:.2f}")
+                    getiri_orani = (toplam_kar_zarar / toplam_yatirim) * 100
+                    print(f"   Getiri Oranı: %{getiri_orani:.2f}")
+                    
+        elif secim == "2":
+            print("\n➕ YENİ YATIRIM EKLE")
+            sembol = input("Sembol (Örnek: AAPL, BTC): ").upper()
+            tip = input("Tip (hisse/kripto): ").lower()
+            adet = float(input("Adet: "))
+            maliyet = float(input("Maliyet ($): "))
+            
+            # Fiyat kontrolü
+            guncel_fiyat = fiyat_sorgula(sembol, tip)
+            if guncel_fiyat:
+                print(f"💰 Güncel fiyat: ${guncel_fiyat:.2f}")
+            
+            veriler["portfoy"][sembol] = {
+                "tip": tip,
+                "adet": adet,
+                "maliyet": maliyet,
+                "tarih": str(datetime.now())
+            }
+            veriler["son_guncelleme"] = str(datetime.now())
+            verileri_kaydet(veriler)
+            print(f"✅ {sembol} portföye eklendi!")
+            
+        elif secim == "3":
+            print("\n🗑️ YATIRIM SİL")
+            sembol = input("Silinecek sembol: ").upper()
+            if sembol in veriler["portfoy"]:
+                del veriler["portfoy"][sembol]
+                verileri_kaydet(veriler)
+                print(f"✅ {sembol} portföyden silindi!")
+            else:
+                print("❌ Bu sembol portföyde bulunamadı")
+                
+        elif secim == "4":
+            print("\n💰 FİYAT SORGULA")
+            sembol = input("Sembol: ").upper()
+            tip = input("Tip (hisse/kripto): ").lower()
+            
+            fiyat = fiyat_sorgula(sembol, tip)
+            if fiyat:
+                print(f"💰 {sembol} güncel fiyat: ${fiyat:.2f}")
+            else:
+                print(f"❌ {sembol} fiyatı alınamadı")
+                
+        elif secim == "5":
+            print("👋 Güle güle! Verileriniz kaydedildi.")
             break
-        except EOFError:
-            print("\nOturum sonlandirildi.")
-            break
-        except Exception as e:
-            print(f"Bir hata olustu: {e}")
+            
+        else:
+            print("❌ Geçersiz seçim! 1-5 arası bir sayı girin.")
 
-
+# Programı başlat
 if __name__ == "__main__":
-    print("Replit kalici depolama kullaniliyor...")
     main()
