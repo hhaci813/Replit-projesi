@@ -13,6 +13,12 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill
 import threading
 
+# Yeni özellikler
+from sentiment_analysis import SocialSentiment
+from advanced_ai import AdvancedAI
+from grafik_3d import Grafik3D
+from portfolio_rebalance import PortfolioRebalancing
+
 print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 7 (ULTIMATE)")
 print("⭐ TÜM ÖZELLİKLER ENTEGRE")
 print("📊 Risk Metrikleri, Haber, Teknik Desenleri, Fiyat Tahmini, Uyarılar")
@@ -441,6 +447,10 @@ def main():
         print("  7 - Backtesting    8 - Fiyat Tahmini    9 - Korelasyon Analizi")
         print("\nGRAFİKLER & EXPORT:")
         print("  10 - Grafikler    11 - Excel Export    12 - Portföy Optimizasyonu")
+        print("\nYENİ ÖZELLİKLER:")
+        print("  19 - Sosyal Medya Sentiment    20 - İleri AI Modelleri    21 - 3D Grafikler")
+        print("  22 - Portfolio Rebalancing")
+        
         print("\nUYARILAR & DİĞER:")
         print("  13 - Uyarı Sistemi    14 - Haber Analizi    15 - Temettü Info")
         print("  16 - Ekonomik Takvim    18 - Verileri Göster    17 - Çıkış")
@@ -551,6 +561,39 @@ def main():
             tum_verileri_goster()
             rapor = veri_analiz_raporu()
             print(f"\n✅ Veri raporu oluşturuldu!")
+        
+        elif secim == "19":
+            print("\n" + "="*80)
+            print("🔴 SOSYAL MEDYA SENTIMENT ANALİZİ")
+            print("="*80)
+            SocialSentiment.finansal_haberler_analiz([])
+            SocialSentiment.trend_analizi()
+            
+        elif secim == "20":
+            print("\n" + "="*80)
+            print("🧠 İLERİ YAPAY ZEKA MODELLERİ")
+            print("="*80)
+            AdvancedAI.derin_ogrenme_tahmin(None, "AAPL")
+            AdvancedAI.ensemble_modeli(None)
+            AdvancedAI.anomali_tespit(None)
+            AdvancedAI.modeli_degerlendirme()
+            
+        elif secim == "21":
+            print("\n" + "="*80)
+            print("🎨 3D GRAFİKLER VE VİZÜALİZASYONLAR")
+            print("="*80)
+            grafikler = Grafik3D.grafikleri_uret()
+            print("\n✅ Grafikler tarayıcıda açabilirsiniz:")
+            print("   - portfoy_3d.html")
+            print("   - fiyat_3d_yuzey.html")
+            print("   - risk_getiri_3d.html")
+            print("   - korelasyon_3d.html")
+            
+        elif secim == "22":
+            print("\n" + "="*80)
+            print("⚙️ PORTFÖY REBALANCING - OTOMATIK DENGE")
+            print("="*80)
+            rapor = PortfolioRebalancing.rebalancing_raporu_uret()
             
         elif secim == "17":
             # Son kayıtları yap
