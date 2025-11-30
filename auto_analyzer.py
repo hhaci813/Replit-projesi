@@ -38,37 +38,42 @@ class AutoAnalyzer:
 """
             elif symbol == "BTC":
                 result = self.analyzer.generate_signal("BTC-USD")
-                if result['signal'] == "?":
-                    return
+                price = result.get('price', 0)
+                rsi = result.get('rsi', 50)
+                ma20 = result.get('ma20', price)
+                ma50 = result.get('ma50', price)
                 
                 message = f"""
 🪙 <b>BITCOIN ANALİZİ</b> #{count}
 
 {result['signal']}
 
-💰 <b>Fiyat:</b> ${result['price']:.2f}
-📊 <b>RSI:</b> {result['rsi']:.1f}
-📈 <b>MA20:</b> ${result['ma20']:.2f}
-📉 <b>MA50:</b> ${result['ma50']:.2f}
+💰 <b>Fiyat:</b> ${price:.2f}
+📊 <b>RSI:</b> {rsi:.1f}
+📈 <b>MA20:</b> ${ma20:.2f}
+📉 <b>MA50:</b> ${ma50:.2f}
+ℹ️ <b>Gerekçe:</b> {', '.join(result.get('reasons', [])[:2])}
 
-<b>Hedef:</b> ${result.get('price', 0) * 1.05:.2f}
+<b>Hedef:</b> ${price * 1.05:.2f}
 ⏰ {self._get_time()}
 """
             else:
                 result = self.analyzer.generate_signal(symbol)
-                if result['signal'] == "?":
-                    return
+                price = result.get('price', 0)
+                rsi = result.get('rsi', 50)
+                ma20 = result.get('ma20', price)
                 
                 message = f"""
 📊 <b>{symbol} ANALİZİ</b> #{count}
 
 {result['signal']}
 
-💰 <b>Fiyat:</b> ${result['price']:.2f}
-📊 <b>RSI:</b> {result['rsi']:.1f}
-📈 <b>MA20:</b> ${result['ma20']:.2f}
+💰 <b>Fiyat:</b> ${price:.2f}
+📊 <b>RSI:</b> {rsi:.1f}
+📈 <b>MA20:</b> ${ma20:.2f}
+ℹ️ <b>Gerekçe:</b> {', '.join(result.get('reasons', [])[:2])}
 
-<b>Hedef:</b> ${result.get('price', 0) * 1.2:.2f}
+<b>Hedef:</b> ${price * 1.2:.2f}
 ⏰ {self._get_time()}
 """
             
