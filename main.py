@@ -1729,7 +1729,9 @@ def main():
         elif secim == "98":
             print("✅ Seçenek 98: College Savings Planner")
         elif secim == "99":
+            import threading
             from auto_run_system import AutoRunSystem
+            
             print("\n" + "="*80)
             print("🚀 SEÇENEK 99: 24/7 HAFIZADA AUTOMASYONU")
             print("="*80)
@@ -1737,9 +1739,17 @@ def main():
             auto_run_system = AutoRunSystem()
             msg = auto_run_system.start_all_systems()
             print(msg)
-            print("\n✅ Otomasyonlar arka planda çalışıyor...")
-            print("🔔 Telegram mesajları her 2 dakikada gelecek\n")
-            auto_run_system.keep_running()
+            print("\n✅ Otomasyonlar arka planda BACKGROUND THREAD'de çalışıyor...")
+            print("🔔 Telegram mesajları her 2 dakikada gelecek!")
+            print("💻 Ana program devam ediyor...\n")
+            
+            # Scheduler'ı background thread'de çalıştır
+            scheduler_thread = threading.Thread(target=auto_run_system.keep_running, daemon=True)
+            scheduler_thread.start()
+            
+            # Ana program devam et (sonsuz loop olmadan)
+            print("✅ Sistem başlatıldı. Herhangi bir tuşa basın...")
+            input()
         elif secim == "100":
             print("\n" + "="*80)
             print("⭐ MASTER DASHBOARD - Tüm Sistem Kontrol Paneli")
