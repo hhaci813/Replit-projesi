@@ -1174,3 +1174,73 @@ def main():
                     print("✅ Analiz Telegram'a gönderildi!")
                 else:
                     print(f"❌ Gönderme başarısız: {msg}")
+
+        elif secim == "36":
+            print("\n" + "="*80)
+            print("⚡ HIZLI TELEGRAM GÖNDER - Symbol Analizi (Komut Yok)")
+            print("="*80)
+            
+            symbol = input("\nSembol (XRPTRY, AAPL, MSFT, vb): ").upper().strip()
+            
+            if not symbol:
+                print("❌ Sembol gerekli")
+                continue
+            
+            print(f"\n📊 {symbol} analiz ediliyor...")
+            
+            from symbol_analyzer import SymbolAnalyzer
+            from telegram_service import TelegramService
+            
+            analyzer = SymbolAnalyzer()
+            telegram = TelegramService()
+            
+            # Analiz yap
+            if symbol == "XRPTRY":
+                result = analyzer.xrptry_manual_analysis()
+                message = f"""
+🔍 <b>{symbol} ANALİZİ</b>
+
+{result['signal']} <b>SİNYAL</b>
+
+💰 <b>Fiyat:</b> ₺{result['current_price']}
+📊 <b>Support:</b> ₺{result['support']}
+📈 <b>Resistance:</b> ₺{result['resistance']}
+🎯 <b>Hedef:</b> ₺{result['target']}
+
+🛑 <b>Risk:</b>
+   • Stop Loss: ₺{result['stop_loss']}
+   • Risk/Reward: {result['risk_reward']}x
+
+✅ <b>Nedenler:</b>
+"""
+                for reason in result.get('reasons', []):
+                    message += f"   ✓ {reason}\n"
+            else:
+                result = analyzer.generate_signal(symbol)
+                if result['signal'] == "?":
+                    print(f"❌ {symbol} analiz edilemedi: {result.get('reason', 'Veri yok')}")
+                    continue
+                
+                message = f"""
+🔍 <b>{symbol} ANALİZİ</b>
+
+{result['signal']} <b>SİNYAL</b>
+
+💰 <b>Fiyat:</b> ${result['price']:.2f}
+📊 <b>RSI:</b> {result['rsi']:.1f}
+📈 <b>MA20:</b> ${result['ma20']:.2f}
+📉 <b>MA50:</b> ${result['ma50']:.2f}
+
+✅ <b>Nedenler:</b>
+"""
+                for reason in result.get('reasons', []):
+                    message += f"   ✓ {reason}\n"
+            
+            # Telegram'a gönder (komut yok, direkt gönder!)
+            ok, msg = telegram._send_message(message)
+            
+            if ok:
+                print(f"✅ {symbol} ANALİZİ TELEGRAM'A GÖNDERİLDİ!")
+                print(f"   Sinyal: {result.get('signal', result.get('signal', '?'))}")
+            else:
+                print(f"❌ Gönderme başarısız: {msg}")
