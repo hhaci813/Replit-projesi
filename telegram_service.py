@@ -6,9 +6,12 @@ from datetime import datetime
 
 class TelegramService:
     def __init__(self):
-        self.token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        self.token = os.environ.get('TELEGRAM_BOT_TOKEN', '').strip()
         self.chat_id = 8391537149
-        self.base_url = f"https://api.telegram.org/bot{self.token}"
+        # Token kontrolü
+        if not self.token or self.token.startswith("Use this"):
+            self.token = None  # Geçersiz token
+        self.base_url = f"https://api.telegram.org/bot{self.token}" if self.token else None
     
     def test_connection(self):
         """Telegram bağlantısını test et"""
@@ -123,6 +126,8 @@ Rebalancing: Gerekli
     
     def _send_message(self, text):
         """Mesaj gönder"""
+        if not self.token or not self.base_url:
+            return False, "❌ Telegram Token Geçersiz veya Boş. Replit Dashboard'tan Bot Token'ını al ve TELEGRAM_BOT_TOKEN secret'ine ekle."
         if not self.token:
             return {"status": "error", "mesaj": "❌ Token gerekli"}
         
