@@ -1,0 +1,23 @@
+{
+  "default": {
+    "username": "default",
+    "password": "1234",
+    "alpaca_key": "DEMO",
+    "binance_key": "DEMO",
+    "portfoy": {},
+    "islemler": [],
+    "created": "2025-11-30T12:34:24.842378"
+  },
+  "testuser": {
+    "password": "password123",
+    "alpaca_keys": {
+      "api_key": "",
+      "secret": ""
+    },
+    "binance_keys": {
+      "api_key": "",
+      "secret": ""
+    },
+    "created": "2025-11-30T12:34:24.850260"
+  }
+}

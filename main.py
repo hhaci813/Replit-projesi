@@ -23,6 +23,8 @@ from telegram_service import TelegramService
 from broker_trading import BrokerTrading
 from alpaca_broker import AlpacaBroker
 from binance_broker import BinanceBroker
+from broker_persistence import BrokerPersistence
+from broker_auth import BrokerAuth
 
 print("🤖 AKILLI YATIRIM ASİSTANI - AŞAMA 7 (ULTIMATE)")
 print("⭐ TÜM ÖZELLİKLER ENTEGRE")
@@ -762,6 +764,58 @@ def main():
                     fiyat = input("Take Profit Fiyatı: ")
                     print(trading.otomatik_take_profit(sembol, fiyat))
                 elif auto_secim == "7":
+                    break
+        
+        elif secim == "27":
+            print("\n" + "="*80)
+            print("👤 BROKER HESAP YÖNETİMİ")
+            print("="*80)
+            
+            auth = BrokerAuth()
+            persistence = BrokerPersistence()
+            
+            print("\n🔐 HESAP İŞLEMLERİ:\n")
+            
+            while True:
+                print("1 - Giriş Yap")
+                print("2 - Yeni Hesap Oluştur")
+                print("3 - API Key'leri Kaydet")
+                print("4 - İşlem Geçmişi")
+                print("5 - Bakiye Göster")
+                print("6 - Pozisyonları Göster")
+                print("7 - Geri Dön")
+                
+                hesap_secim = input("\nSeçim: ").strip()
+                
+                if hesap_secim == "1":
+                    username = input("Kullanıcı adı: ")
+                    password = input("Şifre: ")
+                    ok, msg = auth.login(username, password)
+                    print(msg)
+                
+                elif hesap_secim == "2":
+                    username = input("Yeni kullanıcı adı: ")
+                    password = input("Şifre: ")
+                    ok, msg = auth.register(username, password)
+                    print(msg)
+                
+                elif hesap_secim == "3":
+                    broker = input("Broker (alpaca/binance): ")
+                    api_key = input("API Key: ")
+                    secret = input("Secret Key: ")
+                    ok, msg = auth.set_api_keys(broker, api_key, secret)
+                    print(msg)
+                
+                elif hesap_secim == "4":
+                    print(persistence.islem_gecmisi_goster())
+                
+                elif hesap_secim == "5":
+                    print(persistence.bakiye_goster())
+                
+                elif hesap_secim == "6":
+                    print(persistence.pozisyon_goster())
+                
+                elif hesap_secim == "7":
                     break
             
         elif secim == "17":
