@@ -3,6 +3,7 @@ from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor, V
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import StandardScaler
 import numpy as np
+import pandas as pd
 import yfinance as yf
 
 class AdvancedMLAnalyzer:
@@ -36,12 +37,13 @@ class AdvancedMLAnalyzer:
             data['Momentum'] = data['Close'].pct_change(10)
             data['ROC'] = (data['Close'] - data['Close'].shift(10)) / data['Close'].shift(10)
             
-            X = data[['MA5', 'MA20', 'MA50', 'RSI', 'MACD', 'BB_High', 'BB_Low', 
-                      'Volume_MA', 'Volatility', 'Momentum', 'ROC']].dropna().values
+            feature_data = data[['MA5', 'MA20', 'MA50', 'RSI', 'MACD', 'BB_High', 'BB_Low', 
+                      'Volume_MA', 'Volatility', 'Momentum', 'ROC']].dropna()
             
-            if len(X) == 0:
+            if feature_data.empty or len(feature_data) == 0:
                 return None
-                
+            
+            X = feature_data.values
             y = data['Close'][len(data)-len(X):].values
             
             X_scaled = self.scaler.fit_transform(X)

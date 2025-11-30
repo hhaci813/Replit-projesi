@@ -18,9 +18,9 @@ class SymbolAnalyzer:
             gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
             loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
             rs = gain / loss
-            rsi_series = 100 - (100 / (1 + rs))
-            rsi_clean = rsi_series.dropna()
-            rsi = float(rsi_clean.iloc[-1]) if len(rsi_clean) > 0 else 50.0
+            rsi_series: pd.Series = 100 - (100 / (1 + rs))
+            rsi_clean: pd.Series = rsi_series.dropna()
+            rsi: float = float(rsi_clean.iloc[-1]) if len(rsi_clean) > 0 else 50.0
             
             # MACD
             exp1 = data['Close'].ewm(span=12).mean()
@@ -29,15 +29,15 @@ class SymbolAnalyzer:
             signal_line = macd.ewm(span=9).mean()
             
             # MA - safe indexing
-            ma20_vals = data['Close'].rolling(20).mean()
-            ma50_vals = data['Close'].rolling(50).mean()
+            ma20_vals: pd.Series = data['Close'].rolling(20).mean()
+            ma50_vals: pd.Series = data['Close'].rolling(50).mean()
             
             if ma20_vals.isna().all() or ma50_vals.isna().all():
                 return {"signal": "?", "reason": "MA hesaplanamadı"}
             
-            ma20 = float(ma20_vals.iloc[-1])
-            ma50 = float(ma50_vals.iloc[-1])
-            price = float(data['Close'].iloc[-1])
+            ma20: float = float(ma20_vals.iloc[-1])
+            ma50: float = float(ma50_vals.iloc[-1])
+            price: float = float(data['Close'].iloc[-1])
             
             score = 0
             reasons = []
@@ -49,8 +49,8 @@ class SymbolAnalyzer:
                 score -= 2
                 reasons.append(f"RSI {rsi:.1f} - Overbought")
             
-            macd_last = float(macd.iloc[-1])
-            signal_last = float(signal_line.iloc[-1])
+            macd_last: float = float(macd.iloc[-1])
+            signal_last: float = float(signal_line.iloc[-1])
             
             if macd_last > signal_last:
                 score += 1
