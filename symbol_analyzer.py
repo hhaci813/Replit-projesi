@@ -11,7 +11,10 @@ class SymbolAnalyzer:
             # Gerçek fiyat al
             real_price, source = PriceFetcher.get_price(symbol)
             
-            data = yf.download(symbol, period="3mo", progress=False)
+            try:
+                data = yf.download(symbol, period="3mo", progress=False)
+            except:
+                data = None
             
             # Null checks
             if data is None or data.empty or len(data) < 20:
