@@ -21,8 +21,9 @@ from portfolio_rebalance import PortfolioRebalancing
 from telegram_bot import TelegramBot
 from telegram_service import TelegramService
 from broker_trading import BrokerTrading
-from alpaca_broker import AlpacaBroker
-from binance_broker import BinanceBroker
+from alpaca_broker_real import AlpacaBrokerReal as AlpacaBroker
+from binance_broker_real import BinanceBrokerReal as BinanceBroker
+from real_data_broker import RealBrokerData
 from broker_persistence import BrokerPersistence
 from broker_auth import BrokerAuth
 from scheduler_system import BrokerScheduler
