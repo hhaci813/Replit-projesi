@@ -5,7 +5,10 @@ from broker_alpaca import AlpacaBrokerEngine
 from backtesting_engine import BacktestingEngine
 from email_alerts import AlertEngine
 from ml_models import MLForecastingEngine
-from sentiment_analysis import SentimentAnalyzer
+try:
+    from sentiment_analysis import SentimentAnalyzer
+except ImportError:
+    SentimentAnalyzer = None
 from performance_dashboard import PerformanceDashboard
 
 class AutoRunSystem:

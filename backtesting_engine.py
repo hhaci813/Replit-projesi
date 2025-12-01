@@ -14,7 +14,7 @@ class BacktestingEngine:
         # Simüle edilmiş tarihçe (gerçek: API'den çekilmeli)
         prices = self._get_historical_prices(symbol, days)
         
-        if not prices:
+        if not prices or len(prices) < 14:
             return None
         
         cash = initial_capital
@@ -23,8 +23,13 @@ class BacktestingEngine:
         portfolio_values = [initial_capital]
         
         # Simple RSI strategy - oversold al, overbought sat
-        for i, (date, price) in enumerate(prices):
+        for i, (date, price_data) in enumerate(prices):
             if i < 14:  # RSI için min 14 veri
+                continue
+            
+            # Ensure price is valid
+            price = price_data[1] if isinstance(price_data, tuple) else price_data
+            if not price or price <= 0:
                 continue
             
             # Basit RSI hesapla
@@ -101,9 +106,10 @@ class BacktestingEngine:
             date = datetime.now() - timedelta(days=days-i)
             # Simüle trend
             price = base_price * (1 + (i * 0.001 + (i % 3) * 0.002))
-            prices.append((date, price))
+            if price > 0:  # Validation
+                prices.append((date, price))
         
-        return prices
+        return prices if prices else [(datetime.now(), base_price)]
     
     def _calculate_rsi(self, prices, period=14):
         """RSI hesapla"""

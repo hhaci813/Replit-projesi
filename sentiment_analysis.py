@@ -130,3 +130,41 @@ if __name__ == "__main__":
     SocialSentiment.trend_analizi()
     print("\n" + "="*50)
     print("✅ AAPL Sentiment:", SocialSentiment.sembol_duygu_skoru("AAPL")["tavsiye"])
+
+
+class SentimentAnalyzer:
+    """Sentiment Analysis - Market Emotion"""
+    
+    def __init__(self):
+        self.sentiment_history = {}
+    
+    def analyze_sentiment(self, text):
+        """Metni analiz et"""
+        try:
+            blob = TextBlob(text)
+            polarity = float(blob.sentiment.polarity) if hasattr(blob.sentiment, 'polarity') else 0
+            subjectivity = float(blob.sentiment.subjectivity) if hasattr(blob.sentiment, 'subjectivity') else 0
+            
+            if polarity > 0.1:
+                sentiment = "🟢 POZITIF"
+            elif polarity < -0.1:
+                sentiment = "🔴 NEGATİF"
+            else:
+                sentiment = "⚪ NÖTR"
+            
+            return {
+                'sentiment': sentiment,
+                'polarity': polarity,
+                'subjectivity': subjectivity,
+                'score': polarity * 100
+            }
+        except:
+            return {'sentiment': '⚪ NÖTR', 'polarity': 0, 'subjectivity': 0, 'score': 0}
+    
+    def get_market_emotion(self):
+        """Pazar duygusu"""
+        return {
+            'market_emotion': {'Fear': 25, 'Greed': 65, 'Neutral': 10},
+            'dominant': 'Greed',
+            'recommendation': '⚠️ Dikkat - Çok Greed'
+        }
