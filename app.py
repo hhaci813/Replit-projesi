@@ -187,3 +187,32 @@ def telegram_ayarla():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+
+
+@app.route('/api/analiz')
+def get_analysis():
+    """Grafik analizi API"""
+    try:
+        from investment_analyzer import InvestmentAnalyzer
+        analyzer = InvestmentAnalyzer()
+        data = analyzer.get_all_prices()
+        
+        analysis = {'crypto': [], 'stocks': [], 'stocks_rising': [], 'crypto_falling': []}
+        
+        for sym in ['BTC', 'ETH', 'XRP', 'BNB', 'SOL', 'ADA']:
+            if sym in data and 'price' in data[sym]:
+                item = data[sym]
+                analysis['crypto'].append({'symbol': sym, 'price': item.get('price', 0), 'change': item.get('change_pct', 0)})
+        
+        for sym in ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'NVDA']:
+            if sym in data:
+                item = data[sym]
+                change = item.get('change_pct', 0)
+                if change > 0:
+                    analysis['stocks_rising'].append({'symbol': sym, 'price': item['price'], 'change': change})
+                else:
+                    analysis['stocks'].append({'symbol': sym, 'price': item['price'], 'change': change})
+        
+        return jsonify(analysis)
+    except:
+        return jsonify({'error': 'error'})
