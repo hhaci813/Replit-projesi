@@ -182,3 +182,25 @@ Sharpe: {metrics['sharpe_ratio']:.2f}
             TelegramService()._send_message(msg)
         except:
             pass
+
+    def _track_ada_prediction(self):
+        """ADA prediction takip et - Günlük"""
+        try:
+            from ada_prediction_tracker import ADAPredictionTracker
+            tracker = ADAPredictionTracker()
+            tracker.load_tracking()
+            
+            # Track
+            entry = tracker.track_daily()
+            if entry:
+                accuracy = tracker.get_accuracy()
+                report = tracker.generate_report()
+                
+                # Telegram'a gönder
+                from telegram_service import TelegramService
+                TelegramService()._send_message(report)
+                
+                # Kaydet
+                tracker.save_tracking()
+        except:
+            pass

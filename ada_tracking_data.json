@@ -1,0 +1,17 @@
+{
+  "start_date": "2025-12-01T10:56:29.105762",
+  "start_price": 0.39,
+  "target_price": 0.42,
+  "expected_change": 8.9,
+  "confidence": 75,
+  "timeframe_days": 7,
+  "daily_tracking": [
+    {
+      "day": 1,
+      "date": "2025-12-01T10:56:29.641560",
+      "price": 0.38588690757751465,
+      "change_from_start": -1.054639082688555,
+      "vs_target": -0.034113092422485336
+    }
+  ]
+}
