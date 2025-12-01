@@ -1,13 +1,15 @@
 from flask import Flask, jsonify
+import os
+
 app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 @app.route('/')
 def home():
     try:
-        with open('static/index.html', 'r') as f:
+        with open('static/advanced_dashboard.html', 'r', encoding='utf-8') as f:
             return f.read()
-    except:
-        return "<!DOCTYPE html><html><body style='background:#1a1a1a;color:#00ff00'><h1>Dashboard açılıyor...</h1></body></html>"
+    except Exception as e:
+        return f"<h1>Hata: {e}</h1>"
 
 @app.route('/api/btcturk-analysis')
 def analysis():
@@ -19,4 +21,4 @@ def analysis():
         return jsonify({'assets': [], 'error': str(e)})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)

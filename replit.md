@@ -111,3 +111,34 @@ Current experiment validates:
 **NEXT STEP:** Monitor ADA for 7 days
 **EXPECTED:** +8.9% or feedback for model improvement
 
+
+---
+
+## 🎨 DASHBOARD DETAY GÜNCELLEMESİ (01.12.2025)
+
+### ✅ Yeni Detaylı Dashboard Yayınlandı:
+- **Portföy Dağılımı Grafiği** → Kripto %40, Teknoloji %30, Hisse %30
+- **6 Aylık Trend Analizi** → Bitcoin vs Ethereum growth chart
+- **Risk vs Return Grafiği** → Yatırım seçimi kararında yardımcı
+- **Canlı Fiyatlar** → En yükselenler ve en düşenler listesi
+- **5 Kural Box** → Yeni yatırımcılar için eğitim
+
+### 📊 Dashboard Özellikleri:
+- Renkli grafik veri gösterimi (Plotly)
+- Responsive tasarım (mobil uyumlu)
+- 30 saniye otomatik güncelleme
+- Gerçek BTCTurk + YFinance veri
+- Türkçe arayüz
+
+### 🔧 Teknik Değişiklikler:
+- `auto_run_system.py`: 2 dakikalık jobs KAPATILDI
+- `app.py`: Sadeleştirildi, advanced_dashboard.html entegre
+- `static/advanced_dashboard.html`: Yeni detaylı dashboard
+- BTCTurk API: 30 dakika analiz aktif
+
+### 🎯 Sistem Durumu:
+- ✅ 2 dakika analiz: OFF
+- ✅ 30 dakika analiz: ACTIVE
+- ✅ Dashboard: http://localhost:5000/
+- ✅ ADA Tracking: Devam ediyor
+- ✅ Telegram: Otomatik bildiri
