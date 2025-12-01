@@ -122,6 +122,26 @@ Rebalancing: Gerekli
 """
         return self._send_message(uyari)
     
+    def send_video(self, video_path, caption=""):
+        """Video dosyası gönder"""
+        try:
+            with open(video_path, 'rb') as video_file:
+                files = {'video': video_file}
+                params = {
+                    'chat_id': self.chat_id,
+                    'caption': caption
+                }
+                
+                url = f"{self.base_url}/sendVideo"
+                response = requests.post(url, files=files, params=params, timeout=60)
+                
+                if response.status_code == 200:
+                    return True, "✅ Video gönderildi"
+                else:
+                    return False, f"❌ Hata {response.status_code}"
+        except Exception as e:
+            return False, f"❌ {str(e)}"
+    
     def send_message(self, text):
         """Public method to send message"""
         return self._send_message(text)
