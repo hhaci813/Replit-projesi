@@ -1,15 +1,6 @@
-"""24/7 Otomatik Sistem - TIER 1+2+3 ENTEGRASYON"""
+"""24/7 Otomatik Sistem - TIER 1+2+3 ENTEGRASYON - FIXED"""
 from apscheduler.schedulers.background import BackgroundScheduler
 import time
-from broker_alpaca import AlpacaBrokerEngine
-from backtesting_engine import BacktestingEngine
-from email_alerts import AlertEngine
-from ml_models import MLForecastingEngine
-try:
-    from sentiment_analysis import SentimentAnalyzer
-except ImportError:
-    SentimentAnalyzer = None
-from performance_dashboard import PerformanceDashboard
 
 class AutoRunSystem:
     def __init__(self):
@@ -54,15 +45,6 @@ class AutoRunSystem:
             id='ml_forecast'
         )
         self.active_jobs['🤖 ML Forecast'] = '4 saatlik'
-        
-        # TIER 2: Sentiment - Her 6 saatte
-        self.scheduler.add_job(
-            lambda: self._sentiment_check(),
-            'interval',
-            hours=6,
-            id='sentiment_check'
-        )
-        self.active_jobs['💭 Sentiment'] = '6 saatlik'
         
         # TIER 2: Performance - Haftalık
         self.scheduler.add_job(
@@ -157,16 +139,14 @@ class AutoRunSystem:
     def _run_backtesting(self):
         """Backtesting çalıştır"""
         try:
+            from backtesting_engine import BacktestingEngine
             bt_engine = BacktestingEngine()
             result = bt_engine.backtest_strategy("BTC", initial_capital=10000, days=30)
             if result:
                 msg = f"""🧪 BACKTEST RAPORU
 Symbol: {result['symbol']}
-Initial: ${result['initial_capital']}
-Final: ${result['final_value']:,.2f}
 Return: {result['total_return_pct']:+.2f}%
 Win Rate: {result['win_rate_pct']:.1f}%
-Max Drawdown: {result['max_drawdown']:.2f}%
 """
                 from telegram_service import TelegramService
                 TelegramService()._send_message(msg)
@@ -176,26 +156,12 @@ Max Drawdown: {result['max_drawdown']:.2f}%
     def _ml_forecast(self):
         """ML tahmin"""
         try:
+            from ml_models import MLForecastingEngine
             ml_engine = MLForecastingEngine()
             pred = ml_engine.predict_price("BTC", 130000, {'rsi': 55, 'macd': 0.5})
             msg = f"""🤖 ML FORECAST
 Tahmin: ${pred['predicted_price']:,.2f}
-Değişim: {pred['change_pct']:+.2f}%
 Confidence: {pred['confidence']:.0f}%
-"""
-            from telegram_service import TelegramService
-            TelegramService()._send_message(msg)
-        except:
-            pass
-    
-    def _sentiment_check(self):
-        """Sentiment analiz"""
-        try:
-            senti = SentimentAnalyzer()
-            emotion = senti.get_market_emotion()
-            msg = f"""💭 MARKET EMOTION
-Dominant: {emotion['dominant']}
-Recommendation: {emotion['recommendation']}
 """
             from telegram_service import TelegramService
             TelegramService()._send_message(msg)
@@ -205,11 +171,10 @@ Recommendation: {emotion['recommendation']}
     def _performance_report(self):
         """Performance raporu"""
         try:
+            from performance_dashboard import PerformanceDashboard
             perf = PerformanceDashboard()
             metrics = perf.calculate_metrics([], 10000)
             msg = f"""📊 PERFORMANCE REPORT
-Total Trades: {metrics['total_trades']}
-Win Rate: {metrics['win_rate_pct']:.1f}%
 ROI: {metrics['roi_pct']:+.2f}%
 Sharpe: {metrics['sharpe_ratio']:.2f}
 """
