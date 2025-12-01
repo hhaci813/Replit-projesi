@@ -19,7 +19,7 @@ try:
     print(msg)
     print("\n✅ TELEGRAM BOTUNUZ ARKA PLANDA ÇALIŞIYOR")
     print("🔔 6 SYMBOL (BTC, XRPTRY, AAPL, MSFT, GOOGL, ETH)")
-    print("⏰ HER 2 DAKİKADA ANALİZ GÖNDERİLECEK")
+    print("⏰ DEVAMLI BACKEND ANALİZİ YAPILIYOR (Mesaj yok)")
     print("💼 100+ ARAÇ PORTFÖY MOTORü AKTIF\n")
     
     # Hoş geldiniz mesajı gönder
@@ -33,8 +33,8 @@ try:
 
 📊 ÖZELLIKLER:
   • 100+ Yatırım Aracı Analizi
+  • Devamlı Backend Analizi Yapılıyor
   • Kişisel Portföy Tavsiyesi
-  • Her 2 dakikada Telegram Raporu
   • Gerçek Zamanlı Fiyat Güncellemeleri
   
 💡 KULLANMA:
@@ -43,6 +43,7 @@ try:
   Herhangi bir miktar yazabilirsin!
   
 🚀 Sistem aktif. Yatırım aracı analizi başladı!
+📊 Dashboard: http://localhost:5000/
 """
     bot.telegram._send_message(welcome_msg)
     

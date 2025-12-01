@@ -97,10 +97,10 @@ class AutoAnalyzer:
 ⏰ {self._get_time()}
 """
             
-            # Telegram'a gönder + Trade history kayıt
-            self.telegram._send_message(message)
+            # ❌ 2 DAKİKA TELEGRAM MESAJI KAPANDI - Sadece backend analizi yapılıyor
+            # self.telegram._send_message(message)
             TradeHistory.log_trade(symbol, result['signal'], price, result['signal'], rsi)
-            print(f"✅ #{count} {symbol}: Analiz gönderildi + Kayıt yapıldı")
+            print(f"✅ #{count} {symbol}: Analiz yapıldı + Kayıt yapıldı")
         except Exception as e:
             print(f"❌ Analiz hatası {symbol}: {str(e)}")
     
