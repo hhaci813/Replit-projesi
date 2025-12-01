@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>📊 BTCTurk Market</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        *{margin:0;padding:0}body{background:#0a0a0a;color:#00ff00;font-family:monospace;padding:20px}h1{text-align:center;margin:20px 0}h2{color:#00ff00;margin:15px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:15px 0}.card{background:#1a1a1a;padding:10px;border-radius:4px;border-left:3px solid;font-size:12px}.up{border-color:#00ff00}.down{border-color:#ff0000}.card b{display:block}.price{margin:5px 0}.change{font-size:14px;font-weight:bold}.section{margin:20px 0}.title{background:#1a1a1a;padding:10px;border-left:4px solid;margin:10px 0}
+    </style>
+</head>
+<body>
+    <h1>📊 BTCTurk Market Scanner</h1>
+    <div id="content">Yükleniyor...</div>
+    <script>
+        async function load(){try{const r=await fetch('/api/btcturk-analysis');const d=await r.json();let h='';const a=d.assets||[];const su=a.filter(x=>x.change>2);const u=a.filter(x=>0.5<x.change&&x.change<=2);const dw=a.filter(x=>-2<=x.change&&x.change<-0.5);const sd=a.filter(x=>x.change<-2);function mk(items){let r='<div class="grid">';items.forEach(x=>{const c=x.change>0?'#00ff00':'#ff0000';r+=`<div class="card ${x.change>0?'up':'down'}"><b>${x.symbol}</b><div class="price">₺${x.price.toFixed(0)}</div><div class="change" style="color:${c}">${x.change>0?'+':''}${x.change.toFixed(2)}%</div></div>`});r+='</div>';return r}if(su.length)h+=`<div class="section"><div class="title" style="border-color:#00ff00;color:#00ff00">📈📈 YÜKSELENLER</div>${mk(su)}</div>`;if(u.length)h+=`<div class="section"><div class="title" style="border-color:#00ff00;color:#00ff00">📈 YÜKSELENLER</div>${mk(u)}</div>`;if(dw.length)h+=`<div class="section"><div class="title" style="border-color:#ff0000;color:#ff0000">📉📉 DÜŞENLER</div>${mk(dw)}</div>`;if(dw.length||u.length)h+=`<div id="chart" style="height:300px;background:#1a1a1a;margin:20px 0;border-radius:4px"></div>`;document.getElementById('content').innerHTML=h;Plotly.newPlot('chart',[{x:['Yükselen','Düşen'],y:[su.length+u.length,dw.length+a.filter(x=>-0.5<=x.change&&x.change<=0.5).length],type:'bar',marker:{color:['#00ff00','#ff0000']}}],{plot_bgcolor:'#1a1a1a',paper_bgcolor:'#0a0a0a',font:{color:'#00ff00'}});setInterval(load,30000)}catch(e){console.error(e)}}load();
+    </script>
+</body>
+</html>

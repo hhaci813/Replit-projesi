@@ -15,18 +15,9 @@ class AutoRunSystem:
         
         from auto_analyzer import AutoAnalyzer
         
-        # TIER 1: Canlı Analiz
-        auto_analyzer = AutoAnalyzer()
-        
-        symbols = ["BTC", "XRPTRY", "AAPL", "MSFT", "GOOGL", "ETH"]
-        for sym in symbols:
-            self.scheduler.add_job(
-                lambda s=sym: auto_analyzer.analyze_and_send(s),
-                'interval',
-                minutes=2,
-                id=f'auto_analyzer_{sym}'
-            )
-            self.active_jobs[f'📊 AutoAnalyzer ({sym})'] = 'Her 2 dakika'
+        # ❌ 2 DAKİKA ANALİZİ - KAPATILDI
+        # auto_analyzer = AutoAnalyzer()
+        # symbols = ["BTC", "XRPTRY", "AAPL", "MSFT", "GOOGL", "ETH"]
         
         # TIER 1: Backtesting - Her gün
         self.scheduler.add_job(
