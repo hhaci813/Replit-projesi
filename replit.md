@@ -1,74 +1,9 @@
-# 🤖 AKILLI YATIRIM ASİSTANI - V3 ENTERPRISE (100 SEÇENEK)
+# Akıllı Yatırım Asistanı
 
-**Final Status:** ✅ **PRODUCTION READY - LIVE TRADING MODE**  
-**Date:** 01 Aralık 2025
-**User Investment:** ADA Tracking Mode 🎯
+## Overview
+Akıllı Yatırım Asistanı (Smart Investment Assistant) is a comprehensive, AI-powered platform designed to provide real-time investment analysis, forecasting, and actionable recommendations for cryptocurrencies, stocks, and global market indices. The system integrates machine learning, technical analysis, and sentiment analysis from various data sources to offer a holistic view of market opportunities and risks. Its primary purpose is to empower users with data-driven insights for making informed investment decisions, operating in a "demo mode" with paper trading to mitigate real financial risk. The project aims to become a leading tool for investors seeking advanced analytical capabilities and automated market monitoring.
 
----
-
-## 🎯 CURRENT MISSION: ADA PREDICTION TRACKING
-
-### Live Experiment:
-- **Start Date:** 01.12.2025
-- **Prediction:** ADA $0.39 → $0.42 (+8.9%)
-- **Timeframe:** 7 Days
-- **Confidence:** 75%
-- **User Action:** ✅ BOUGHT ADA
-- **Tracking:** Daily monitoring + Telegram alerts
-
-### Tracking System:
-- Daily price monitoring
-- Accuracy calculation
-- Real-time reports
-- Telegram notifications every day
-
----
-
-## 📊 SISTEM YETENEKLER
-
-### ✅ Implemented (6,558+ lines):
-1. **Real-Time Analysis** - BTCTurk + YFinance
-2. **ML Forecasting** - LSTM + Ensemble (RF, GB, NN)
-3. **Technical Signals** - RSI, MACD, Moving Averages
-4. **Backtesting Engine** - Historical analysis
-5. **Performance Dashboard** - Sharpe ratio, ROI metrics
-6. **Telegram Integration** - Every 2 minutes analysis
-
-### 🔄 24/7 Automation:
-- 📊 AutoAnalyzer: 6 symbols every 2 minutes
-- 🧪 Backtesting: Daily
-- 🤖 ML Forecast: Every 4 hours
-- 📈 Performance Report: Weekly
-- ⚠️ Risk Management: Every 6 hours
-- 🎯 ADA Tracking: Daily (NEW)
-
-### 📱 APIs & Integrations:
-- BTCTurk (Live - ✅ Working)
-- YFinance (Live - ✅ Working)
-- Telegram Bot (Active - ✅ Working)
-- Web Dashboard (Port 5000 - ✅ Running)
-
----
-
-## 🚀 LATEST ADDITIONS
-
-### ADA Prediction Tracking:
-- **Created:** 01.12.2025
-- **File:** `ada_prediction_tracker.py`
-- **Purpose:** Validate 7-day forecast accuracy
-- **Data:** Daily tracking with accuracy metrics
-- **Status:** Active (24/7 monitoring)
-
-### Investment Strategy:
-1. AL: ADA @ $0.39 ✅ USER BOUGHT
-2. HOLD: 7 days
-3. TRACK: Daily accuracy
-4. EXIT: When target hit or day 7
-
----
-
-## 🎯 USER PREFERENCES
-
+## User Preferences
 - **Language:** Turkish
 - **Data Quality:** Maximum - No garbage data
 - **Trading Style:** Technical Analysis Based
@@ -76,336 +11,46 @@
 - **Monitoring:** Real-time + Daily reports
 - **Focus:** Actionable signals, not speculation
 
----
-
-## 📈 ACCURACY TESTING
-
-Current experiment validates:
-- ✅ BTCTurk signal reliability
-- ✅ ML prediction accuracy (75%)
-- ✅ 7-day mean reversion
-- ✅ System automation quality
-
-**Result:** Pending (1 week wait)
-
----
-
-## ✅ PRODUCTION CHECKLIST
-
-- ✅ 100+ seçenek fonksiyon
-- ✅ BTCTurk live connection
-- ✅ Telegram 24/7 alerts
-- ✅ Real-time dashboards
-- ✅ ML models trained
-- ✅ Data validation layer
-- ✅ Error handling robust
-- ✅ ADA tracking active
-- ✅ User experiment running
-- ✅ Production ready
-
----
-
-## 🎉 STATUS
-
-**SISTEM:** ✅ LIVE & OPERATIONAL
-**NEXT STEP:** Monitor ADA for 7 days
-**EXPECTED:** +8.9% or feedback for model improvement
-
-
----
-
-## 🎨 DASHBOARD DETAY GÜNCELLEMESİ (01.12.2025)
-
-### ✅ Yeni Detaylı Dashboard Yayınlandı:
-- **Portföy Dağılımı Grafiği** → Kripto %40, Teknoloji %30, Hisse %30
-- **6 Aylık Trend Analizi** → Bitcoin vs Ethereum growth chart
-- **Risk vs Return Grafiği** → Yatırım seçimi kararında yardımcı
-- **Canlı Fiyatlar** → En yükselenler ve en düşenler listesi
-- **5 Kural Box** → Yeni yatırımcılar için eğitim
-
-### 📊 Dashboard Özellikleri:
-- Renkli grafik veri gösterimi (Plotly)
-- Responsive tasarım (mobil uyumlu)
-- 30 saniye otomatik güncelleme
-- Gerçek BTCTurk + YFinance veri
-- Türkçe arayüz
-
-### 🔧 Teknik Değişiklikler:
-- `auto_run_system.py`: 2 dakikalık jobs KAPATILDI
-- `app.py`: Sadeleştirildi, advanced_dashboard.html entegre
-- `static/advanced_dashboard.html`: Yeni detaylı dashboard
-- BTCTurk API: 30 dakika analiz aktif
-
-### 🎯 Sistem Durumu:
-- ✅ 2 dakika analiz: OFF
-- ✅ 30 dakika analiz: ACTIVE
-- ✅ Dashboard: http://localhost:5000/
-- ✅ ADA Tracking: Devam ediyor
-- ✅ Telegram: Otomatik bildiri
-
----
-
-## 🚀 YENİ ÖZELLIKLER EKLENDI (01.12.2025 - Round 2)
-
-### ✅ Eklenen 5 Yeni Sistem (Gerçek Para Hariç):
-
-1. **🚀 Pump Detection** - `pump_detector.py`
-   - Volume spike algılaması (%150+)
-   - Fiyat hareket tespiti (2%+)
-   - Risk level tespiti (HIGH/MEDIUM)
-   - Trend analysis (UP/DOWN/SIDEWAYS)
-   - RSI hesaplama
-   - **Otomasyon:** Her 15 dakika
-
-2. **📧 Email Digest Service** - `email_alerts_service.py`
-   - Günlük market özeti emaili
-   - Top 5 yükselenler/düşenler
-   - HTML formatında güzel tasarım
-   - Gmail SMTP entegrasyonu
-   - **Otomasyon:** Günlük 09:00
-
-3. **🎮 Discord Bot Service** - `discord_bot_service.py`
-   - Real-time Discord alerts
-   - Embed mesajlar
-   - Renk kodlu notifications
-   - Async işlem
-   - **Otomasyon:** Her 1 saat
-
-4. **🎯 Advanced Sentiment Analyzer** - `advanced_sentiment_analyzer.py`
-   - TextBlob sentiment analizi
-   - NewsAPI entegrasyonu
-   - Polarity (-1 to +1)
-   - Subjectivity (0 to 1)
-   - Article-based analysis
-   - **Otomasyon:** Günlük 08:00
-
-5. **⚙️ Enhanced Auto System** - `enhanced_auto_system.py`
-   - Tüm yeni features'ın orkestrasyonu
-   - Schedule management
-   - Status reporting
-   - Error handling
-
-### 🔌 İhtiyaç Duyulan Setup:
-
-| Feature | Setup | Status |
-|---------|-------|--------|
-| Pump Detection | None needed | ✅ Ready |
-| Email | Gmail App Password | ⏳ Optional |
-| Discord | Bot Token | ⏳ Optional |
-| Sentiment | NewsAPI key | ⏳ Optional |
-
-### 📊 Sistem Durumu:
-
-- **Total Lines:** 7000+ satır kod
-- **Features:** 18+ özellik
-- **Modules:** 30+ Python modülü
-- **Automation:** 10 scheduled jobs
-- **API Integrations:** 4 (BTCTurk, YFinance, NewsAPI, Discord)
-- **Status:** Production Ready ✅
-
-### 🎯 Şuanda Yapılabilir:
-
-```
-✅ 169+ kripto real-time analiz
-✅ Pump detection otomatik
-✅ Sentiment analysis haberlerden
-✅ Web dashboard grafikleri
-✅ Telegram bot komutları
-✅ Email digest raporları
-✅ Discord notifications
-✅ ML price forecasting
-✅ Backtesting engine
-✅ Portfolio çeşitlendirmesi
-✅ Risk management
-✅ ADA tracking
-✅ Trade history kaydı
-```
-
-### ❌ Hala Yapılamayan:
-
-```
-❌ Gerçek para ile ticaret
-❌ Options/Futures trading
-❌ Arbitrage finder
-❌ Live broker integration
-```
-# 🚀 YENİ ÖZELLIKLER - Email, Discord, Pump Detection, Sentiment
-
-**Tarih:** 01 Aralık 2025  
-**Eklenen Modüller:** 5 yeni sistem
-
----
-
-## ✅ EKLENEN ÖZELLIKLER
-
-### 📧 **Email Digest Service**
-- **Dosya:** `email_alerts_service.py`
-- **Fonksiyon:** Günlük market özeti emaili
-- **Otomasyon:** Günlük 09:00'de otomatik
-- **İçerik:**
-  - En yükselenler (Top 5)
-  - En düşenler (Top 5)
-  - Dashboard linki
-  - HTML formatında güzel görünüm
-
-**Setup gerekli:**
-```python
-service = EmailAlertsService()
-service.set_credentials("your_email@gmail.com", "app_password")
-```
-
----
-
-### 🎮 **Discord Bot Service**
-- **Dosya:** `discord_bot_service.py`
-- **Fonksiyon:** Real-time Discord alertleri
-- **Otomasyon:** Her 1 saatte bir report
-- **Özellikler:**
-  - Embed mesajlar
-  - Renk kodlu alerts
-  - Multiple channels desteği
-  - Asynchronous işlem
-
-**Setup gerekli:**
-```bash
-DISCORD_BOT_TOKEN=your_bot_token
-# Channel ID'yi ayarla
-```
-
----
-
-### 🚀 **Pump Detector**
-- **Dosya:** `pump_detector.py`
-- **Fonksiyon:** Volume spike ve pump detection
-- **Otomasyon:** Her 15 dakikada bir tarama
-- **Algılar:**
-  - Volume spike (%150+ artış)
-  - Fiyat hareketleri (2%+ değişim)
-  - Risk level (HIGH/MEDIUM)
-  - Trend detection (UP/DOWN/SIDEWAYS)
-  - RSI hesaplama
-
-**Sonuç:**
-```
-🚀 Pump Detected: 5 coins
-   - SOL: +3.45%
-   - LINK: +2.89%
-   - MATIC: +2.12%
-```
-
----
-
-### 🎯 **Advanced Sentiment Analyzer**
-- **Dosya:** `advanced_sentiment_analyzer.py`
-- **Fonksiyon:** Haberlerden sentiment analizi
-- **Otomasyon:** Günlük 08:00'de çalışır
-- **Analiz:**
-  - TextBlob ile text sentiment
-  - NewsAPI haberlerinden
-  - Polarity (-1 to +1)
-  - Subjectivity (0 to 1)
-  - Average market sentiment
-
-**Sonuç:**
-```
-📰 Bitcoin: POSITIVE 📈 (12 articles)
-   - Avg polarity: +0.65
-   - Recommendation: ACCUMULATE
-```
-
----
-
-### ⚙️ **Enhanced Auto System**
-- **Dosya:** `enhanced_auto_system.py`
-- **Fonksiyon:** Tüm yeni features'ı orkestrasyonu
-- **Schedule:**
-  - 📧 Email: Günlük 09:00
-  - 🎮 Discord: Her 1 saat
-  - 🚀 Pump: Her 15 dakika
-  - 🎯 Sentiment: Günlük 08:00
-
----
-
-## 🎯 KULLANIM
-
-### 1. Email Digest Aktif Etmek
-```python
-from email_alerts_service import EmailAlertsService
-
-service = EmailAlertsService()
-service.set_credentials("your_email@gmail.com", "app_password")
-service.send_daily_digest("recipient@email.com", analysis_data)
-```
-
-### 2. Discord Alerts Aktif Etmek
-```python
-from discord_bot_service import DiscordBotService
-
-bot = DiscordBotService(token="YOUR_BOT_TOKEN")
-bot.set_channel(1234567890)  # Channel ID
-asyncio.run(bot.send_alert("BTC Pump", "Volume spike detected!", 0x00ff00))
-```
-
-### 3. Pump Detection Çalıştırmak
-```python
-from pump_detector import PumpDetector, TrendDetector
-
-detector = PumpDetector()
-result = detector.detect_pump(1000, 500, 0.03)
-# {'detected': True, 'risk_level': 'HIGH', 'volume_spike': 2.0, ...}
-
-trend = TrendDetector.detect_trend([100, 102, 105, 108, 110])
-# 'STRONG_UP'
-```
-
-### 4. Sentiment Analysis Çalıştırmak
-```python
-from advanced_sentiment_analyzer import AdvancedSentimentAnalyzer
-
-analyzer = AdvancedSentimentAnalyzer()
-result = analyzer.analyze_news_sentiment("Bitcoin")
-# {'overall_sentiment': 'POSITIVE 📈', 'avg_polarity': 0.65, 'articles': [...]}
-```
-
----
-
-## 🔌 REQUIRED SETUP
-
-### Email (Gmail SMTP)
-1. Gmail account'da "App Passwords" oluştur
-2. `set_credentials()` ile kayıt et
-3. SMTP otomatik çalışacak
-
-### Discord Bot
-1. Discord Developer Portal'da bot oluştur
-2. Token'ı environment variable'a koy
-3. Bot'u sunucuya invite et
-4. Channel ID'yi ayarla
-
-### NewsAPI (Sentiment)
-1. https://newsapi.org/ 'den API key al
-2. Environment variable: `NEWSAPI_KEY`
-3. Haberlerden sentiment otomatik alınacak
-
----
-
-## 📊 DURUM
-
-| Feature | Status | Setup |
-|---------|--------|-------|
-| Email Digest | ✅ Ready | Requires Gmail config |
-| Discord Bot | ✅ Ready | Requires Discord token |
-| Pump Detection | ✅ Ready | No config needed |
-| Sentiment | ✅ Ready | Requires NewsAPI key |
-| Auto Schedule | ✅ Ready | Auto-integrated |
-
----
-
-## 🚀 Şuanda Önerilir
-
-1. **Pump Detection** - Hemen başla (config yok)
-2. **Sentiment Analysis** - NewsAPI key alırsan hemen
-3. **Email Digest** - Gmail setup yaparsanız hemen
-4. **Discord Bot** - Discord var mı diye sor
-
-Gerçek para hariç yapamadığın şeyler artık yapılabilir! 🎉
+## System Architecture
+The Akıllı Yatırım Asistanı is built upon a robust architecture that combines several analytical engines, data sources, and user interaction layers.
+
+### UI/UX Decisions
+- **Dashboard:** A web-based dashboard (accessible via `http://localhost:5000/`) provides a comprehensive overview.
+  - Features include portfolio distribution graphs, 6-month trend analysis, risk vs. return charts, live price updates for top risers/fallers, and a "5 Rules Box" for new investors.
+  - Visualizations leverage colorful Plotly graphs.
+  - Responsive design ensures mobile compatibility.
+  - Automatic updates every 30 seconds.
+  - Turkish interface.
+
+### Technical Implementations
+- **Real-Time Analysis:** Integrates BTCTurk and YFinance for live cryptocurrency and stock data.
+- **ML Forecasting:** Utilizes LSTM and an ensemble of models (Random Forest, Gradient Boosting, Neural Networks) for price prediction every 4 hours.
+- **Technical Signals:** Calculates and interprets RSI, MACD, and Moving Averages.
+- **Backtesting Engine:** Allows for historical analysis of strategies.
+- **Performance Dashboard:** Tracks metrics like Sharpe ratio and ROI.
+- **Pump Detection:** Identifies volume spikes (150%+) and significant price movements (2%+) every 15 minutes, calculating risk levels and trends.
+- **Advanced Sentiment Analyzer:** Uses TextBlob for sentiment analysis on news articles, integrated with NewsAPI, running daily at 08:00.
+- **Global Markets Analyzer:** Monitors 10+ major world indices and 10 sectors, providing real-time technical analysis and trend detection.
+- **Expert Sentiment Extractor:** Extracts expert opinions and recommendations (BUY/SELL/HOLD) from news using NewsAPI and TextBlob.
+- **Recommendation Engine:** Calculates profit/loss potential, risk assessment (1-10 scale), and composite scores (Technical 40% + Sentiment 30% + Momentum 30%) to generate detailed investment action signals (STRONG_BUY, BUY, HOLD, SELL, STRONG_SELL).
+- **Enhanced Auto System:** Orchestrates all automated features, managing schedules and reporting status.
+
+### Feature Specifications
+- **Data Sources:** Supports 169+ cryptocurrencies, 50+ stocks, 10+ global indices, and 10 market sectors.
+- **Analysis:** Offers technical analysis, ML forecasting, ensemble learning, backtesting, pattern recognition, pump detection, and sentiment analysis.
+- **Recommendations:** Provides profit/loss predictions, risk assessment, composite scoring, and expert consensus.
+- **Automation:** 24/7 automated analysis, including daily backtesting, hourly Discord alerts, and daily email digests.
+
+### System Design Choices
+- **Modularity:** The system is composed of numerous Python modules (35+) for different functionalities.
+- **Scalability:** Designed to handle multiple data sources and analytical tasks concurrently.
+- **Robustness:** Includes error handling and a data validation layer.
+
+## External Dependencies
+- **BTCTurk:** For real-time cryptocurrency data.
+- **YFinance:** For real-time stock market data.
+- **Telegram Bot API:** For real-time alerts, portfolio tracking, forecasts, and daily global recommendations.
+- **NewsAPI:** For fetching news articles for sentiment and expert opinion analysis.
+- **Gmail SMTP:** For sending daily market summary email digests (requires Gmail App Password setup).
+- **Discord Bot API:** For real-time alerts and notifications (requires Discord bot token).
+- **Plotly:** For interactive data visualization in the web dashboard.
