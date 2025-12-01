@@ -246,3 +246,60 @@ def markets():
         return scanner.get_html_dashboard()
     except Exception as e:
         return f"Error: {e}"
+
+@app.route('/dashboard')
+def simple_dashboard():
+    """Basit Dashboard"""
+    return '''<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Market Grafik</title>
+    <style>
+        body { background: #1a1a1a; color: #00ff00; font-family: Arial; padding: 20px; }
+        h1 { color: #00ff00; text-align: center; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .section { background: #2a2a2a; padding: 15px; margin: 15px 0; border-radius: 8px; border: 1px solid #00ff00; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 BTCTurk Market Grafik</h1>
+        <div id="content">Yükleniyor...</div>
+    </div>
+    <script>
+        async function loadData() {
+            try {
+                const res = await fetch('/api/btcturk-analysis');
+                if (res.ok) {
+                    const data = await res.json();
+                    let html = '<div class="section">';
+                    html += '<h2>📈 Yükselenler</h2>';
+                    data.assets.forEach(a => {
+                        if (a.change > 0.5) {
+                            html += `<p>✅ ${a.symbol}: ₺${a.price.toFixed(0)} (+${a.change.toFixed(2)}%)</p>`;
+                        }
+                    });
+                    html += '</div><div class="section">';
+                    html += '<h2>📉 Düşenler</h2>';
+                    data.assets.forEach(a => {
+                        if (a.change < -0.5) {
+                            html += `<p>⚠️ ${a.symbol}: ₺${a.price.toFixed(0)} (${a.change.toFixed(2)}%)</p>`;
+                        }
+                    });
+                    html += '</div>';
+                    document.getElementById('content').innerHTML = html;
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        loadData();
+    </script>
+</body>
+</html>'''
+
+@app.route('/dashboard')
+def dashboard_html():
+    """Dashboard HTML"""
+    return open('/home/runner/workspace/static/dashboard.html', 'r').read()

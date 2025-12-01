@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>📊 BTCTurk Market Grafik</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; }
+        body { background: #0a0a0a; color: #00ff00; font-family: 'Courier New'; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { text-align: center; color: #00ff00; margin: 20px 0; }
+        .time { text-align: center; color: #666; margin: 10px 0; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 20px 0; }
+        .card { background: #1a1a1a; padding: 12px; border-radius: 6px; border-left: 3px solid; }
+        .up { border-color: #00ff00; }
+        .down { border-color: #ff0000; }
+        .symbol { font-weight: bold; font-size: 14px; }
+        .price { font-size: 12px; margin: 5px 0; }
+        .change { font-size: 16px; font-weight: bold; }
+        .section { margin: 20px 0; }
+        .section-title { background: #1a1a1a; padding: 10px; border-left: 4px solid; margin: 10px 0; }
+        .strong-up { border-color: #00ff00; color: #00ff00; }
+        .strong-down { border-color: #ff0000; color: #ff0000; }
+        .chart { background: #1a1a1a; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 BTCTurk Market Grafik</h1>
+        <div class="time" id="time"></div>
+        
+        <div class="section">
+            <div class="section-title strong-up">📈📈 GÜÇLÜ YÜKSELENLER</div>
+            <div class="grid" id="strong-up"></div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title strong-up">📈 YÜKSELENLER</div>
+            <div class="grid" id="up"></div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title strong-down">📉 DÜŞENLER</div>
+            <div class="grid" id="down"></div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title strong-down">📉📉 GÜÇLÜ DÜŞENLER</div>
+            <div class="grid" id="strong-down"></div>
+        </div>
+        
+        <div class="chart">
+            <h2 style="color: #00ff00; margin-bottom: 15px;">📊 Market Durumu</h2>
+            <div id="chart" style="width: 100%; height: 400px;"></div>
+        </div>
+    </div>
+    
+    <script>
+        async function loadMarkets() {
+            try {
+                const res = await fetch('/api/btcturk-analysis');
+                if (!res.ok) throw new Error('API Error');
+                const data = await res.json();
+                
+                const assets = data.assets || [];
+                
+                let strongUp = assets.filter(a => a.change > 2);
+                let up = assets.filter(a => 0.5 < a.change <= 2);
+                let down = assets.filter(a => -2 <= a.change < -0.5);
+                let strongDown = assets.filter(a => a.change < -2);
+                
+                function renderCards(items, container) {
+                    let html = '';
+                    items.forEach(a => {
+                        const color = a.change > 0 ? '#00ff00' : '#ff0000';
+                        const className = a.change > 0 ? 'up' : 'down';
+                        html += `<div class="card ${className}">
+                            <div class="symbol">${a.symbol}</div>
+                            <div class="price">₺${a.price.toFixed(0)}</div>
+                            <div class="change" style="color: ${color};">${a.change > 0 ? '+' : ''}${a.change.toFixed(2)}%</div>
+                        </div>`;
+                    });
+                    document.getElementById(container).innerHTML = html;
+                }
+                
+                renderCards(strongUp, 'strong-up');
+                renderCards(up, 'up');
+                renderCards(down, 'down');
+                renderCards(strongDown, 'strong-down');
+                
+                // Chart
+                const categories = ['Yükselen', 'Düşen', 'Yatay'];
+                const counts = [
+                    strongUp.length + up.length,
+                    strongDown.length + down.length,
+                    assets.filter(a => -0.5 <= a.change <= 0.5).length
+                ];
+                
+                Plotly.newPlot('chart', [{
+                    x: categories,
+                    y: counts,
+                    type: 'bar',
+                    marker: { color: ['#00ff00', '#ff0000', '#ffaa00'] }
+                }], {
+                    plot_bgcolor: '#1a1a1a',
+                    paper_bgcolor: '#0a0a0a',
+                    font: { color: '#00ff00' },
+                    xaxis: { gridcolor: '#333' },
+                    yaxis: { gridcolor: '#333' }
+                });
+                
+                document.getElementById('time').innerHTML = `Canlı Veri - ${new Date().toLocaleTimeString('tr-TR')}`;
+                
+            } catch(e) {
+                console.error(e);
+                document.body.innerHTML += `<p style="color: red; text-align: center;">Hata: ${e}</p>`;
+            }
+        }
+        
+        loadMarkets();
+        setInterval(loadMarkets, 30000);
+    </script>
+</body>
+</html>
