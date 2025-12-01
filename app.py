@@ -236,3 +236,13 @@ def btcturk_dashboard():
         return analyzer.generate_html_chart()
     except:
         return "Error"
+
+@app.route('/markets')
+def markets():
+    """BTCTurk Market Scanner Dashboard"""
+    try:
+        from btcturk_market_scanner import BTCTurkMarketScanner
+        scanner = BTCTurkMarketScanner()
+        return scanner.get_html_dashboard()
+    except Exception as e:
+        return f"Error: {e}"
