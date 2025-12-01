@@ -43,6 +43,15 @@ def index():
             
             <div class="dashboard">
                 <div class="card" style="grid-column: 1 / 4; background: #1a3a1a; border: 2px solid #00ff00;">
+                    <h2>🎬 Yatırım Rehberi - VIDEO</h2>
+                    <video width="100%" controls style="border-radius: 10px; margin: 10px 0;">
+                        <source src="/static/investment_tutorial.mp4" type="video/mp4">
+                        Tarayıcınız video oynatmayı desteklemiyor.
+                    </video>
+                    <p style="color: #00ff00; margin-top: 10px;">✅ Nasıl Yatırım Yapılır - Adım Adım Rehberi (8 min)</p>
+                </div>
+                
+                <div class="card" style="grid-column: 1 / 4; background: #1a3a1a; border: 2px solid #00ff00;">
                     <h2>📱 Telegram Entegrasyonu</h2>
                     <input type="text" id="telegram-token" placeholder="Telegram Bot Token (123456:ABC-DEF...)">
                     <input type="text" id="telegram-chat" placeholder="Telegram Chat ID">
