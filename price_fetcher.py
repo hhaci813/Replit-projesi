@@ -1,10 +1,11 @@
-"""Simple Price Fetcher - Working APIs Only"""
+"""Universal Price Fetcher - Tüm Araçlar"""
 import requests
+import yfinance as yf
 
 class PriceFetcher:
     @staticmethod
     def get_price(symbol):
-        """Doğrudan çalışan API'ler - en güvenilir"""
+        """Kripto, hisse, tüm araçlardan fiyat al"""
         try:
             # BTC USD
             if symbol in ["BTC-USD", "BTC"]:
@@ -29,15 +30,21 @@ class PriceFetcher:
                     price = float(resp.json()['data'][0]['last'])
                     return price, "BTCTurk"
             
-            # Hisse senetleri - Finnhub (Free API)
-            if symbol in ["AAPL", "MSFT", "GOOGL"]:
-                # Fallback: Static realistic prices (API limit)
-                fallback_prices = {
-                    "AAPL": 242.84,
-                    "MSFT": 445.95,
-                    "GOOGL": 177.45
-                }
-                return fallback_prices.get(symbol, 0), "Fallback"
+            # Diğer kripto
+            if symbol in ["BNB", "SOL", "ADA", "XRP", "DOGE", "AVAX", "LINK", "MATIC"]:
+                ticker = yf.Ticker(symbol + "-USD")
+                data = ticker.history(period='1d')
+                if not data.empty:
+                    price = data['Close'].iloc[-1]
+                    return float(price), "YFinance"
+            
+            # Tüm hisseler - YFinance
+            ticker = yf.Ticker(symbol)
+            data = ticker.history(period='1d')
+            if not data.empty:
+                price = data['Close'].iloc[-1]
+                return float(price), "YFinance"
+        
         except:
             pass
         
