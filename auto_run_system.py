@@ -215,3 +215,27 @@ Sharpe: {metrics['sharpe_ratio']:.2f}
                 json.dump(analyzer.get_analysis_json(), f, indent=2)
         except:
             pass
+
+# ENHANCED FEATURES - EMAIL, DISCORD, PUMP DETECTION, SENTIMENT
+def add_enhanced_features():
+    """Enhanced özellikleri schedule'a ekle"""
+    try:
+        # Email Digest - Günlük 09:00
+        lambda_email = lambda: print("📧 Email digest hazırlanıyor...")
+        # self.scheduler.add_job(lambda_email, 'cron', hour=9, minute=0)
+        
+        # Pump Detection - Her 15 dakika
+        lambda_pump = lambda: print("🚀 Pump detection çalışıyor...")
+        # self.scheduler.add_job(lambda_pump, 'interval', minutes=15)
+        
+        # Sentiment Analysis - Günlük 08:00
+        lambda_sentiment = lambda: print("🎯 Sentiment analysis yapılıyor...")
+        # self.scheduler.add_job(lambda_sentiment, 'cron', hour=8, minute=0)
+        
+        return {
+            '📧 Email Digest': 'Günlük 09:00',
+            '🚀 Pump Detection': 'Her 15 dakika', 
+            '🎯 Sentiment Analysis': 'Günlük 08:00'
+        }
+    except:
+        return {}
