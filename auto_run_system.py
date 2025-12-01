@@ -204,3 +204,23 @@ Sharpe: {metrics['sharpe_ratio']:.2f}
                 tracker.save_tracking()
         except:
             pass
+
+    def _btcturk_30min_analysis(self):
+        """Her 30 dakikada BTCTurk analizi - GRAFIK HALİNDE"""
+        try:
+            from btcturk_30min_analyzer import BTCTurk30MinAnalyzer
+            analyzer = BTCTurk30MinAnalyzer()
+            
+            # Metin raporu
+            report = analyzer.get_text_report()
+            
+            # Telegram'a gönder
+            from telegram_service import TelegramService
+            TelegramService()._send_message(report)
+            
+            # JSON kaydet
+            import json
+            with open('latest_30min_analysis.json', 'w') as f:
+                json.dump(analyzer.get_analysis_json(), f, indent=2)
+        except:
+            pass

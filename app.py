@@ -216,3 +216,23 @@ def get_analysis():
         return jsonify(analysis)
     except:
         return jsonify({'error': 'error'})
+
+@app.route('/api/btcturk-analysis')
+def btcturk_analysis():
+    """BTCTurk 30 min analiz API"""
+    try:
+        from btcturk_30min_analyzer import BTCTurk30MinAnalyzer
+        analyzer = BTCTurk30MinAnalyzer()
+        return jsonify(analyzer.get_analysis_json())
+    except:
+        return jsonify({'error': 'error'})
+
+@app.route('/btcturk-dashboard')
+def btcturk_dashboard():
+    """BTCTurk grafik dashboard"""
+    try:
+        from btcturk_30min_analyzer import BTCTurk30MinAnalyzer
+        analyzer = BTCTurk30MinAnalyzer()
+        return analyzer.generate_html_chart()
+    except:
+        return "Error"
