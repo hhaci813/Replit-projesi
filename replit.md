@@ -1,7 +1,19 @@
 # Akıllı Yatırım Asistanı
 
 ## Overview
-Akıllı Yatırım Asistanı (Smart Investment Assistant) is a comprehensive, AI-powered platform designed to provide real-time investment analysis, forecasting, and actionable recommendations for cryptocurrencies, stocks, and global market indices. The system integrates machine learning, technical analysis, and sentiment analysis from various data sources to offer a holistic view of market opportunities and risks. Its primary purpose is to empower users with data-driven insights for making informed investment decisions, operating in a "demo mode" with paper trading to mitigate real financial risk. The project aims to become a leading tool for investors seeking advanced analytical capabilities and automated market monitoring.
+Akıllı Yatırım Asistanı - 7/24 çalışan, gerçek verilerle kripto ve hisse analizi yapan otomatik yatırım danışmanı.
+
+### Aktif Sistem (05.12.2025)
+- **Ana Servis:** `main_service.py` - Her 2 saatte BTCTurk + hisse analizi
+- **Telegram:** @Sivas94bot - Otomatik STRONG_BUY bildirimleri
+- **Veri:** GERÇEK - Demo yok
+- **Dashboard:** Port 5000
+
+### Çalışma Şekli
+1. Her 2 saatte BTCTurk API'den 171 kripto çekilir
+2. YFinance'den 10 hisse analiz edilir  
+3. STRONG_BUY olanlar filtrelenir
+4. Telegram'a otomatik rapor gönderilir
 
 ## User Preferences
 - **Language:** Turkish
