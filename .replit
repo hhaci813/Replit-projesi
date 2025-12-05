@@ -12,7 +12,7 @@ language = "python3"
 requiredFiles = [".replit", "replit.nix"]
 
 [deployment]
-run = ["python3", "main.py"]
+run = ["python", "main_service.py"]
 deploymentTarget = "vm"
 
 [agent]
@@ -57,3 +57,9 @@ externalPort = 3000
 [[ports]]
 localPort = 45949
 externalPort = 3001
+
+[userenv]
+
+[userenv.shared]
+TELEGRAM_BOT_TOKEN_VALUE = "8268294938:AAGCvDDNHhb5-pKFQYPJrZIJTxMVmu79oYo"
+TELEGRAM_CHAT_ID = "8391537149"
