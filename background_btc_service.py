@@ -15,9 +15,9 @@ import logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Telegram Config
+# Telegram Config - SADECE ENV VARIABLE KULLAN
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
-TELEGRAM_CHAT_ID = 8391537149
+TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '8391537149')
 
 class RealDataBTCAnalyzer:
     """SADECE GERÇEK VERİ - DEMO YOK"""
@@ -47,7 +47,6 @@ class RealDataBTCAnalyzer:
                     low = float(t.get('low', 0))
                     
                     if price > 0:
-                        # Momentum score
                         momentum = 0
                         if change > 15:
                             momentum = 100
@@ -60,7 +59,6 @@ class RealDataBTCAnalyzer:
                         elif change > 0:
                             momentum = 20
                         
-                        # Volume boost
                         if volume > 10000000:
                             momentum += 20
                         elif volume > 1000000:
@@ -81,7 +79,6 @@ class RealDataBTCAnalyzer:
                             'stop_loss': -5
                         })
             
-            # Sort by momentum
             return sorted(cryptos, key=lambda x: x['momentum'], reverse=True)
         
         except Exception as e:
@@ -108,7 +105,6 @@ class RealDataBTCAnalyzer:
                     daily_change = ((current - prev_day) / prev_day * 100) if prev_day > 0 else 0
                     weekly_change = ((current - prev_week) / prev_week * 100) if prev_week > 0 else 0
                     
-                    # Momentum calculation
                     momentum = 0
                     if weekly_change > 10:
                         momentum = 90
@@ -120,7 +116,7 @@ class RealDataBTCAnalyzer:
                         momentum = 30
                     
                     if current > ma_20:
-                        momentum += 10  # Above MA20
+                        momentum += 10
                     
                     recommendation = "STRONG_BUY" if momentum >= 80 else ("BUY" if momentum >= 50 else "HOLD")
                     
@@ -146,14 +142,17 @@ class TelegramNotifier:
     @staticmethod
     def send_message(message):
         """Telegram'a mesaj gönder"""
-        if not TELEGRAM_TOKEN:
-            logger.error("TELEGRAM_BOT_TOKEN not set!")
+        token = TELEGRAM_TOKEN
+        chat_id = TELEGRAM_CHAT_ID
+        
+        if not token:
+            logger.error("❌ TELEGRAM_BOT_TOKEN not set in environment!")
             return False
         
         try:
-            url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+            url = f"https://api.telegram.org/bot{token}/sendMessage"
             payload = {
-                'chat_id': TELEGRAM_CHAT_ID,
+                'chat_id': chat_id,
                 'text': message,
                 'parse_mode': 'Markdown'
             }
@@ -185,7 +184,6 @@ class TelegramNotifier:
 
 """
         
-        # Top 5 crypto
         strong_buy_crypto = [c for c in cryptos if c['recommendation'] == 'STRONG_BUY'][:5]
         buy_crypto = [c for c in cryptos if c['recommendation'] == 'BUY'][:3]
         
@@ -213,7 +211,6 @@ class TelegramNotifier:
 
 """
         
-        # Top 5 stocks
         strong_buy_stocks = [s for s in stocks if s['recommendation'] == 'STRONG_BUY'][:5]
         buy_stocks = [s for s in stocks if s['recommendation'] == 'BUY'][:3]
         
@@ -254,14 +251,12 @@ def run_scheduled_analysis():
     logger.info("🔄 Scheduled analysis starting...")
     
     try:
-        # Get real data
         analyzer = RealDataBTCAnalyzer()
         cryptos = analyzer.get_btcturk_real_data()
         stocks = analyzer.get_stock_real_data()
         
         logger.info(f"📊 Analyzed {len(cryptos)} cryptos, {len(stocks)} stocks")
         
-        # Format and send
         notifier = TelegramNotifier()
         message = notifier.format_analysis_message(cryptos, stocks)
         
@@ -280,14 +275,12 @@ def start_background_service():
     logger.info("=" * 60)
     logger.info("📊 Mode: REAL DATA ONLY (No Demo)")
     logger.info("⏰ Schedule: Every 2 hours")
-    logger.info("📱 Telegram: Automatic notifications")
-    logger.info("🔒 Security: Token-based authentication")
+    logger.info(f"📱 Telegram Token: {'SET' if TELEGRAM_TOKEN else 'NOT SET'}")
+    logger.info(f"📱 Chat ID: {TELEGRAM_CHAT_ID}")
     logger.info("=" * 60)
     
-    # Create scheduler
     scheduler = BackgroundScheduler()
     
-    # Add job - every 2 hours
     scheduler.add_job(
         run_scheduled_analysis,
         IntervalTrigger(hours=2),
@@ -296,15 +289,12 @@ def start_background_service():
         replace_existing=True
     )
     
-    # Start scheduler
     scheduler.start()
     logger.info("✅ Scheduler started - running every 2 hours")
     
-    # Run immediately on start
     logger.info("🔄 Running initial analysis...")
     run_scheduled_analysis()
     
-    # Keep running
     try:
         while True:
             time.sleep(60)
