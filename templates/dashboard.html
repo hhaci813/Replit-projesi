@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚀 Akıllı Yatırım Asistanı - KESIN AL ÖNERİLERİ</title>
+    <style>
+        * { margin: 0; padding: 0; }
+        body { background: #0f172a; color: #e2e8f0; font-family: Arial; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        h1 { text-align: center; color: #60a5fa; margin: 20px 0; }
+        .widget { background: #1e293b; border: 2px solid #475569; border-radius: 10px; padding: 20px; margin: 20px 0; }
+        .recommendation { background: #0f172a; border-left: 4px solid #10b981; padding: 15px; margin: 10px 0; }
+        .symbol { font-weight: bold; color: #fbbf24; font-size: 16px; }
+        .change { color: #10b981; margin-left: 10px; }
+        .action { color: #10b981; font-weight: bold; }
+        button { background: #3b82f6; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 KESIN AL ÖNERİLERİ</h1>
+        
+        <div class="widget">
+            <h2>🔥 STRONG_BUY KRİPTO (Kesin Al):</h2>
+            <div id="crypto-list">Yükleniyor...</div>
+            
+            <h2>💻 STRONG_BUY HİSSE (Kesin Al):</h2>
+            <div id="stock-list">Yükleniyor...</div>
+            
+            <button onclick="location.reload()">🔄 Yenile</button>
+        </div>
+    </div>
+
+    <script>
+        fetch('/api/btc/analysis')
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById('crypto-list').innerHTML = data.strong_buy_cryptos
+                    .map((c, i) => `<div class="recommendation"><span class="symbol">${i+1}. ${c.symbol}</span> <span class="change">${c.change}</span> → <span class="action">${c.action}</span></div>`)
+                    .join('');
+                document.getElementById('stock-list').innerHTML = data.strong_buy_stocks
+                    .map((s, i) => `<div class="recommendation"><span class="symbol">${i+1}. ${s.symbol}</span> <span class="change">${s.change}</span> → <span class="action">${s.action}</span></div>`)
+                    .join('');
+            });
+    </script>
+</body>
+</html>

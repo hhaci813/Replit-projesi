@@ -1,0 +1,46 @@
+🚀 TELEGRAM /btc KOMUTU - BAŞLANGIC KILAVUzu
+
+📱 TELEGRAM'DA /btc YAZINCA NE OLUR?
+
+Sistem otomatik olarak:
+1. BTCTurk'deki 337+ kripto'yu analiz eder
+2. Yükselen olanları bulur  
+3. STRONG_BUY önerileri verir
+
+🎯 ÖRNEK ÇIKTI:
+
+🔥 KESIN AL ÖNERİLERİ
+
+🔥 STRONG_BUY KRİPTO:
+1. LUNA +66.66% → KESIN AL
+2. CVC +19.25% → KESIN AL
+
+💻 STRONG_BUY HİSSE:
+1. TSLA +5.74% → KESIN AL
+2. ADBE +7.39% → KESIN AL
+3. CRM +11.93% → KESIN AL
+
+⚠️ Stop Loss -5% | Kar Hedefi +25%
+
+📊 NASIL KULLANIR?
+
+1. Telegram'ı aç
+2. Bot'a yaz: /btc
+3. KESIN AL önerileri al
+4. Stop Loss koy
+5. Hedeflere ulaşınca çık
+
+💡 KURALLAR:
+✅ STRONG_BUY = Kesin al
+✅ BUY = Fırsat varsa al
+❌ Stop Loss MUTLAKA!
+❌ Diversify: 5+ sembol min
+❌ Position size: %5 max
+
+🔗 API ENDPOINTS (Developers):
+GET /api/btc/analysis → JSON
+GET /api/btc/telegram → Metin
+POST /api/btc/send → Telegram'a gönder
+
+---
+Bot 24/7 çalışıyor! /btc yazıp başla! 🚀

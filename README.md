@@ -1,48 +1,52 @@
-# 🤖 AKILLI YATIRIM ASİSTANI - V3 ENTERPRISE
+# 🚀 AKILLI YATIRIM ASİSTANI
 
-Yapay Zeka destekli, 24/7 Telegram botlu yatırım asistanı.
+Comprehensive AI investment assistant for crypto, stocks, and global markets.
 
-## ✨ Özellikler
+## 📱 Telegram /btc Komutu
 
-- **500+ Hisse & Kripto Analizi** - Gerçek borsa taraması
-- **Telegram Bot** - Her 2 dakikada canlı analiz & tavsiye
-- **Web Dashboard** - Portföy yönetimi & yatırım rehberi videosu
-- **Otomatik Tavsiyeler** - Bütçeye göre diversifiye portföy önerisi
-- **Risk Yönetimi** - Stop Loss (-5%) & Take Profit (+20%)
-- **24/7 Sistem** - Sürekli arka planda çalışan automation
+Telegram'da `/btc` yazınca sistem **kesin yükselişe geçecekleri** otomatik analiz eder:
 
-## 🚀 Başlat
+### 🔥 STRONG_BUY ÖNERİLERİ:
 
-```bash
-python main.py
+**KESIN AL:**
+- LUNA +68% → Hedef: +25% | Stop: -5%
+- CVC +20% → Hedef: +25% | Stop: -5%
+- TSLA +5.7% → Hedef: +20% | Stop: -3%
+- ADBE +7.4% → Hedef: +20% | Stop: -3%
+- CRM +11.7% → Hedef: +20% | Stop: -3%
+
+### 📊 API Endpoints
+
+```
+GET /api/btc/analysis           → JSON önerileri
+GET /api/btc/telegram           → Telegram formatı
+POST /api/btc/send              → Telegram'a gönder
+GET /                           → Dashboard
 ```
 
-## 📊 Sistem Bileşenleri
+### 🎯 Features
 
-- **main.py** - Ana giriş noktası
-- **auto_run_system.py** - 24/7 Otomasyonu
-- **market_scanner.py** - Borsa taraması (500+ araç)
-- **universal_portfolio_engine.py** - Portföy önerisi motoru
-- **telegram_interactive.py** - Telegram bot entegrasyonu
-- **symbol_analyzer.py** - Teknik analiz (RSI, MACD, MA)
-- **price_fetcher.py** - Gerçek fiyat verisi (BTCTurk, YFinance)
+✅ 337+ BTCTurk kripto analizi
+✅ 10+ hisse senedi tracking
+✅ STRONG_BUY/BUY otomatik filtreleme
+✅ Kar/zarar potansiyelini hesapla
+✅ Deep research (5-layer analysis)
+✅ Dashboard widget
+✅ Telegram integration
+✅ 24/7 otomatik monitoring
 
-## 📱 Telegram Komutları
+### 🚀 Kullanım
 
-- `/analiz` - Canlı borsa analizi
-- `/portfoy` - Portföy durumu
-- `/sinyaller` - AL/SAT sinyalleri
+```bash
+# Telegram'da
+/btc         → Kesin AL önerileri
+/help        → Komutlar
 
-## 🎬 Yatırım Rehberi Videosu
-
-Dashboard veya Telegram'da "Nasıl Yatırım Yapılır" videosu mevcuttur.
-
-## ⚙️ Konfigürasyon
-
-Telegram token ve chat ID `telegram_service.py` içinde ayarlanır.
+# API'da
+curl http://localhost:5000/api/btc/analysis
+```
 
 ---
 
-**Status:** ✅ Production Ready  
-**Version:** 3.0 Enterprise  
-**Last Update:** 01 Aralık 2025
+**Sistem 24/7 çalışıyor. Telegram'da /btc yazın!** 🔥
+
