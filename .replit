@@ -28,30 +28,15 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Run Learning System"
-
-[[workflows.workflow.tasks]]
-task = "workflow.run"
-args = "Web Dashboard"
+args = "BTC Analysis Service"
 
 [[workflows.workflow]]
-name = "Run Learning System"
-author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "console"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "python main.py"
-
-[[workflows.workflow]]
-name = "Web Dashboard"
+name = "BTC Analysis Service"
 author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python app.py"
+args = "python main_service.py"
 waitForPort = 5000
 
 [workflows.workflow.metadata]
@@ -60,10 +45,6 @@ outputType = "webview"
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 38075
-externalPort = 3001
 
 [[ports]]
 localPort = 39463
