@@ -54,3 +54,101 @@ The Akıllı Yatırım Asistanı is built upon a robust architecture that combin
 - **Gmail SMTP:** For sending daily market summary email digests (requires Gmail App Password setup).
 - **Discord Bot API:** For real-time alerts and notifications (requires Discord bot token).
 - **Plotly:** For interactive data visualization in the web dashboard.
+---
+
+## 🌐 DEEP RESEARCH WEB SCRAPER (04.12.2025 - Final)
+
+### ✅ YENİ ÖZELLIK: Internet Tarayıcısı + Derinlemesine Analiz
+
+#### 1. **Advanced Web Scraper** - `advanced_web_scraper.py`
+- **News Scraping:** BTCTurk'le ilgili haberleri RSS/Web'den otomatik topla
+- **Social Media Tracking:** Twitter trending, Reddit discussions
+- **Technical Data:** RSI, MACD, Volume, Whale transactions
+- **Multi-Source:** Coindesk, Bloomberg, Cryptonews, vb.
+
+```python
+scraper = AdvancedWebScraper()
+news = scraper.scrape_crypto_news("bitcoin", limit=20)
+whales = scraper.scrape_technical_data("BTC")
+```
+
+#### 2. **Deep Research Analyzer** - `deep_research_analyzer.py`
+5-Layer İnsan Bulamadığı Bilgi Sistemi:
+
+| Layer | İçerik | Açıklama |
+|-------|--------|----------|
+| **1. News Sentiment** | 20+ makale | Haberlerden sentiment analiz |
+| **2. Social Signals** | Twitter + Reddit | Sosyal medya consensus |
+| **3. Technical Confluence** | RSI, MACD, MA | 7/10 confluence score |
+| **4. Whale Activity** | Blockchain | Büyük oyuncu hareketleri |
+| **5. Market Correlation** | S&P 500, Yields | Makro ekonomi etkileri |
+
+```python
+analyzer = DeepResearchAnalyzer()
+research = analyzer.analyze_btc_deep()
+# Returns: 5 layers + final verdict + confidence
+```
+
+#### 3. **Integrated API Endpoints**
+
+```
+GET /api/deep-research/BTC              → 5-layer complete analysis
+GET /api/scrape-news/<keyword>          → News scraping + sentiment
+GET /api/whale-activity                 → Blockchain tracking
+GET /api/social-signals                 → Twitter + Reddit consensus
+```
+
+### 📊 Örnek Output:
+
+```
+🔬 DEEP BTC RESEARCH REPORT
+
+📰 News Sentiment: POSITIVE (+0.45 polarity)
+   • 20 makale analiz edildi
+   • Bullish haberler başında
+   
+💬 Social Signals: BULLISH
+   • Twitter: Bitcoin momentum trending
+   • Reddit: Bulls r fuk memes 🚀
+   
+📊 Technical: 7/10 Confluence
+   • RSI Normal (not overbought)
+   • MAs perfectly aligned
+   • Volume confirmed
+   
+🐋 Whales: NET BULLISH
+   • 5 büyük transfer (accumulation)
+   • Long-term holders buying
+   
+🔗 Market Correlation: POSITIVE
+   • S&P 500 ↑ BTC ↑ (0.7 corr)
+   • Treasury yields ↓ → BTC favorable
+   • Risk appetite: ↑
+
+🎯 FINAL VERDICT: STRONG_BUY
+   Score: 7.4/10
+   Confidence: 74%
+   Message: "BTC yükseliş sinyalleri güçlü"
+```
+
+### 🚀 CAPABILITIES:
+
+- ✅ Internet tarama (otomatik haber toplama)
+- ✅ Sosyal medya sentiment (Twitter, Reddit)
+- ✅ Whale tracking (blockchain analizi)
+- ✅ Technical confluence (5 indicator combo)
+- ✅ Market correlation (makro etki)
+- ✅ Automated insights generation
+- ✅ Integrated with recommendation engine
+
+### 📱 KULLANIM:
+
+1. **Telegram:** Deep report günlük otomatik
+2. **Dashboard:** `/api/deep-research/BTC` endpoint
+3. **News:** Keyword'e göre otomatik scrape
+4. **Whale:** Blockchain hareketlerini takip et
+
+### 🎊 SONUÇ:
+
+Sistem artık **interneti taratıyor** + **derinlemesine analiz yapıyor** + **insan bulamadığı bilgileri buluyor** = **Sağlam investment recommendations**
+
