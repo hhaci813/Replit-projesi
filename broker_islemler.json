@@ -1,0 +1,43 @@
+{
+  "islemler": [
+    {
+      "id": 1,
+      "broker": "alpaca",
+      "tipi": "AL",
+      "sembol": "AAPL",
+      "miktar": 10,
+      "fiyat": 0,
+      "zaman": "2025-11-30T12:34:24.843591",
+      "status": "tamam"
+    },
+    {
+      "id": 2,
+      "broker": "binance",
+      "tipi": "AL",
+      "sembol": "BTC",
+      "miktar": 0.5,
+      "fiyat": 0,
+      "zaman": "2025-11-30T12:34:24.846815",
+      "status": "tamam"
+    },
+    {
+      "id": 3,
+      "broker": "alpaca",
+      "tipi": "SAT",
+      "sembol": "MSFT",
+      "miktar": 5,
+      "fiyat": 0,
+      "zaman": "2025-11-30T12:34:24.847842",
+      "status": "tamam"
+    }
+  ],
+  "bakiye": {
+    "alpaca": 100000,
+    "binance": 10
+  },
+  "pozisyonlar": {
+    "alpaca": {},
+    "binance": {}
+  },
+  "son_guncelleme": "2025-11-30T12:34:24.847848"
+}
