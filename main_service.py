@@ -128,11 +128,11 @@ def get_crypto_history(symbol, days=30):
 
 # ===================== DETAYLI ANALİZ =====================
 def analyze_crypto_detailed(symbol):
-    """Tek kripto için detaylı analiz"""
+    """Tek kripto için detaylı analiz (TL)"""
     try:
         tickers = get_btcturk_data()
         for t in tickers:
-            if t.get('pairNormalized') == f"{symbol}_USDT":
+            if t.get('pairNormalized') == f"{symbol}_TRY":
                 price = float(t.get('last', 0))
                 high = float(t.get('high', 0))
                 low = float(t.get('low', 0))
@@ -198,11 +198,13 @@ def analyze_crypto_detailed(symbol):
         return None
 
 def analyze_rising_cryptos(tickers):
+    """Yükselen kriptolar (TL)"""
     cryptos = []
+    seen = set()
     for t in tickers:
         if isinstance(t, dict):
             pair = t.get('pairNormalized', '')
-            if '_USDT' in pair or '_TRY' in pair:
+            if '_TRY' in pair:
                 symbol = pair.split('_')[0]
                 change = float(t.get('dailyPercent', 0))
                 price = float(t.get('last', 0))
@@ -219,12 +221,14 @@ def analyze_rising_cryptos(tickers):
     return sorted(cryptos, key=lambda x: x['change'], reverse=True)[:10]
 
 def analyze_potential_risers(tickers):
+    """Yükselecek kriptolar (TL)"""
     potentials = []
+    seen = set()
     for t in tickers:
         if not isinstance(t, dict):
             continue
         pair = t.get('pairNormalized', '')
-        if '_USDT' not in pair and '_TRY' not in pair:
+        if '_TRY' not in pair:
             continue
         
         symbol = pair.split('_')[0]
@@ -414,10 +418,17 @@ def run_full_analysis():
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
     
+    # BTC TL fiyatını al
+    btc_tl = None
+    for t in tickers:
+        if t.get('pairNormalized') == 'BTC_TRY':
+            btc_tl = float(t.get('last', 0))
+            break
+    
     if btc_analysis:
         msg += f"""
 📊 <b>BTC TEKNİK ANALİZ</b>
-   💰 Fiyat: ${btc_analysis['price']:,}
+   💰 Fiyat: ₺{btc_tl:,.0f} TL
    📈 RSI: {btc_analysis['rsi']}
    📉 MACD: {btc_analysis['macd']}
    🎯 Skor: {btc_analysis['score']}/100
@@ -444,14 +455,14 @@ def run_full_analysis():
     if potential:
         for p in potential[:5]:
             msg += f"""🎯 <b>{p['symbol']}</b>
-   💰 ${p['price']:.6f} | Pot: +{p['potential']}%
+   💰 ₺{p['price']:,.2f} TL | Pot: +{p['potential']}%
    ⏱️ {p.get('days_estimate', '3-7 gün')} | Risk: {p['risk']}/10
    
 """
     else:
         msg += "⚠️ Sinyal yok\n"
     
-    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n💻 <b>HİSSELER:</b>\n"
+    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n💻 <b>HİSSELER (USD):</b>\n"
     if strong_stocks:
         for s in strong_stocks:
             msg += f"🟢 <b>{s['symbol']}</b> ${s['price']} +{s['weekly']:.1f}%\n"
@@ -525,21 +536,21 @@ def run_telegram_bot():
 🔄 Her 2 saatte otomatik rapor"""
                                 send_telegram_to(chat_id, help_msg)
                             
-                            # /btc - Yükselecekler
+                            # /btc - Yükselecekler (TL)
                             elif cmd == '/btc':
                                 tickers = get_btcturk_data()
                                 potential = analyze_potential_risers(tickers)
                                 rising = analyze_rising_cryptos(tickers)
                                 
-                                msg = "🔮 <b>YÜKSELECEK KRİPTOLAR</b>\n\n"
+                                msg = "🔮 <b>YÜKSELECEK KRİPTOLAR (TL)</b>\n\n"
                                 
                                 if potential:
                                     for i, p in enumerate(potential[:7], 1):
                                         msg += f"""<b>{i}. 🎯 {p['symbol']}</b>
-   💰 ${p['price']:.6f}
+   💰 ₺{p['price']:,.2f} TL
    📈 Potansiyel: +{p['potential']}%
-   🎯 Hedef: ${p['target']:.6f}
-   🛑 Stop: ${p['stop']:.6f}
+   🎯 Hedef: ₺{p['target']:,.2f} TL
+   🛑 Stop: ₺{p['stop']:,.2f} TL
    ⏱️ {p.get('days_estimate', '3-7 gün')}
    
 """
@@ -547,11 +558,11 @@ def run_telegram_bot():
                                 if rising:
                                     msg += "\n🔥 <b>ŞU AN YÜKSELENLER:</b>\n"
                                     for r in rising[:3]:
-                                        msg += f"• {r['symbol']} +{r['change']:.1f}%\n"
+                                        msg += f"• {r['symbol']} +{r['change']:.1f}% | ₺{r['price']:,.2f}\n"
                                 
                                 send_telegram_to(chat_id, msg or "⚠️ Sinyal yok")
                             
-                            # /analiz [COIN] - Detaylı analiz
+                            # /analiz [COIN] - Detaylı analiz (TL)
                             elif cmd == '/analiz':
                                 symbol = args[0].upper() if args else 'BTC'
                                 
@@ -561,9 +572,9 @@ def run_telegram_bot():
                                 else:
                                     analysis = analyze_crypto_detailed(symbol)
                                     if analysis:
-                                        msg = f"""🔍 <b>DETAYLI ANALİZ: {symbol}</b>
+                                        msg = f"""🔍 <b>DETAYLI ANALİZ: {symbol} (TL)</b>
 
-💰 Fiyat: ${analysis['price']:.6f}
+💰 Fiyat: ₺{analysis['price']:,.2f} TL
 📈 24s: {analysis['change']:+.2f}%
 📊 RSI: {analysis['rsi']}
 📉 MACD: {analysis['macd']}
@@ -572,11 +583,11 @@ def run_telegram_bot():
 🎯 <b>Skor: {analysis['score']}/100</b>
 ✅ <b>{analysis['recommendation']}</b>
 
-🎯 Hedef: ${analysis['target']:.6f}
-🛑 Stop: ${analysis['stop']:.6f}"""
+🎯 Hedef: ₺{analysis['target']:,.2f} TL
+🛑 Stop: ₺{analysis['stop']:,.2f} TL"""
                                         send_telegram_to(chat_id, msg)
                                     else:
-                                        send_telegram_to(chat_id, f"❌ {symbol} bulunamadı")
+                                        send_telegram_to(chat_id, f"❌ {symbol} TL paritesi bulunamadı")
                             
                             # /piyasa - Global
                             elif cmd == '/piyasa':
@@ -624,30 +635,30 @@ def run_telegram_bot():
                                 else:
                                     send_telegram_to(chat_id, "💼 Portföy modülü yükleniyor...")
                             
-                            # /ekle [COIN] [TUTAR] - Pozisyon ekle
+                            # /ekle [COIN] [TUTAR] - Pozisyon ekle (TL)
                             elif cmd == '/ekle':
                                 if portfolio and len(args) >= 2:
                                     symbol = args[0].upper()
                                     try:
-                                        amount = float(args[1].replace('$', ''))
+                                        amount = float(args[1].replace('₺', '').replace('TL', ''))
                                         pos = portfolio.add_position(symbol, amount)
                                         if pos:
-                                            send_telegram_to(chat_id, f"✅ {symbol} ${amount} eklendi!")
+                                            send_telegram_to(chat_id, f"✅ {symbol} ₺{amount:,.2f} TL eklendi!")
                                         else:
                                             send_telegram_to(chat_id, "❌ Eklenemedi")
                                     except:
-                                        send_telegram_to(chat_id, "❌ Format: /ekle BTC 100")
+                                        send_telegram_to(chat_id, "❌ Format: /ekle BTC 1000")
                                 else:
-                                    send_telegram_to(chat_id, "📝 Kullanım: /ekle BTC 100")
+                                    send_telegram_to(chat_id, "📝 Kullanım: /ekle BTC 1000 (TL)")
                             
-                            # /alarm - Aktif alarmlar
+                            # /alarm - Aktif alarmlar (TL)
                             elif cmd == '/alarm':
                                 if alert_system:
                                     alerts = alert_system.get_active_alerts()
                                     if alerts:
-                                        msg = "🔔 <b>AKTİF ALARMLAR</b>\n\n"
+                                        msg = "🔔 <b>AKTİF ALARMLAR (TL)</b>\n\n"
                                         for a in alerts[:10]:
-                                            msg += f"• {a['symbol']}: ${a['entry_price']:.6f}\n  🎯 ${a['target_price']:.6f} | 🛑 ${a['stop_loss']:.6f}\n\n"
+                                            msg += f"• {a['symbol']}: ₺{a['entry_price']:,.2f}\n  🎯 ₺{a['target_price']:,.2f} | 🛑 ₺{a['stop_loss']:,.2f}\n\n"
                                         send_telegram_to(chat_id, msg)
                                     else:
                                         send_telegram_to(chat_id, "🔔 Aktif alarm yok")
