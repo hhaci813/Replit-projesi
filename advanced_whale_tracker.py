@@ -9,8 +9,8 @@ import json
 from datetime import datetime, timedelta
 from typing import Dict, List
 
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or "8268294938:AAFIdr7FfJdtq__FueMOdsvym19H8IBWdNs"
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID") or "8391537149"
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 
 class AdvancedWhaleTracker:
     def __init__(self):
