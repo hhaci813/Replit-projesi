@@ -1,33 +1,70 @@
-"""🚀 AKILLI YATIRIM ASİSTANI - TAM VERSİYON
-Tüm özellikler entegre
+"""🚀 AKILLI YATIRIM ASİSTANI - MAX VERSİYON
+Tüm özellikler entegre + ML Advanced + Alarm + Portföy + Whale + AI Haberci
 """
 import os
 import requests
 import yfinance as yf
 import numpy as np
 from datetime import datetime
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import threading
 import logging
+import time
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-# Telegram Config - Environment variables ile güvenli
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN") or "8268294938:AAFIdr7FfJdtq__FueMOdsvym19H8IBWdNs"
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID") or ""
-
-# Fallback - secrets yoksa hardcoded (geliştirme için)
-if not TELEGRAM_TOKEN:
-    TELEGRAM_TOKEN = "8268294938:AAGCvDDNHhb5-pKFQYPJrZIJTxMVmu79oYo"
-if not TELEGRAM_CHAT_ID:
-    TELEGRAM_CHAT_ID = "8391537149"
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID") or "8391537149"
 
 app = Flask(__name__)
 CORS(app)
+
+# ===================== MODÜL IMPORTS =====================
+try:
+    from price_alerts import PriceAlertSystem
+    alert_system = PriceAlertSystem()
+except:
+    alert_system = None
+
+try:
+    from portfolio_tracker import PortfolioTracker
+    portfolio = PortfolioTracker()
+except:
+    portfolio = None
+
+try:
+    from advanced_whale_tracker import AdvancedWhaleTracker
+    whale_tracker = AdvancedWhaleTracker()
+except:
+    whale_tracker = None
+
+try:
+    from backtesting_engine import BacktestingEngine
+    backtest = BacktestingEngine()
+except:
+    backtest = None
+
+try:
+    from ai_news_analyzer import AINewsAnalyzer
+    news_analyzer = AINewsAnalyzer()
+except:
+    news_analyzer = None
+
+try:
+    from ml_advanced import MLAdvancedPredictor
+    ml_predictor = MLAdvancedPredictor()
+except:
+    ml_predictor = None
+
+try:
+    from detailed_analyzer import DetailedAnalyzer
+    detailed = DetailedAnalyzer()
+except:
+    detailed = None
 
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
@@ -61,6 +98,18 @@ def calculate_macd(prices):
     trend = 'BULLISH' if hist > 0 else 'BEARISH'
     return {'trend': trend, 'histogram': round(hist, 4)}
 
+def calculate_bollinger(prices, period=20):
+    if len(prices) < period:
+        return None
+    recent = prices[-period:]
+    middle = np.mean(recent)
+    std = np.std(recent)
+    upper = middle + (std * 2)
+    lower = middle - (std * 2)
+    current = prices[-1]
+    position = (current - lower) / (upper - lower) if (upper - lower) > 0 else 0.5
+    return {'upper': upper, 'middle': middle, 'lower': lower, 'position': position * 100}
+
 # ===================== VERİ KAYNAKLARI =====================
 def get_btcturk_data():
     try:
@@ -77,32 +126,108 @@ def get_crypto_history(symbol, days=30):
     except:
         return []
 
-# ===================== ANALİZ FONKSİYONLARI =====================
+# ===================== DETAYLI ANALİZ =====================
+def analyze_crypto_detailed(symbol):
+    """Tek kripto için detaylı analiz"""
+    try:
+        tickers = get_btcturk_data()
+        for t in tickers:
+            if t.get('pairNormalized') == f"{symbol}_USDT":
+                price = float(t.get('last', 0))
+                high = float(t.get('high', 0))
+                low = float(t.get('low', 0))
+                change = float(t.get('dailyPercent', 0))
+                volume = float(t.get('volume', 0))
+                
+                prices = get_crypto_history(symbol, 30)
+                rsi = calculate_rsi(prices) if prices else 50
+                macd = calculate_macd(prices) if prices else {'trend': 'NEUTRAL'}
+                bb = calculate_bollinger(prices) if prices else None
+                
+                signals = []
+                score = 50
+                
+                if rsi < 30:
+                    signals.append(f"🟢 RSI {rsi} - Aşırı satım")
+                    score += 20
+                elif rsi > 70:
+                    signals.append(f"🔴 RSI {rsi} - Aşırı alım")
+                    score -= 20
+                else:
+                    signals.append(f"⚪ RSI {rsi}")
+                
+                if macd['trend'] == 'BULLISH':
+                    signals.append("🟢 MACD Yükseliş")
+                    score += 15
+                else:
+                    signals.append("🔴 MACD Düşüş")
+                    score -= 15
+                
+                if bb:
+                    if bb['position'] < 20:
+                        signals.append("🟢 BB Alt bant")
+                        score += 15
+                    elif bb['position'] > 80:
+                        signals.append("🔴 BB Üst bant")
+                        score -= 15
+                
+                if score >= 70:
+                    rec = "STRONG_BUY"
+                elif score >= 55:
+                    rec = "BUY"
+                elif score <= 30:
+                    rec = "STRONG_SELL"
+                elif score <= 45:
+                    rec = "SELL"
+                else:
+                    rec = "HOLD"
+                
+                target = price * 1.15 if rec in ['STRONG_BUY', 'BUY'] else price
+                stop = price * 0.92
+                
+                return {
+                    'symbol': symbol, 'price': price, 'change': change,
+                    'high': high, 'low': low, 'volume': volume,
+                    'rsi': rsi, 'macd': macd['trend'],
+                    'bb_position': bb['position'] if bb else 50,
+                    'signals': signals, 'score': score, 
+                    'recommendation': rec, 'target': target, 'stop': stop
+                }
+        return None
+    except Exception as e:
+        return None
+
 def analyze_rising_cryptos(tickers):
     cryptos = []
     for t in tickers:
-        if isinstance(t, dict) and 'TRY' in t.get('pairNormalized', ''):
-            symbol = t['pairNormalized'].split('_')[0]
-            change = float(t.get('dailyPercent', 0))
-            price = float(t.get('last', 0))
-            volume = float(t.get('volume', 0))
-            if price > 0 and change > 5:
-                momentum = 100 if change > 15 else (80 if change > 10 else 60)
-                if volume > 1000000: momentum += 10
-                cryptos.append({
-                    'symbol': symbol, 'change': change, 'price': price,
-                    'momentum': momentum, 'rec': 'STRONG_BUY' if momentum >= 80 else 'BUY',
-                    'target': min(change + 25, 100)
-                })
-    return sorted(cryptos, key=lambda x: x['change'], reverse=True)[:5]
+        if isinstance(t, dict):
+            pair = t.get('pairNormalized', '')
+            if '_USDT' in pair or '_TRY' in pair:
+                symbol = pair.split('_')[0]
+                change = float(t.get('dailyPercent', 0))
+                price = float(t.get('last', 0))
+                volume = float(t.get('volume', 0))
+                if price > 0 and change > 5:
+                    momentum = 100 if change > 15 else (80 if change > 10 else 60)
+                    if volume > 1000000: momentum += 10
+                    cryptos.append({
+                        'symbol': symbol, 'change': change, 'price': price,
+                        'momentum': momentum, 'rec': 'STRONG_BUY' if momentum >= 80 else 'BUY',
+                        'target': price * (1 + min(change + 25, 100) / 100),
+                        'stop': price * 0.92
+                    })
+    return sorted(cryptos, key=lambda x: x['change'], reverse=True)[:10]
 
 def analyze_potential_risers(tickers):
     potentials = []
     for t in tickers:
-        if not isinstance(t, dict) or 'TRY' not in t.get('pairNormalized', ''):
+        if not isinstance(t, dict):
+            continue
+        pair = t.get('pairNormalized', '')
+        if '_USDT' not in pair and '_TRY' not in pair:
             continue
         
-        symbol = t['pairNormalized'].split('_')[0]
+        symbol = pair.split('_')[0]
         price = float(t.get('last', 0))
         change = float(t.get('dailyPercent', 0))
         volume = float(t.get('volume', 0))
@@ -115,21 +240,21 @@ def analyze_potential_risers(tickers):
         score = 0
         signals = []
         
-        if -3 < change < 3 and volume > 1000000:
+        if -3 < change < 3 and volume > 100000:
             score += 25
             signals.append("📦 Birikim")
         
-        if -10 < change < 0 and volume > 500000:
+        if -10 < change < 0 and volume > 50000:
             score += 20
             signals.append("📉 Dip")
         
         if high > 0 and low > 0 and high != low:
             price_pos = (price - low) / (high - low)
-            if price_pos < 0.3 and volume > 500000:
+            if price_pos < 0.3:
                 score += 30
                 signals.append("🎯 Breakout")
         
-        if volume > 5000000 and abs(change) < 5:
+        if volume > 500000 and abs(change) < 5:
             score += 20
             signals.append("📊 Hacim")
         
@@ -137,16 +262,19 @@ def analyze_potential_risers(tickers):
             score += 15
             signals.append("📈 Oversold")
         
-        if score >= 50 and signals:
-            potential_gain = ((high - price) / price * 100) if high > price else 15
+        if score >= 40 and signals:
+            potential_gain = ((high - price) / price * 100) if high > price else 20
             potentials.append({
                 'symbol': symbol, 'price': price, 'change': change,
                 'volume': volume, 'score': score, 'signals': signals,
                 'potential': round(min(potential_gain, 50), 1),
-                'risk': 5 if volume > 1000000 else 7
+                'risk': 4 if volume > 100000 else 6,
+                'target': price * 1.25,
+                'stop': price * 0.92,
+                'days_estimate': '3-7 gün'
             })
     
-    return sorted(potentials, key=lambda x: x['score'], reverse=True)[:5]
+    return sorted(potentials, key=lambda x: x['score'], reverse=True)[:10]
 
 def get_global_market_sentiment():
     try:
@@ -188,6 +316,7 @@ def get_btc_technical_analysis():
         
         rsi = calculate_rsi(prices)
         macd = calculate_macd(prices)
+        bb = calculate_bollinger(prices)
         
         score = 50
         signals = []
@@ -230,7 +359,7 @@ def get_stock_data():
                 weekly = ((current - prev_week) / prev_week * 100) if prev_week > 0 else 0
                 momentum = 90 if weekly > 10 else (70 if weekly > 5 else 50 if weekly > 2 else 30)
                 rec = "STRONG_BUY" if momentum >= 80 else ("BUY" if momentum >= 50 else "HOLD")
-                stocks.append({'symbol': sym, 'price': round(current,2), 'weekly': round(weekly,2), 'rec': rec})
+                stocks.append({'symbol': sym, 'price': round(current,2), 'weekly': round(weekly,2), 'rec': rec, 'target': current * 1.15, 'stop': current * 0.95})
         except:
             pass
     return sorted(stocks, key=lambda x: x['weekly'], reverse=True)
@@ -270,8 +399,16 @@ def run_full_analysis():
     
     logger.info(f"📊 {len(tickers)} kripto analiz edildi")
     
+    # Alarm kontrolü
+    if alert_system:
+        alert_system.check_alerts()
+    
+    # Backtest güncelleme
+    if backtest:
+        backtest.check_recommendations()
+    
     now = datetime.now()
-    msg = f"""🔔 <b>AKILLI YATIRIM RAPORU</b>
+    msg = f"""🔔 <b>AKILLI YATIRIM RAPORU - MAX</b>
 📅 {now.strftime('%d.%m.%Y %H:%M')}
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -299,14 +436,18 @@ def run_full_analysis():
     msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔥 <b>YÜKSELENLER:</b>\n"
     if rising:
         for c in rising[:3]:
-            msg += f"🔥 <b>{c['symbol']}</b> +{c['change']:.1f}%\n"
+            msg += f"🔥 <b>{c['symbol']}</b> +{c['change']:.1f}% | Hedef: +{c['change']+15:.0f}%\n"
     else:
         msg += "⚠️ Yok\n"
     
-    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔮 <b>YÜKSELECEKLER:</b>\n"
+    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔮 <b>YÜKSELECEKLER (TAHMİN):</b>\n"
     if potential:
         for p in potential[:5]:
-            msg += f"🎯 <b>{p['symbol']}</b> | Pot: +{p['potential']}% | Skor: {p['score']}\n"
+            msg += f"""🎯 <b>{p['symbol']}</b>
+   💰 ${p['price']:.6f} | Pot: +{p['potential']}%
+   ⏱️ {p.get('days_estimate', '3-7 gün')} | Risk: {p['risk']}/10
+   
+"""
     else:
         msg += "⚠️ Sinyal yok\n"
     
@@ -321,7 +462,13 @@ def run_full_analysis():
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ⏰ Sonraki: 2 saat
-📱 /btc /analiz /piyasa
+📱 KOMUTLAR:
+/btc - Yükselecekler
+/analiz BTC - Detaylı analiz
+/portfoy - Portföy durumu
+/whale - Whale takip
+/haber - AI Haberci
+/ml - ML Tahmin
 """
     
     if send_telegram(msg):
@@ -329,13 +476,12 @@ def run_full_analysis():
     else:
         logger.error("❌ Telegram hatası")
 
-# ===================== TELEGRAM BOT =====================
+# ===================== TELEGRAM BOT (Gelişmiş) =====================
 def run_telegram_bot():
     logger.info("📱 Telegram bot başlatılıyor...")
     api_url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}"
     last_update_id = 0
     
-    import time
     while True:
         try:
             resp = requests.get(f"{api_url}/getUpdates", params={'offset': last_update_id + 1, 'timeout': 30}, timeout=35)
@@ -350,51 +496,213 @@ def run_telegram_bot():
                         text = message.get('text', '').strip()
                         
                         if text.startswith('/'):
-                            cmd = text.split()[0].lower().split('@')[0]
+                            parts = text.split()
+                            cmd = parts[0].lower().split('@')[0]
+                            args = parts[1:] if len(parts) > 1 else []
                             
+                            # /start, /yardim
                             if cmd in ['/start', '/yardim', '/help']:
-                                send_telegram_to(chat_id, "🚀 <b>AKILLI YATIRIM ASİSTANI</b>\n\n/btc - Yükselecekler\n/analiz - BTC teknik\n/piyasa - Global")
+                                help_msg = """🚀 <b>AKILLI YATIRIM ASİSTANI - MAX</b>
+
+📊 <b>ANALİZ KOMUTLARI:</b>
+/btc - Yükselecek kriptolar
+/analiz [COIN] - Detaylı teknik analiz
+/piyasa - Global piyasa durumu
+
+🐋 <b>GELİŞMİŞ ÖZELLİKLER:</b>
+/whale - Whale hareketleri
+/haber - AI Haber analizi
+/ml - ML fiyat tahmini
+
+💼 <b>PORTFÖY:</b>
+/portfoy - Portföy durumu
+/ekle [COIN] [TUTAR] - Pozisyon ekle
+/alarm - Aktif alarmlar
+
+📈 <b>PERFORMANS:</b>
+/backtest - Strateji performansı
+
+🔄 Her 2 saatte otomatik rapor"""
+                                send_telegram_to(chat_id, help_msg)
                             
+                            # /btc - Yükselecekler
                             elif cmd == '/btc':
                                 tickers = get_btcturk_data()
                                 potential = analyze_potential_risers(tickers)
+                                rising = analyze_rising_cryptos(tickers)
+                                
+                                msg = "🔮 <b>YÜKSELECEK KRİPTOLAR</b>\n\n"
+                                
                                 if potential:
-                                    msg = "🔮 <b>YÜKSELECEKLER</b>\n\n"
-                                    for i, p in enumerate(potential[:5], 1):
-                                        msg += f"🎯 <b>{i}. {p['symbol']}</b>\n   {p['price']:.4f} TRY | +{p['potential']}%\n\n"
-                                    send_telegram_to(chat_id, msg)
-                                else:
-                                    send_telegram_to(chat_id, "⚠️ Sinyal yok")
+                                    for i, p in enumerate(potential[:7], 1):
+                                        msg += f"""<b>{i}. 🎯 {p['symbol']}</b>
+   💰 ${p['price']:.6f}
+   📈 Potansiyel: +{p['potential']}%
+   🎯 Hedef: ${p['target']:.6f}
+   🛑 Stop: ${p['stop']:.6f}
+   ⏱️ {p.get('days_estimate', '3-7 gün')}
+   
+"""
+                                
+                                if rising:
+                                    msg += "\n🔥 <b>ŞU AN YÜKSELENLER:</b>\n"
+                                    for r in rising[:3]:
+                                        msg += f"• {r['symbol']} +{r['change']:.1f}%\n"
+                                
+                                send_telegram_to(chat_id, msg or "⚠️ Sinyal yok")
                             
+                            # /analiz [COIN] - Detaylı analiz
                             elif cmd == '/analiz':
-                                btc = get_btc_technical_analysis()
-                                if btc:
-                                    send_telegram_to(chat_id, f"📊 <b>BTC</b>\n💰 ${btc['price']:,}\n📈 RSI: {btc['rsi']}\n📉 MACD: {btc['macd']}\n✅ {btc['recommendation']}")
+                                symbol = args[0].upper() if args else 'BTC'
+                                
+                                if detailed:
+                                    report = detailed.generate_report(symbol)
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    analysis = analyze_crypto_detailed(symbol)
+                                    if analysis:
+                                        msg = f"""🔍 <b>DETAYLI ANALİZ: {symbol}</b>
+
+💰 Fiyat: ${analysis['price']:.6f}
+📈 24s: {analysis['change']:+.2f}%
+📊 RSI: {analysis['rsi']}
+📉 MACD: {analysis['macd']}
+
+{''.join([s + chr(10) for s in analysis['signals']])}
+🎯 <b>Skor: {analysis['score']}/100</b>
+✅ <b>{analysis['recommendation']}</b>
+
+🎯 Hedef: ${analysis['target']:.6f}
+🛑 Stop: ${analysis['stop']:.6f}"""
+                                        send_telegram_to(chat_id, msg)
+                                    else:
+                                        send_telegram_to(chat_id, f"❌ {symbol} bulunamadı")
                             
+                            # /piyasa - Global
                             elif cmd == '/piyasa':
                                 gs = get_global_market_sentiment()
-                                msg = f"🌍 <b>GLOBAL</b>\n{gs['sentiment']} | {gs['crypto_impact']}\n"
+                                msg = f"""🌍 <b>GLOBAL PİYASA</b>
+
+📊 Durum: {gs['sentiment']}
+🪙 Kripto Etkisi: {gs['crypto_impact']}
+
+📈 <b>ENDEKSler:</b>
+"""
                                 for n, c in gs.get('indices', {}).items():
                                     msg += f"{'📈' if c > 0 else '📉'} {n}: {'+' if c > 0 else ''}{c}%\n"
                                 send_telegram_to(chat_id, msg)
+                            
+                            # /whale - Whale tracking
+                            elif cmd == '/whale':
+                                if whale_tracker:
+                                    report = whale_tracker.generate_whale_report()
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "🐋 Whale tracker yükleniyor...")
+                            
+                            # /haber - AI Haberci
+                            elif cmd == '/haber':
+                                if news_analyzer:
+                                    report = news_analyzer.generate_report()
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "📰 Haber analizi yükleniyor...")
+                            
+                            # /ml - ML Tahmin
+                            elif cmd == '/ml':
+                                if ml_predictor:
+                                    report = ml_predictor.generate_report()
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "🤖 ML modeli yükleniyor...")
+                            
+                            # /portfoy - Portföy durumu
+                            elif cmd == '/portfoy':
+                                if portfolio:
+                                    report = portfolio.generate_report()
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "💼 Portföy modülü yükleniyor...")
+                            
+                            # /ekle [COIN] [TUTAR] - Pozisyon ekle
+                            elif cmd == '/ekle':
+                                if portfolio and len(args) >= 2:
+                                    symbol = args[0].upper()
+                                    try:
+                                        amount = float(args[1].replace('$', ''))
+                                        pos = portfolio.add_position(symbol, amount)
+                                        if pos:
+                                            send_telegram_to(chat_id, f"✅ {symbol} ${amount} eklendi!")
+                                        else:
+                                            send_telegram_to(chat_id, "❌ Eklenemedi")
+                                    except:
+                                        send_telegram_to(chat_id, "❌ Format: /ekle BTC 100")
+                                else:
+                                    send_telegram_to(chat_id, "📝 Kullanım: /ekle BTC 100")
+                            
+                            # /alarm - Aktif alarmlar
+                            elif cmd == '/alarm':
+                                if alert_system:
+                                    alerts = alert_system.get_active_alerts()
+                                    if alerts:
+                                        msg = "🔔 <b>AKTİF ALARMLAR</b>\n\n"
+                                        for a in alerts[:10]:
+                                            msg += f"• {a['symbol']}: ${a['entry_price']:.6f}\n  🎯 ${a['target_price']:.6f} | 🛑 ${a['stop_loss']:.6f}\n\n"
+                                        send_telegram_to(chat_id, msg)
+                                    else:
+                                        send_telegram_to(chat_id, "🔔 Aktif alarm yok")
+                                else:
+                                    send_telegram_to(chat_id, "🔔 Alarm sistemi yükleniyor...")
+                            
+                            # /backtest - Performans
+                            elif cmd == '/backtest':
+                                if backtest:
+                                    report = backtest.generate_report()
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "📊 Backtest modülü yükleniyor...")
             
             time.sleep(1)
         except Exception as e:
             logger.error(f"Bot error: {e}")
             time.sleep(5)
 
-# ===================== FLASK =====================
+# ===================== FLASK API =====================
 @app.route('/')
 def home():
-    return '''<html><head><title>Akıllı Yatırım</title>
-    <style>body{background:#0f172a;color:#e2e8f0;font-family:Arial;padding:40px}h1{color:#60a5fa}.s{background:#10b981;padding:10px 20px;border-radius:5px;display:inline-block}.i{background:#1e293b;padding:20px;border-radius:10px;margin:20px 0}a{color:#60a5fa}</style></head>
-    <body><h1>🚀 AKILLI YATIRIM ASİSTANI</h1><div class="s">✅ TÜM ÖZELLİKLER AKTIF</div>
-    <div class="i"><a href="/api/analysis">/api/analysis</a> | <a href="/api/potential">/api/potential</a> | <a href="/api/btc">/api/btc</a> | <a href="/api/send-now">/api/send-now</a></div></body></html>'''
+    return '''<html><head><title>Akıllı Yatırım - MAX</title>
+    <meta charset="UTF-8">
+    <style>body{background:#0f172a;color:#e2e8f0;font-family:Arial;padding:40px}h1{color:#60a5fa}.s{background:#10b981;padding:10px 20px;border-radius:5px;display:inline-block;margin:5px}.i{background:#1e293b;padding:20px;border-radius:10px;margin:20px 0}a{color:#60a5fa;text-decoration:none;margin:10px}.g{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}</style></head>
+    <body><h1>🚀 AKILLI YATIRIM ASİSTANI - MAX VERSİYON</h1>
+    <div class="s">✅ TÜM ÖZELLİKLER AKTIF</div>
+    <div class="i"><h3>📊 ANALİZ</h3><div class="g">
+    <a href="/api/analysis">📈 Tam Analiz</a>
+    <a href="/api/potential">🔮 Yükselecekler</a>
+    <a href="/api/btc">₿ BTC</a>
+    <a href="/api/global">🌍 Global</a>
+    <a href="/api/stocks">💻 Hisseler</a>
+    </div></div>
+    <div class="i"><h3>🚀 GELİŞMİŞ</h3><div class="g">
+    <a href="/api/whale">🐋 Whale</a>
+    <a href="/api/news">📰 Haberler</a>
+    <a href="/api/ml">🤖 ML Tahmin</a>
+    <a href="/api/portfolio">💼 Portföy</a>
+    <a href="/api/alerts">🔔 Alarmlar</a>
+    <a href="/api/backtest">📊 Backtest</a>
+    </div></div>
+    <div class="i"><a href="/api/send-now">📤 Rapor Gönder</a></div>
+    </body></html>'''
 
 @app.route('/api/analysis')
 def api_analysis():
     tickers = get_btcturk_data()
-    return jsonify({'rising': analyze_rising_cryptos(tickers), 'potential': analyze_potential_risers(tickers), 'btc': get_btc_technical_analysis(), 'global': get_global_market_sentiment()})
+    return jsonify({
+        'rising': analyze_rising_cryptos(tickers), 
+        'potential': analyze_potential_risers(tickers), 
+        'btc': get_btc_technical_analysis(), 
+        'global': get_global_market_sentiment(),
+        'timestamp': datetime.now().isoformat()
+    })
 
 @app.route('/api/potential')
 def api_potential():
@@ -408,33 +716,122 @@ def api_btc():
 def api_global():
     return jsonify(get_global_market_sentiment())
 
+@app.route('/api/stocks')
+def api_stocks():
+    return jsonify(get_stock_data())
+
+@app.route('/api/analyze/<symbol>')
+def api_analyze_symbol(symbol):
+    if detailed:
+        return jsonify(detailed.full_analysis(symbol.upper()))
+    return jsonify(analyze_crypto_detailed(symbol.upper()))
+
+@app.route('/api/whale')
+def api_whale():
+    if whale_tracker:
+        return jsonify({
+            'flows': whale_tracker.get_exchange_flows(),
+            'top_coins': whale_tracker.track_top_coins()
+        })
+    return jsonify({'error': 'Whale tracker not loaded'})
+
+@app.route('/api/news')
+def api_news():
+    if news_analyzer:
+        return jsonify(news_analyzer.analyze_all_news())
+    return jsonify({'error': 'News analyzer not loaded'})
+
+@app.route('/api/ml')
+def api_ml():
+    if ml_predictor:
+        return jsonify(ml_predictor.get_top_predictions())
+    return jsonify({'error': 'ML predictor not loaded'})
+
+@app.route('/api/portfolio')
+def api_portfolio():
+    if portfolio:
+        return jsonify(portfolio.get_portfolio_value())
+    return jsonify({'error': 'Portfolio tracker not loaded'})
+
+@app.route('/api/alerts')
+def api_alerts():
+    if alert_system:
+        return jsonify({
+            'active': alert_system.get_active_alerts(),
+            'stats': alert_system.get_stats()
+        })
+    return jsonify({'error': 'Alert system not loaded'})
+
+@app.route('/api/backtest')
+def api_backtest():
+    if backtest:
+        return jsonify(backtest.get_statistics())
+    return jsonify({'error': 'Backtest engine not loaded'})
+
 @app.route('/api/send-now')
 def api_send():
     run_full_analysis()
-    return jsonify({'success': True})
+    return jsonify({'success': True, 'message': 'Rapor gönderildi'})
 
 @app.route('/api/status')
 def api_status():
-    return jsonify({'status': 'active', 'features': ['technical', 'prediction', 'global', 'bot']})
+    return jsonify({
+        'status': 'active',
+        'version': 'MAX',
+        'features': {
+            'technical_analysis': True,
+            'prediction': True,
+            'global_markets': True,
+            'telegram_bot': True,
+            'alerts': alert_system is not None,
+            'portfolio': portfolio is not None,
+            'whale_tracker': whale_tracker is not None,
+            'news_analyzer': news_analyzer is not None,
+            'ml_advanced': ml_predictor is not None,
+            'backtesting': backtest is not None,
+            'detailed_analyzer': detailed is not None
+        },
+        'timestamp': datetime.now().isoformat()
+    })
 
 # ===================== MAIN =====================
 def main():
     logger.info("=" * 60)
-    logger.info("🚀 AKILLI YATIRIM ASİSTANI - TAM VERSİYON")
-    logger.info("📊 RSI, MACD | 🔮 Tahmin | 🌍 Global | 📱 Bot")
+    logger.info("🚀 AKILLI YATIRIM ASİSTANI - MAX VERSİYON")
+    logger.info("📊 RSI, MACD, BB | 🔮 Tahmin | 🌍 Global | 📱 Bot")
+    logger.info("🐋 Whale | 📰 AI Haberci | 🤖 ML | 🔔 Alarm | 💼 Portföy")
     logger.info("=" * 60)
     
+    # Modül durumları
+    logger.info(f"✅ Alert System: {'Aktif' if alert_system else 'Yok'}")
+    logger.info(f"✅ Portfolio: {'Aktif' if portfolio else 'Yok'}")
+    logger.info(f"✅ Whale Tracker: {'Aktif' if whale_tracker else 'Yok'}")
+    logger.info(f"✅ Backtest: {'Aktif' if backtest else 'Yok'}")
+    logger.info(f"✅ News Analyzer: {'Aktif' if news_analyzer else 'Yok'}")
+    logger.info(f"✅ ML Predictor: {'Aktif' if ml_predictor else 'Yok'}")
+    logger.info(f"✅ Detailed Analyzer: {'Aktif' if detailed else 'Yok'}")
+    
+    # Scheduler
     scheduler = BackgroundScheduler()
     scheduler.add_job(run_full_analysis, IntervalTrigger(hours=2), id='analysis', replace_existing=True)
-    scheduler.start()
-    logger.info("✅ Scheduler aktif")
     
+    # Alarm kontrolü her 5 dakika
+    if alert_system:
+        scheduler.add_job(alert_system.check_alerts, IntervalTrigger(minutes=5), id='alerts', replace_existing=True)
+        alert_system.start_monitoring()
+    
+    scheduler.start()
+    logger.info("✅ Scheduler aktif (2 saat)")
+    
+    # Telegram bot
     bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
     bot_thread.start()
     logger.info("✅ Telegram bot aktif")
     
+    # İlk analiz
     run_full_analysis()
     
+    # Flask
     app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)
 
 if __name__ == '__main__':
