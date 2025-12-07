@@ -561,46 +561,153 @@ def run_telegram_bot():
                             
                             # /start, /yardim
                             if cmd in ['/start', '/yardim', '/help']:
-                                help_msg = """🚀 <b>AKILLI YATIRIM ASİSTANI - ULTRA</b>
+                                help_msg1 = """🚀 <b>AKILLI YATIRIM ASİSTANI - ULTRA</b>
+━━━━━━━━━━━━━━━━━━━━━━
+📊 341+ Kripto | 💰 Tüm Fiyatlar TL | 🤖 15 Modül Aktif
+━━━━━━━━━━━━━━━━━━━━━━
 
-📊 <b>ANALİZ:</b>
-/btc - Yükselecek kriptolar
-/analiz [COIN] - Detaylı analiz
-/piyasa - Global piyasa
-/fib [COIN] - Fibonacci seviyeleri
-/grafik [COIN] - Fiyat grafiği
+📈 <b>ANALİZ KOMUTLARI:</b>
 
-🎭 <b>SENTIMENT:</b>
-/sentiment - Fear&Greed + Funding
-/sosyal - Sosyal medya analizi
-/haber - AI Haber analizi
+/btc
+↳ Yükselecek kriptoları listeler
+↳ Hedef fiyat, stop loss, potansiyel kar
+↳ Örnek: Günlük en iyi 7 fırsat
 
-📡 <b>SİNYALLER:</b>
-/sinyal - Trade sinyalleri
-/whale - Whale hareketleri
-/ml - ML fiyat tahmini
+/analiz BTC
+↳ Tek kripto için detaylı teknik analiz
+↳ RSI, MACD, Bollinger, trend durumu
+↳ Örnek: /analiz ETH, /analiz AVAX
 
-⭐ <b>WATCHLIST:</b>
-/favori [COIN] - Favorilere ekle
-/favori_sil [COIN] - Favoriden çıkar
+/piyasa
+↳ Global piyasa durumu özeti
+↳ BTC dominansı, toplam piyasa değeri
+↳ Majör coinlerin anlık durumu
 
-👤 <b>RİSK YÖNETİMİ:</b>
-/risk - Risk profili
-/sermaye [TL] - Sermaye ayarla
+/fib BTC
+↳ Fibonacci destek/direnç seviyeleri
+↳ %23.6, %38.2, %50, %61.8, %78.6
+↳ Alım-satım noktaları için kritik
 
-💹 <b>İŞLEM TAKİBİ:</b>
-/islem [COIN] [FIYAT] [MIKTAR]
-/kapat [ID] [FIYAT]
-/kz - Kar/zarar raporu
+/grafik BTC
+↳ Fiyat grafiğini resim olarak gönderir
+↳ Son 30 günlük fiyat hareketi
+↳ Teknik göstergelerle birlikte"""
+                                send_telegram_to(chat_id, help_msg1)
+                                
+                                help_msg2 = """🎭 <b>SENTIMENT ANALİZİ:</b>
 
-💼 <b>PORTFÖY:</b>
-/portfoy - Portföy durumu
-/ekle [COIN] [TL] - Pozisyon ekle
-/alarm - Aktif alarmlar
-/backtest - Performans
+/sentiment
+↳ Fear & Greed Index (Korku/Açgözlülük)
+↳ Funding Rate (Long/Short oranı)
+↳ Piyasa genel duygu durumu
 
-🔄 Her 2 saatte otomatik rapor"""
-                                send_telegram_to(chat_id, help_msg)
+/sosyal
+↳ Twitter ve Reddit trend analizi
+↳ Sosyal medyada en çok konuşulanlar
+↳ Topluluk sentiment skoru
+
+/haber
+↳ AI destekli haber analizi
+↳ Kripto haberlerinden sentiment çıkarımı
+↳ Pozitif/negatif haber oranı
+
+━━━━━━━━━━━━━━━━━━━━━━
+📡 <b>SİNYAL SİSTEMİ:</b>
+
+/sinyal
+↳ Otomatik trade sinyalleri
+↳ Giriş fiyatı, hedef, stop loss
+↳ Risk/ödül oranı hesaplanmış
+
+/whale
+↳ Balina (büyük yatırımcı) hareketleri
+↳ Borsa giriş/çıkış akışları
+↳ Büyük alım/satım uyarıları
+
+/ml
+↳ Makine öğrenmesi fiyat tahmini
+↳ 7 günlük fiyat projeksiyonu
+↳ Güven oranı ile birlikte"""
+                                send_telegram_to(chat_id, help_msg2)
+                                
+                                help_msg3 = """⭐ <b>WATCHLIST (TAKİP LİSTESİ):</b>
+
+/favori
+↳ Favori listeni görüntüle
+↳ Eklediğin coinlerin anlık durumu
+
+/favori BTC
+↳ BTC'yi favorilere ekle
+↳ Örnek: /favori ETH, /favori AVAX
+
+/favori_sil BTC
+↳ BTC'yi favorilerden çıkar
+
+━━━━━━━━━━━━━━━━━━━━━━
+👤 <b>KİŞİSEL RİSK YÖNETİMİ:</b>
+
+/risk
+↳ Mevcut risk profilini görüntüle
+↳ Önerilen pozisyon büyüklükleri
+
+/risk muhafazakar
+↳ Düşük risk profili ayarla
+↳ Küçük pozisyonlar, güvenli coinler
+
+/risk dengeli
+↳ Orta risk profili ayarla
+↳ Dengeli portföy önerileri
+
+/risk agresif
+↳ Yüksek risk profili ayarla
+↳ Yüksek potansiyel, yüksek risk
+
+/sermaye 50000
+↳ Toplam sermayeni TL olarak ayarla
+↳ Pozisyon büyüklüğü hesaplaması için"""
+                                send_telegram_to(chat_id, help_msg3)
+                                
+                                help_msg4 = """💹 <b>İŞLEM TAKİBİ:</b>
+
+/islem BTC 3500000 0.01
+↳ Yeni işlem kaydet
+↳ Format: /islem [COIN] [FİYAT] [MİKTAR]
+↳ Örnek: BTC'yi ₺3,500,000'dan 0.01 adet aldım
+
+/kapat 1 3600000
+↳ Açık işlemi kapat
+↳ Format: /kapat [İŞLEM_ID] [ÇIKIŞ_FİYATI]
+↳ Kar/zarar otomatik hesaplanır
+
+/kz
+↳ Kar/zarar raporu
+↳ Tüm işlem geçmişi
+↳ Toplam performans özeti
+
+━━━━━━━━━━━━━━━━━━━━━━
+💼 <b>PORTFÖY YÖNETİMİ:</b>
+
+/portfoy
+↳ Portföy durumu ve dağılımı
+↳ Toplam değer (TL)
+↳ Günlük kar/zarar
+
+/ekle BTC 10000
+↳ Portföye pozisyon ekle
+↳ Format: /ekle [COIN] [TL_TUTAR]
+
+/alarm
+↳ Aktif fiyat alarmlarını listele
+
+/backtest
+↳ Strateji performans raporu
+↳ Geçmiş sinyallerin başarı oranı
+
+━━━━━━━━━━━━━━━━━━━━━━
+🔄 Her 2 saatte otomatik rapor gönderilir
+💰 Tüm fiyatlar Türk Lirası (₺) cinsindendir
+🤖 15 modül 24/7 aktif çalışmaktadır"""
+                                send_telegram_to(chat_id, help_msg4)
                             
                             # /btc - Yükselecekler (TL)
                             elif cmd == '/btc':
