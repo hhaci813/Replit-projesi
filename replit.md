@@ -259,3 +259,73 @@ Alırsınız: Kesin AL önerileri
 
 **Bot 24/7 AKTIF! Telegram'da /btc yazın ve kesin AL önerileri alın!** 🔥
 
+---
+
+## 🔥 ULTRA VERSION - 15 MODÜL AKTİF (07.12.2025)
+
+### ✅ TÜM PARA BİRİMLERİ TL'YE ÇEVRİLDİ
+
+Tüm fiyatlar artık Türk Lirası (₺) olarak gösteriliyor:
+- BTCTurk kripto fiyatları: ₺3,450,000.00 TL formatı
+- Hisse fiyatları: USD → TL dönüşümü (kur: 35.5)
+- Hedef fiyatlar, stop loss, kar/zarar: Hepsi TL
+
+### 📊 15 AKTİF MODÜL
+
+| # | Modül | Açıklama | Telegram Komutu |
+|---|-------|----------|-----------------|
+| 1 | Alert System | Fiyat alarmları | /alarm |
+| 2 | Portfolio | Portföy takibi | /portfoy |
+| 3 | Whale Tracker | Balina hareketleri | /whale |
+| 4 | Backtest | Performans analizi | /backtest |
+| 5 | News Analyzer | AI haber analizi | /haber |
+| 6 | ML Predictor | Makine öğrenmesi tahmini | /ml |
+| 7 | Detailed Analyzer | Detaylı teknik analiz | /analiz |
+| 8 | **Advanced Indicators** | Fibonacci + Ichimoku + Volume | /fib |
+| 9 | **Market Sentiment** | Fear&Greed + Funding Rate | /sentiment |
+| 10 | **Social Sentiment** | Twitter/Reddit analizi | /sosyal |
+| 11 | **Chart Generator** | Grafik oluşturma | /grafik |
+| 12 | **Trade Signals** | Otomatik sinyaller | /sinyal |
+| 13 | **Watchlist** | Favori kriptolar | /favori |
+| 14 | **Risk Profile** | Kişisel risk profili | /risk |
+| 15 | **Trade History** | İşlem geçmişi + K/Z | /islem, /kz |
+
+### 📱 YENİ TELEGRAM KOMUTLARI
+
+```
+/fib [COIN]      → Fibonacci destek/direnç seviyeleri
+/sentiment       → Fear&Greed Index + Funding Rate
+/sosyal          → Sosyal medya sentiment analizi
+/grafik [COIN]   → Fiyat grafiği (resim olarak gönderir)
+/sinyal          → Otomatik trade sinyalleri
+/favori [COIN]   → Favorilere ekle
+/favori_sil COIN → Favoriden çıkar
+/risk            → Risk profili görüntüle
+/risk agresif    → Risk seviyesi ayarla (muhafazakar/dengeli/agresif)
+/sermaye 50000   → Sermaye miktarı ayarla
+/islem COIN FIYAT MIKTAR → İşlem kaydet
+/kapat ID FIYAT  → İşlem kapat
+/kz              → Kar/zarar raporu
+```
+
+### 🎯 ULTRA ÖZELLİKLER
+
+1. **Fibonacci Seviyeleri**: 0%, 23.6%, 38.2%, 50%, 61.8%, 78.6%, 100%
+2. **Ichimoku Cloud**: Tenkan, Kijun, Senkou A/B, Chikou
+3. **Volume Profile**: POC, VAH, VAL analizi
+4. **Fear & Greed Index**: Gerçek zamanlı piyasa duygusu
+5. **Funding Rate**: Long/Short baskısı göstergesi
+6. **Sosyal Sentiment**: Twitter/Reddit trend analizi
+7. **Grafik Gönderme**: Matplotlib ile profesyonel grafikler
+8. **Watchlist**: Favori kriptolar takip listesi
+9. **Risk Profili**: Muhafazakar/Dengeli/Agresif profiller
+10. **Trade History**: İşlem geçmişi + performans takibi
+
+### 🚀 SİSTEM DURUMU
+
+- Toplam Modül: 15
+- Kripto Sayısı: 341+ (BTCTurk)
+- Para Birimi: Türk Lirası (₺)
+- Rapor Sıklığı: 2 saatte bir
+- Telegram: 24/7 aktif
+
