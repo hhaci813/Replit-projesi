@@ -66,6 +66,54 @@ try:
 except:
     detailed = None
 
+try:
+    from advanced_indicators import AdvancedIndicators
+    indicators = AdvancedIndicators()
+except:
+    indicators = None
+
+try:
+    from market_sentiment import MarketSentiment
+    market_sent = MarketSentiment()
+except:
+    market_sent = None
+
+try:
+    from social_sentiment import SocialSentiment
+    social_sent = SocialSentiment()
+except:
+    social_sent = None
+
+try:
+    from chart_generator import ChartGenerator
+    chart_gen = ChartGenerator()
+except:
+    chart_gen = None
+
+try:
+    from trade_signals import TradeSignals
+    trade_sig = TradeSignals()
+except:
+    trade_sig = None
+
+try:
+    from watchlist import Watchlist
+    watchlist = Watchlist()
+except:
+    watchlist = None
+
+try:
+    from risk_profile import RiskProfile
+    risk_prof = RiskProfile()
+except:
+    risk_prof = None
+
+try:
+    from trade_history import TradeHistory
+    trade_hist = TradeHistory()
+except:
+    trade_hist = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -513,25 +561,43 @@ def run_telegram_bot():
                             
                             # /start, /yardim
                             if cmd in ['/start', '/yardim', '/help']:
-                                help_msg = """🚀 <b>AKILLI YATIRIM ASİSTANI - MAX</b>
+                                help_msg = """🚀 <b>AKILLI YATIRIM ASİSTANI - ULTRA</b>
 
-📊 <b>ANALİZ KOMUTLARI:</b>
+📊 <b>ANALİZ:</b>
 /btc - Yükselecek kriptolar
-/analiz [COIN] - Detaylı teknik analiz
-/piyasa - Global piyasa durumu
+/analiz [COIN] - Detaylı analiz
+/piyasa - Global piyasa
+/fib [COIN] - Fibonacci seviyeleri
+/grafik [COIN] - Fiyat grafiği
 
-🐋 <b>GELİŞMİŞ ÖZELLİKLER:</b>
-/whale - Whale hareketleri
+🎭 <b>SENTIMENT:</b>
+/sentiment - Fear&Greed + Funding
+/sosyal - Sosyal medya analizi
 /haber - AI Haber analizi
+
+📡 <b>SİNYALLER:</b>
+/sinyal - Trade sinyalleri
+/whale - Whale hareketleri
 /ml - ML fiyat tahmini
+
+⭐ <b>WATCHLIST:</b>
+/favori [COIN] - Favorilere ekle
+/favori_sil [COIN] - Favoriden çıkar
+
+👤 <b>RİSK YÖNETİMİ:</b>
+/risk - Risk profili
+/sermaye [TL] - Sermaye ayarla
+
+💹 <b>İŞLEM TAKİBİ:</b>
+/islem [COIN] [FIYAT] [MIKTAR]
+/kapat [ID] [FIYAT]
+/kz - Kar/zarar raporu
 
 💼 <b>PORTFÖY:</b>
 /portfoy - Portföy durumu
-/ekle [COIN] [TUTAR] - Pozisyon ekle
+/ekle [COIN] [TL] - Pozisyon ekle
 /alarm - Aktif alarmlar
-
-📈 <b>PERFORMANS:</b>
-/backtest - Strateji performansı
+/backtest - Performans
 
 🔄 Her 2 saatte otomatik rapor"""
                                 send_telegram_to(chat_id, help_msg)
@@ -672,6 +738,158 @@ def run_telegram_bot():
                                     send_telegram_to(chat_id, report)
                                 else:
                                     send_telegram_to(chat_id, "📊 Backtest modülü yükleniyor...")
+                            
+                            # /fib [COIN] - Fibonacci seviyeleri
+                            elif cmd == '/fib':
+                                symbol = args[0].upper() if args else 'BTC'
+                                if indicators:
+                                    report = indicators.generate_report(symbol)
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "📐 Fibonacci modülü yükleniyor...")
+                            
+                            # /sentiment - Fear & Greed + Funding Rate
+                            elif cmd == '/sentiment':
+                                if market_sent:
+                                    report = market_sent.generate_report()
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "🎭 Sentiment modülü yükleniyor...")
+                            
+                            # /sosyal - Sosyal medya sentiment
+                            elif cmd == '/sosyal':
+                                if social_sent:
+                                    report = social_sent.generate_report()
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "📱 Sosyal medya modülü yükleniyor...")
+                            
+                            # /grafik [COIN] - Fiyat grafiği gönder
+                            elif cmd == '/grafik':
+                                symbol = args[0].upper() if args else 'BTC'
+                                if chart_gen:
+                                    send_telegram_to(chat_id, f"📊 {symbol} grafiği hazırlanıyor...")
+                                    success = chart_gen.generate_and_send(symbol, chat_id, 30)
+                                    if not success:
+                                        send_telegram_to(chat_id, f"❌ {symbol} grafiği oluşturulamadı")
+                                else:
+                                    send_telegram_to(chat_id, "📊 Grafik modülü yükleniyor...")
+                            
+                            # /sinyal - Trade sinyalleri
+                            elif cmd == '/sinyal':
+                                if trade_sig:
+                                    report = trade_sig.generate_report()
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "📡 Sinyal modülü yükleniyor...")
+                            
+                            # /favori [COIN] - Watchlist'e ekle
+                            elif cmd == '/favori':
+                                if watchlist and args:
+                                    symbol = args[0].upper()
+                                    user = str(chat_id)
+                                    if watchlist.add_to_watchlist(user, symbol):
+                                        send_telegram_to(chat_id, f"⭐ {symbol} favorilere eklendi!")
+                                    else:
+                                        send_telegram_to(chat_id, f"⚠️ {symbol} zaten favorilerde")
+                                elif watchlist:
+                                    report = watchlist.generate_report(str(chat_id))
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "⭐ Watchlist modülü yükleniyor...")
+                            
+                            # /favori_sil [COIN] - Watchlist'ten çıkar
+                            elif cmd == '/favori_sil':
+                                if watchlist and args:
+                                    symbol = args[0].upper()
+                                    user = str(chat_id)
+                                    if watchlist.remove_from_watchlist(user, symbol):
+                                        send_telegram_to(chat_id, f"❌ {symbol} favorilerden çıkarıldı")
+                                    else:
+                                        send_telegram_to(chat_id, f"⚠️ {symbol} favorilerde yok")
+                                else:
+                                    send_telegram_to(chat_id, "📝 Kullanım: /favori_sil BTC")
+                            
+                            # /risk [seviye] - Risk profili ayarla
+                            elif cmd == '/risk':
+                                if risk_prof:
+                                    user = str(chat_id)
+                                    if args:
+                                        level = args[0].lower()
+                                        level_map = {'muhafazakar': 'conservative', 'dengeli': 'moderate', 'agresif': 'aggressive'}
+                                        if level in level_map:
+                                            risk_prof.set_profile(user, level_map[level])
+                                            send_telegram_to(chat_id, f"✅ Risk profili: {level.title()}")
+                                        else:
+                                            send_telegram_to(chat_id, "📝 Seçenekler: muhafazakar, dengeli, agresif")
+                                    else:
+                                        report = risk_prof.generate_report(user)
+                                        send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "👤 Risk modülü yükleniyor...")
+                            
+                            # /sermaye [TL] - Sermaye ayarla
+                            elif cmd == '/sermaye':
+                                if risk_prof and args:
+                                    try:
+                                        user = str(chat_id)
+                                        amount = float(args[0].replace('₺', '').replace('TL', ''))
+                                        profile = risk_prof.get_profile(user)
+                                        level = profile.get('risk_level', 'moderate') if profile else 'moderate'
+                                        risk_prof.set_profile(user, level, amount)
+                                        send_telegram_to(chat_id, f"✅ Sermaye: ₺{amount:,.0f} TL")
+                                    except:
+                                        send_telegram_to(chat_id, "❌ Format: /sermaye 50000")
+                                else:
+                                    send_telegram_to(chat_id, "📝 Kullanım: /sermaye 50000")
+                            
+                            # /islem [COIN] [FIYAT] [MIKTAR] - İşlem kaydet
+                            elif cmd == '/islem':
+                                if trade_hist and len(args) >= 3:
+                                    try:
+                                        user = str(chat_id)
+                                        symbol = args[0].upper()
+                                        entry = float(args[1])
+                                        amount = float(args[2])
+                                        trade = trade_hist.add_trade(user, {
+                                            'symbol': symbol,
+                                            'entry_price': entry,
+                                            'amount': amount
+                                        })
+                                        send_telegram_to(chat_id, f"✅ İşlem #{trade['id']} kaydedildi\n{symbol} ₺{entry:,.2f} x {amount}")
+                                    except:
+                                        send_telegram_to(chat_id, "❌ Format: /islem BTC 100000 0.5")
+                                elif trade_hist:
+                                    report = trade_hist.generate_report(str(chat_id))
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "💹 İşlem modülü yükleniyor...")
+                            
+                            # /kapat [ID] [FIYAT] - İşlem kapat
+                            elif cmd == '/kapat':
+                                if trade_hist and len(args) >= 2:
+                                    try:
+                                        user = str(chat_id)
+                                        trade_id = int(args[0])
+                                        exit_price = float(args[1])
+                                        trade = trade_hist.close_trade(user, trade_id, exit_price)
+                                        if trade:
+                                            emoji = '📈' if trade['profit_loss'] >= 0 else '📉'
+                                            send_telegram_to(chat_id, f"{emoji} İşlem #{trade_id} kapatıldı\nK/Z: ₺{trade['profit_loss']:,.2f} ({trade['profit_loss_pct']:+.1f}%)")
+                                        else:
+                                            send_telegram_to(chat_id, "❌ İşlem bulunamadı")
+                                    except:
+                                        send_telegram_to(chat_id, "❌ Format: /kapat 1 105000")
+                                else:
+                                    send_telegram_to(chat_id, "📝 Kullanım: /kapat 1 105000")
+                            
+                            # /kz - Kar/Zarar raporu
+                            elif cmd == '/kz':
+                                if trade_hist:
+                                    report = trade_hist.generate_report(str(chat_id))
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "💹 K/Z modülü yükleniyor...")
             
             time.sleep(1)
         except Exception as e:
@@ -788,7 +1006,7 @@ def api_send():
 def api_status():
     return jsonify({
         'status': 'active',
-        'version': 'MAX',
+        'version': 'ULTRA',
         'features': {
             'technical_analysis': True,
             'prediction': True,
@@ -800,20 +1018,29 @@ def api_status():
             'news_analyzer': news_analyzer is not None,
             'ml_advanced': ml_predictor is not None,
             'backtesting': backtest is not None,
-            'detailed_analyzer': detailed is not None
+            'detailed_analyzer': detailed is not None,
+            'fibonacci_ichimoku': indicators is not None,
+            'fear_greed': market_sent is not None,
+            'social_sentiment': social_sent is not None,
+            'chart_generator': chart_gen is not None,
+            'trade_signals': trade_sig is not None,
+            'watchlist': watchlist is not None,
+            'risk_profile': risk_prof is not None,
+            'trade_history': trade_hist is not None
         },
+        'total_modules': 15,
         'timestamp': datetime.now().isoformat()
     })
 
 # ===================== MAIN =====================
 def main():
     logger.info("=" * 60)
-    logger.info("🚀 AKILLI YATIRIM ASİSTANI - MAX VERSİYON")
-    logger.info("📊 RSI, MACD, BB | 🔮 Tahmin | 🌍 Global | 📱 Bot")
-    logger.info("🐋 Whale | 📰 AI Haberci | 🤖 ML | 🔔 Alarm | 💼 Portföy")
+    logger.info("🚀 AKILLI YATIRIM ASİSTANI - ULTRA VERSİYON")
+    logger.info("📊 RSI, MACD, BB, Fibonacci, Ichimoku | 🔮 Tahmin | 🌍 Global")
+    logger.info("🐋 Whale | 📰 Haberci | 🤖 ML | 🔔 Alarm | 💼 Portföy | 📡 Sinyaller")
     logger.info("=" * 60)
     
-    # Modül durumları
+    # Modül durumları - Temel
     logger.info(f"✅ Alert System: {'Aktif' if alert_system else 'Yok'}")
     logger.info(f"✅ Portfolio: {'Aktif' if portfolio else 'Yok'}")
     logger.info(f"✅ Whale Tracker: {'Aktif' if whale_tracker else 'Yok'}")
@@ -821,6 +1048,16 @@ def main():
     logger.info(f"✅ News Analyzer: {'Aktif' if news_analyzer else 'Yok'}")
     logger.info(f"✅ ML Predictor: {'Aktif' if ml_predictor else 'Yok'}")
     logger.info(f"✅ Detailed Analyzer: {'Aktif' if detailed else 'Yok'}")
+    
+    # Modül durumları - Yeni
+    logger.info(f"✅ Advanced Indicators: {'Aktif' if indicators else 'Yok'}")
+    logger.info(f"✅ Market Sentiment: {'Aktif' if market_sent else 'Yok'}")
+    logger.info(f"✅ Social Sentiment: {'Aktif' if social_sent else 'Yok'}")
+    logger.info(f"✅ Chart Generator: {'Aktif' if chart_gen else 'Yok'}")
+    logger.info(f"✅ Trade Signals: {'Aktif' if trade_sig else 'Yok'}")
+    logger.info(f"✅ Watchlist: {'Aktif' if watchlist else 'Yok'}")
+    logger.info(f"✅ Risk Profile: {'Aktif' if risk_prof else 'Yok'}")
+    logger.info(f"✅ Trade History: {'Aktif' if trade_hist else 'Yok'}")
     
     # Scheduler
     scheduler = BackgroundScheduler()
