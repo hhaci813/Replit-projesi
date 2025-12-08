@@ -444,6 +444,16 @@ def send_telegram_to(chat_id, msg):
     except:
         pass
 
+def get_usd_try_rate():
+    """USD/TRY kurunu al"""
+    try:
+        resp = requests.get("https://api.exchangerate-api.com/v4/latest/USD", timeout=5)
+        if resp.status_code == 200:
+            return resp.json().get('rates', {}).get('TRY', 34.5)
+    except:
+        pass
+    return 34.5
+
 def run_full_analysis():
     logger.info("🔄 ULTRA Tam analiz başlıyor...")
     
@@ -455,7 +465,10 @@ def run_full_analysis():
     btc_analysis = get_btc_technical_analysis()
     global_sentiment = get_global_market_sentiment()
     
-    logger.info(f"📊 {len(tickers)} kripto analiz edildi")
+    # USD/TRY kuru
+    usd_try = get_usd_try_rate()
+    
+    logger.info(f"📊 {len(tickers)} kripto analiz edildi | USD/TRY: {usd_try:.2f}")
     
     # Alarm kontrolü
     if alert_system:
@@ -546,8 +559,9 @@ def run_full_analysis():
                 spike = pro_analyzer.detect_volume_spike(volume, avg_volume, change)
                 if spike.get('spike') and change > 0:
                     pump_count += 1
-                    price = float(t.get('last', 0))
-                    msg2 += f"🔥 <b>{symbol}</b> ₺{price:,.4f}\n"
+                    price_tl = float(t.get('last', 0))
+                    price_usd = price_tl / usd_try if usd_try > 0 else 0
+                    msg2 += f"🔥 <b>{symbol}</b> ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
                     msg2 += f"   {spike['text']} | +{change:.1f}%\n"
                     if pump_count >= 5:
                         break
@@ -560,14 +574,20 @@ def run_full_analysis():
     msg2 += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔥 <b>YÜKSELENLER:</b>\n"
     if rising:
         for c in rising[:5]:
-            msg2 += f"🟢 <b>{c['symbol']}</b> +{c['change']:.1f}% | ₺{c.get('price', 0):,.4f}\n"
+            price_tl = c.get('price', 0)
+            price_usd = price_tl / usd_try if usd_try > 0 else 0
+            msg2 += f"🟢 <b>{c['symbol']}</b> +{c['change']:.1f}%\n"
+            msg2 += f"   ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
     else:
         msg2 += "⚠️ Yok\n"
     
     msg2 += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔮 <b>YÜKSELECEKLER (TAHMİN):</b>\n"
     if potential:
         for p in potential[:5]:
-            msg2 += f"🎯 <b>{p['symbol']}</b> ₺{p['price']:,.4f}\n"
+            price_tl = p['price']
+            price_usd = price_tl / usd_try if usd_try > 0 else 0
+            msg2 += f"🎯 <b>{p['symbol']}</b>\n"
+            msg2 += f"   💰 ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
             msg2 += f"   📈 Potansiyel: +{p['potential']}% | Risk: {p['risk']}/10\n"
     else:
         msg2 += "⚠️ Sinyal yok\n"
