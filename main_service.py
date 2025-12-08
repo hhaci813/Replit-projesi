@@ -445,7 +445,7 @@ def send_telegram_to(chat_id, msg):
         pass
 
 def run_full_analysis():
-    logger.info("🔄 Tam analiz başlıyor...")
+    logger.info("🔄 ULTRA Tam analiz başlıyor...")
     
     tickers = get_btcturk_data()
     rising = analyze_rising_cryptos(tickers)
@@ -466,9 +466,10 @@ def run_full_analysis():
         backtest.check_recommendations()
     
     now = datetime.now()
-    msg = f"""🔔 <b>AKILLI YATIRIM RAPORU - MAX</b>
+    
+    # ==================== MESAJ 1: ANA RAPOR ====================
+    msg1 = f"""🔔 <b>AKILLI YATIRIM RAPORU - ULTRA</b>
 📅 {now.strftime('%d.%m.%Y %H:%M')}
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
     
@@ -479,8 +480,33 @@ def run_full_analysis():
             btc_tl = float(t.get('last', 0))
             break
     
+    # PRO Analiz - Top 5 Coin
+    if pro_analyzer:
+        msg1 += "\n🔥 <b>PRO ANALİZ - EN İYİ 5</b>\n"
+        top_coins = ['BTC', 'ETH', 'SOL', 'XRP', 'AVAX']
+        pro_results = []
+        for coin in top_coins:
+            try:
+                analysis = pro_analyzer.full_pro_analysis(coin)
+                if analysis:
+                    pro_results.append(analysis)
+                    msg1 += f"<b>{coin}</b> {analysis['price_formatted']}\n"
+                    msg1 += f"   📊 PRO: <b>{analysis['pro_score']}/10</b> {analysis['final_text']}\n"
+                    msg1 += f"   📈 RSI: {analysis['rsi']['value']:.1f} | {analysis['macd']['text']}\n"
+            except Exception as e:
+                logger.error(f"PRO {coin} hatası: {e}")
+        
+        # Fear & Greed Index
+        try:
+            fg = pro_analyzer.get_fear_greed_index()
+            msg1 += f"\n{fg['emoji']} <b>Fear & Greed:</b> {fg['value']} - {fg['classification']}\n"
+        except:
+            pass
+        
+        msg1 += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    
     if btc_analysis:
-        msg += f"""
+        msg1 += f"""
 📊 <b>BTC TEKNİK ANALİZ</b>
    💰 Fiyat: ₺{btc_tl:,.0f} TL
    📈 RSI: {btc_analysis['rsi']}
@@ -491,53 +517,115 @@ def run_full_analysis():
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
     
-    msg += f"""
+    msg1 += f"""
 🌍 <b>GLOBAL PİYASA</b>
    {global_sentiment['sentiment']} | {global_sentiment['crypto_impact']}
 """
     for name, change in global_sentiment.get('indices', {}).items():
-        msg += f"   {'📈' if change > 0 else '📉'} {name}: {'+' if change > 0 else ''}{change}%\n"
+        msg1 += f"   {'📈' if change > 0 else '📉'} {name}: {'+' if change > 0 else ''}{change}%\n"
     
-    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔥 <b>YÜKSELENLER:</b>\n"
+    send_telegram(msg1)
+    time.sleep(1)
+    
+    # ==================== MESAJ 2: PUMP & FIRSATLAR ====================
+    msg2 = """🚀 <b>PUMP TESPİT & FIRSATLAR</b>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+    
+    # Pump Detection
+    if pro_analyzer:
+        msg2 += "\n⚡ <b>HACİM PATLAMASI:</b>\n"
+        pump_count = 0
+        for t in tickers[:50]:
+            try:
+                symbol = t.get('pairNormalized', '').replace('_TRY', '')
+                volume = float(t.get('volume', 0))
+                change = float(t.get('dailyPercent', 0))
+                avg_volume = volume * 0.7
+                
+                spike = pro_analyzer.detect_volume_spike(volume, avg_volume, change)
+                if spike.get('spike') and change > 0:
+                    pump_count += 1
+                    price = float(t.get('last', 0))
+                    msg2 += f"🔥 <b>{symbol}</b> ₺{price:,.4f}\n"
+                    msg2 += f"   {spike['text']} | +{change:.1f}%\n"
+                    if pump_count >= 5:
+                        break
+            except:
+                pass
+        
+        if pump_count == 0:
+            msg2 += "   ⚪ Şu an pump tespit edilmedi\n"
+    
+    msg2 += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔥 <b>YÜKSELENLER:</b>\n"
     if rising:
-        for c in rising[:3]:
-            msg += f"🔥 <b>{c['symbol']}</b> +{c['change']:.1f}% | Hedef: +{c['change']+15:.0f}%\n"
+        for c in rising[:5]:
+            msg2 += f"🟢 <b>{c['symbol']}</b> +{c['change']:.1f}% | ₺{c.get('price', 0):,.4f}\n"
     else:
-        msg += "⚠️ Yok\n"
+        msg2 += "⚠️ Yok\n"
     
-    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔮 <b>YÜKSELECEKLER (TAHMİN):</b>\n"
+    msg2 += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔮 <b>YÜKSELECEKLER (TAHMİN):</b>\n"
     if potential:
         for p in potential[:5]:
-            msg += f"""🎯 <b>{p['symbol']}</b>
-   💰 ₺{p['price']:,.2f} TL | Pot: +{p['potential']}%
-   ⏱️ {p.get('days_estimate', '3-7 gün')} | Risk: {p['risk']}/10
-   
-"""
+            msg2 += f"🎯 <b>{p['symbol']}</b> ₺{p['price']:,.4f}\n"
+            msg2 += f"   📈 Potansiyel: +{p['potential']}% | Risk: {p['risk']}/10\n"
     else:
-        msg += "⚠️ Sinyal yok\n"
+        msg2 += "⚠️ Sinyal yok\n"
     
-    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n💻 <b>HİSSELER (USD):</b>\n"
+    send_telegram(msg2)
+    time.sleep(1)
+    
+    # ==================== MESAJ 3: WHALE & SOSYAL ====================
+    msg3 = """🐋 <b>WHALE & SOSYAL ANALİZ</b>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+    
+    # Whale Activity
+    if whale_tracker:
+        try:
+            whale_data = whale_tracker.get_whale_summary()
+            if whale_data:
+                msg3 += "\n🐋 <b>BALİNA HAREKETLERİ:</b>\n"
+                for w in whale_data.get('recent', [])[:3]:
+                    msg3 += f"   {w.get('type', '')} {w.get('symbol', '')} {w.get('amount', '')}\n"
+        except:
+            pass
+    
+    # Social Sentiment
+    if pro_analyzer:
+        msg3 += "\n📱 <b>SOSYAL MEDYA:</b>\n"
+        for coin in ['BTC', 'ETH', 'SOL']:
+            try:
+                social = pro_analyzer.analyze_social_sentiment(coin)
+                msg3 += f"   <b>{coin}</b>: {social['text']} ({social['score']}/100)\n"
+            except:
+                pass
+    
+    # Hisse Senetleri
+    msg3 += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n💻 <b>HİSSELER (USD):</b>\n"
     if strong_stocks:
         for s in strong_stocks:
-            msg += f"🟢 <b>{s['symbol']}</b> ${s['price']} +{s['weekly']:.1f}%\n"
+            msg3 += f"🟢 <b>{s['symbol']}</b> ${s['price']} +{s['weekly']:.1f}%\n"
     else:
-        msg += "⚠️ STRONG_BUY yok\n"
+        msg3 += "⚠️ STRONG_BUY yok\n"
     
-    msg += """
+    msg3 += """
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-⏰ Sonraki: 2 saat
-📱 KOMUTLAR:
-/btc - Yükselecekler
+⏰ <b>Sonraki rapor: 2 saat</b>
+
+📱 <b>KOMUTLAR:</b>
+/pro BTC - PRO Analiz (8 modül)
+/pump - Pump tespit
 /analiz BTC - Detaylı analiz
+/btc - Yükselecekler
 /portfoy - Portföy durumu
 /whale - Whale takip
-/haber - AI Haberci
 /ml - ML Tahmin
 """
     
-    if send_telegram(msg):
-        logger.info("✅ Telegram'a gönderildi!")
+    if send_telegram(msg3):
+        logger.info("✅ ULTRA Rapor Telegram'a gönderildi!")
     else:
         logger.error("❌ Telegram hatası")
 
