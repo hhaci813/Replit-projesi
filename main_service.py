@@ -114,6 +114,12 @@ try:
 except:
     trade_hist = None
 
+try:
+    from pro_analysis import ProAnalysis
+    pro_analyzer = ProAnalysis()
+except:
+    pro_analyzer = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -591,7 +597,22 @@ def run_telegram_bot():
 /grafik BTC
 ↳ Fiyat grafiğini resim olarak gönderir
 ↳ Son 30 günlük fiyat hareketi
-↳ Teknik göstergelerle birlikte"""
+↳ Teknik göstergelerle birlikte
+
+🔬 <b>PRO ANALİZ (8 MODÜL):</b>
+
+/pro BTC
+↳ 8 modüllü tam PRO analiz
+↳ RSI(14) + MACD + Bollinger + Hacim
+↳ Fear&Greed + BTC Korelasyon + Whale + Sosyal
+
+/pump
+↳ Pump dedektörü - anlık spike tespiti
+↳ %10+ yükselenler + yüksek hacim
+
+/korku
+↳ Fear & Greed Index (Korku/Açgözlülük)
+↳ Piyasa duygu durumu 0-100 skalası"""
                                 send_telegram_to(chat_id, help_msg1)
                                 
                                 help_msg2 = """🎭 <b>SENTIMENT ANALİZİ:</b>
@@ -997,6 +1018,59 @@ def run_telegram_bot():
                                     send_telegram_to(chat_id, report)
                                 else:
                                     send_telegram_to(chat_id, "💹 K/Z modülü yükleniyor...")
+                            
+                            # /pro [COIN] - PRO Analiz (8 modül)
+                            elif cmd == '/pro':
+                                symbol = args[0].upper() if args else 'BTC'
+                                if pro_analyzer:
+                                    analysis = pro_analyzer.full_pro_analysis(symbol)
+                                    report = pro_analyzer.format_pro_analysis(analysis)
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "🔬 PRO Analiz modülü yükleniyor...")
+                            
+                            # /pump - Pump dedektörü
+                            elif cmd == '/pump':
+                                tickers = get_btcturk_data()
+                                pumps = []
+                                for t in tickers:
+                                    pair = t.get('pair', '')
+                                    if not pair.endswith('TRY'):
+                                        continue
+                                    symbol = pair.replace('TRY', '')
+                                    change = t.get('dailyPercent', 0)
+                                    volume = t.get('volume', 0)
+                                    price = t.get('last', 0)
+                                    if change > 10 and volume * price > 1000000:
+                                        pumps.append({'symbol': symbol, 'change': change, 'volume_tl': volume * price})
+                                
+                                pumps = sorted(pumps, key=lambda x: x['change'], reverse=True)[:10]
+                                
+                                if pumps:
+                                    msg = "🚀🚀🚀 <b>PUMP TESPİT EDİLDİ!</b>\n\n"
+                                    for p in pumps:
+                                        msg += f"🔥 <b>{p['symbol']}</b>: +{p['change']:.1f}%\n"
+                                        msg += f"   💰 Hacim: ₺{p['volume_tl']:,.0f}\n\n"
+                                    send_telegram_to(chat_id, msg)
+                                else:
+                                    send_telegram_to(chat_id, "🔍 Şu an pump tespit edilmedi (>10% gerekli)")
+                            
+                            # /korku - Fear & Greed Index
+                            elif cmd == '/korku':
+                                if pro_analyzer:
+                                    fg = pro_analyzer.get_fear_greed_index()
+                                    msg = f"""😱 <b>FEAR & GREED INDEX</b>
+
+{fg['emoji']} <b>Değer: {fg['value']}/100</b>
+📊 Durum: {fg['classification']}
+
+{fg['text']}
+
+💡 <i>0-25: Aşırı Korku = AL fırsatı
+75-100: Aşırı Açgözlülük = SAT sinyali</i>"""
+                                    send_telegram_to(chat_id, msg)
+                                else:
+                                    send_telegram_to(chat_id, "😱 Fear & Greed modülü yükleniyor...")
             
             time.sleep(1)
         except Exception as e:
@@ -1025,6 +1099,12 @@ def home():
     <a href="/api/portfolio">💼 Portföy</a>
     <a href="/api/alerts">🔔 Alarmlar</a>
     <a href="/api/backtest">📊 Backtest</a>
+    </div></div>
+    <div class="i"><h3>🔬 PRO ANALİZ</h3><div class="g">
+    <a href="/api/pro/BTC">🔬 PRO BTC</a>
+    <a href="/api/pro/ETH">🔬 PRO ETH</a>
+    <a href="/api/pump">🚀 Pump Dedektör</a>
+    <a href="/api/fear-greed">😱 Fear&Greed</a>
     </div></div>
     <div class="i"><a href="/api/send-now">📤 Rapor Gönder</a></div>
     </body></html>'''
@@ -1061,6 +1141,39 @@ def api_analyze_symbol(symbol):
     if detailed:
         return jsonify(detailed.full_analysis(symbol.upper()))
     return jsonify(analyze_crypto_detailed(symbol.upper()))
+
+@app.route('/api/pro/<symbol>')
+def api_pro_analysis(symbol):
+    if pro_analyzer:
+        return jsonify(pro_analyzer.full_pro_analysis(symbol.upper()))
+    return jsonify({'error': 'PRO analyzer not loaded'})
+
+@app.route('/api/pump')
+def api_pump():
+    tickers = get_btcturk_data()
+    pumps = []
+    for t in tickers:
+        pair = t.get('pair', '')
+        if not pair.endswith('TRY'):
+            continue
+        symbol = pair.replace('TRY', '')
+        change = t.get('dailyPercent', 0)
+        volume = t.get('volume', 0)
+        price = t.get('last', 0)
+        if change > 10 and volume * price > 1000000:
+            pumps.append({
+                'symbol': symbol,
+                'change': change,
+                'price': price,
+                'volume_tl': volume * price
+            })
+    return jsonify(sorted(pumps, key=lambda x: x['change'], reverse=True)[:10])
+
+@app.route('/api/fear-greed')
+def api_fear_greed():
+    if pro_analyzer:
+        return jsonify(pro_analyzer.get_fear_greed_index())
+    return jsonify({'error': 'PRO analyzer not loaded'})
 
 @app.route('/api/whale')
 def api_whale():
