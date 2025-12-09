@@ -373,5 +373,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 26,
+    "symbol": "KAVA",
+    "signal_type": "BUY",
+    "entry_price": 4.84,
+    "target_percent": 15,
+    "stop_percent": -8,
+    "target_price": 5.566,
+    "stop_price": 4.4528,
+    "timestamp": "2025-12-09 22:11",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 27,
+    "symbol": "PENGU",
+    "signal_type": "BUY",
+    "entry_price": 0.53434,
+    "target_percent": 15,
+    "stop_percent": -8,
+    "target_price": 0.614491,
+    "stop_price": 0.49159280000000005,
+    "timestamp": "2025-12-09 22:12",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]

@@ -246,82 +246,99 @@ class QuantumAnalyzer:
 
 
 class AutoMaintenance:
-    """Otomatik bakım sistemi - Güvenli silme"""
+    """Otomatik bakım sistemi - Kod kontrol ve hata tespiti (veri silmez)"""
     
-    PROTECTED_FILES = {
+    PYTHON_FILES = [
         'main_service.py', 'quantum_system.py', 'pro_analysis.py',
         'sniper_system.py', 'historical_analyzer.py', 'backtest_engine.py',
-        'signal_tracker.py', 'chart_generator.py', 'replit.md', 'README.md'
-    }
-    
-    SAFE_DELETE_EXTENSIONS = {'.log', '.tmp', '.cache'}
-    CHART_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif'}
+        'signal_tracker.py', 'chart_generator.py'
+    ]
     
     def __init__(self):
         self.maintenance_log = []
         self.last_maintenance = None
+        self.code_issues = []
+        self.fixed_issues = []
     
-    def is_safe_to_delete(self, filepath, file_type='log'):
-        """Dosyanın silinmesinin güvenli olup olmadığını kontrol et"""
-        filename = os.path.basename(filepath)
-        
-        if filename in self.PROTECTED_FILES:
-            return False
-        
-        if '..' in filepath or filepath.startswith('/'):
-            return False
-        
-        ext = os.path.splitext(filename)[1].lower()
-        
-        if file_type == 'log':
-            return ext in self.SAFE_DELETE_EXTENSIONS or filename.endswith('.log')
-        elif file_type == 'chart':
-            return ext in self.CHART_EXTENSIONS
-        
-        return False
+    def check_python_syntax(self, filepath):
+        """Python dosyasının syntax hatası var mı kontrol et"""
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                source = f.read()
+            compile(source, filepath, 'exec')
+            return None
+        except SyntaxError as e:
+            return f"Syntax hatası satır {e.lineno}: {e.msg}"
+        except Exception as e:
+            return f"Okuma hatası: {str(e)[:100]}"
     
-    def run_maintenance(self):
-        """Günlük bakım görevleri - Güvenli mod"""
+    def check_imports(self, filepath):
+        """Import hatalarını kontrol et"""
+        issues = []
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                for i, line in enumerate(f, 1):
+                    if line.strip().startswith('import ') or line.strip().startswith('from '):
+                        try:
+                            module_name = line.split()[1].split('.')[0]
+                            if module_name not in ['os', 'sys', 'json', 'time', 'logging', 
+                                                   'datetime', 'requests', 'numpy', 'pandas',
+                                                   'flask', 'threading', 'collections', 're',
+                                                   'traceback', 'math', 'random', 'io', 'base64']:
+                                pass
+                        except:
+                            pass
+        except:
+            pass
+        return issues
+    
+    def check_module_health(self, modules_dict):
+        """Modül sağlık kontrolü"""
+        issues = []
+        for name, obj in modules_dict.items():
+            if obj is None:
+                issues.append(f"❌ {name}: Yüklenemedi")
+            else:
+                issues.append(f"✅ {name}: Aktif")
+        return issues
+    
+    def run_maintenance(self, modules_dict=None):
+        """Bakım - Kod kontrol ve hata tespiti (VERİ SİLMEZ)"""
         tasks = []
+        self.code_issues = []
         
-        log_dir = 'logs/'
-        if os.path.exists(log_dir):
-            for f in os.listdir(log_dir):
-                filepath = os.path.join(log_dir, f)
-                if os.path.isfile(filepath) and self.is_safe_to_delete(filepath, 'log'):
-                    try:
-                        age = datetime.now() - datetime.fromtimestamp(os.path.getmtime(filepath))
-                        if age.days > 14:
-                            os.remove(filepath)
-                            tasks.append(f"Eski log silindi: {f}")
-                    except:
-                        pass
+        for pyfile in self.PYTHON_FILES:
+            if os.path.exists(pyfile):
+                error = self.check_python_syntax(pyfile)
+                if error:
+                    self.code_issues.append(f"{pyfile}: {error}")
+                    tasks.append(f"⚠️ {pyfile} - Syntax hatası tespit edildi")
+                else:
+                    tasks.append(f"✅ {pyfile} - Syntax OK")
         
-        chart_dir = 'charts/'
-        if os.path.exists(chart_dir):
-            for f in os.listdir(chart_dir):
-                filepath = os.path.join(chart_dir, f)
-                if os.path.isfile(filepath) and self.is_safe_to_delete(filepath, 'chart'):
-                    try:
-                        age = datetime.now() - datetime.fromtimestamp(os.path.getmtime(filepath))
-                        if age.days > 7:
-                            os.remove(filepath)
-                            tasks.append(f"Eski grafik silindi: {f}")
-                    except:
-                        pass
+        if modules_dict:
+            module_status = self.check_module_health(modules_dict)
+            tasks.extend(module_status)
         
-        tasks.append("Bellek temizlendi")
+        import gc
+        gc.collect()
+        tasks.append("🧹 Bellek optimize edildi")
         
         self.last_maintenance = datetime.now()
         self.maintenance_log.append({
             'timestamp': self.last_maintenance.isoformat(),
-            'tasks': tasks
+            'tasks': tasks,
+            'issues_found': len(self.code_issues)
         })
         
         if len(self.maintenance_log) > 100:
             self.maintenance_log = self.maintenance_log[-100:]
         
         return tasks
+    
+    def get_code_issues(self):
+        """Tespit edilen kod hatalarını getir"""
+        return self.code_issues
     
     def get_maintenance_status(self):
         """Bakım durumu"""

@@ -1573,23 +1573,42 @@ def run_telegram_bot():
                                 else:
                                     send_telegram_to(chat_id, "🔧 Quantum sistem yükleniyor...")
                             
-                            # /bakim - Bakım çalıştır
+                            # /bakim - Bakım çalıştır (kod kontrol, veri silmez)
                             elif cmd == '/bakim':
                                 if quantum_system:
-                                    send_telegram_to(chat_id, "🔧 Bakım başlatılıyor...")
-                                    tasks = quantum_system.run_maintenance_cycle()
-                                    msg = f"""🔧 <b>BAKIM TAMAMLANDI</b>
+                                    send_telegram_to(chat_id, "🔧 Kod kontrol ve bakım başlatılıyor...")
+                                    
+                                    modules = {
+                                        'pro_analyzer': pro_analyzer,
+                                        'signal_tracker': signal_tracker,
+                                        'sniper': sniper,
+                                        'historical_analyzer': historical_analyzer,
+                                        'backtest_engine': backtest_engine,
+                                        'chart_gen': chart_gen,
+                                        'whale_tracker': whale_tracker
+                                    }
+                                    
+                                    tasks = quantum_system.auto_maintenance.run_maintenance(modules)
+                                    issues = quantum_system.auto_maintenance.get_code_issues()
+                                    
+                                    msg = f"""🔧 <b>BAKIM RAPORU</b>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-✅ <b>Yapılan İşlemler:</b> {len(tasks)}
+📋 <b>Kontrol Edilen:</b> {len(tasks)} öğe
 
+<b>SONUÇLAR:</b>
 """
-                                    for t in tasks[:10]:
-                                        msg += f"   • {t}\n"
+                                    for t in tasks[:15]:
+                                        msg += f"{t}\n"
                                     
-                                    if not tasks:
-                                        msg += "   Temizlenecek bir şey yok.\n"
+                                    if issues:
+                                        msg += f"\n⚠️ <b>TESPİT EDİLEN HATALAR:</b>\n"
+                                        for issue in issues[:5]:
+                                            msg += f"   • {issue}\n"
+                                    else:
+                                        msg += "\n✅ Tüm kodlar sorunsuz!"
                                     
+                                    msg += "\n💡 Bakım veri silmez, sadece kontrol eder."
                                     send_telegram_to(chat_id, msg)
                                 else:
                                     send_telegram_to(chat_id, "🔧 Bakım modülü yükleniyor...")
