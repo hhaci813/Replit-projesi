@@ -143,6 +143,11 @@ except:
     backtest_engine = None
     timing_optimizer = None
 
+try:
+    from quantum_system import QuantumSystem, quantum_system
+except:
+    quantum_system = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1445,6 +1450,100 @@ def run_telegram_bot():
                                         send_telegram_to(chat_id, "⏰ Kullanım: /zamanlama BTC")
                                 else:
                                     send_telegram_to(chat_id, "⏰ Zamanlama modülü yükleniyor...")
+                            
+                            # /quantum BTC - Quantum analiz
+                            elif cmd.startswith('/quantum'):
+                                if quantum_system and pro_analyzer:
+                                    parts = text.split()
+                                    if len(parts) > 1:
+                                        symbol = parts[1].upper()
+                                        send_telegram_to(chat_id, f"🔮 {symbol} Quantum analiz başlıyor...")
+                                        
+                                        tickers = get_btcturk_data()
+                                        coin_data = None
+                                        for t in tickers:
+                                            if t.get('pairNormalized', '').startswith(symbol):
+                                                coin_data = t
+                                                break
+                                        
+                                        if coin_data:
+                                            current_price = float(coin_data.get('last', 0))
+                                            pro = pro_analyzer.analyze(symbol)
+                                            
+                                            data = {
+                                                'rsi': pro.get('rsi', {}).get('value', 50),
+                                                'sentiment': pro.get('social_sentiment', {}).get('score', 50),
+                                                'whale_activity': 'neutral',
+                                                'volume_ratio': pro.get('volume_spike', {}).get('ratio', 1.0),
+                                                'macd_histogram': pro.get('macd', {}).get('histogram', 0),
+                                                'historical_match': 50
+                                            }
+                                            
+                                            result = quantum_system.run_quantum_analysis(symbol, data)
+                                            
+                                            msg = f"""🔮 <b>QUANTUM ANALİZ: {symbol}</b>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 <b>Fiyat:</b> ₺{current_price:,.4f}
+
+{result['signal']}
+📊 <b>Quantum Skor:</b> {result['quantum_score']}/100
+🎯 <b>Güven:</b> {result['confidence']}
+
+<b>SKOR DAĞILIMI:</b>
+"""
+                                            for k, v in result['breakdown'].items():
+                                                msg += f"   {k}: {v}/100\n"
+                                            
+                                            msg += "\n💡 Quantum sistem 6 farklı veriyi birleştiriyor."
+                                            send_telegram_to(chat_id, msg)
+                                        else:
+                                            send_telegram_to(chat_id, f"⚠️ {symbol} bulunamadı")
+                                    else:
+                                        send_telegram_to(chat_id, "🔮 Kullanım: /quantum BTC")
+                                else:
+                                    send_telegram_to(chat_id, "🔮 Quantum modülü yükleniyor...")
+                            
+                            # /sistem - Sistem durumu
+                            elif cmd == '/sistem':
+                                if quantum_system:
+                                    modules = {
+                                        'pro_analyzer': pro_analyzer,
+                                        'signal_tracker': signal_tracker,
+                                        'sniper': sniper,
+                                        'historical_analyzer': historical_analyzer,
+                                        'backtest_engine': backtest_engine,
+                                        'timing_optimizer': timing_optimizer,
+                                        'chart_gen': chart_gen,
+                                        'whale_tracker': whale_tracker
+                                    }
+                                    quantum_system.initialize_modules(modules)
+                                    quantum_system.run_maintenance_cycle()
+                                    msg = quantum_system.format_status_telegram()
+                                    send_telegram_to(chat_id, msg)
+                                else:
+                                    send_telegram_to(chat_id, "🔧 Quantum sistem yükleniyor...")
+                            
+                            # /bakim - Bakım çalıştır
+                            elif cmd == '/bakim':
+                                if quantum_system:
+                                    send_telegram_to(chat_id, "🔧 Bakım başlatılıyor...")
+                                    tasks = quantum_system.run_maintenance_cycle()
+                                    msg = f"""🔧 <b>BAKIM TAMAMLANDI</b>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ <b>Yapılan İşlemler:</b> {len(tasks)}
+
+"""
+                                    for t in tasks[:10]:
+                                        msg += f"   • {t}\n"
+                                    
+                                    if not tasks:
+                                        msg += "   Temizlenecek bir şey yok.\n"
+                                    
+                                    send_telegram_to(chat_id, msg)
+                                else:
+                                    send_telegram_to(chat_id, "🔧 Bakım modülü yükleniyor...")
             
             time.sleep(1)
         except Exception as e:

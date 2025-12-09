@@ -1,68 +1,131 @@
-"""Backtest Engine - Gerçek Accuracy Ölçümü + Walk-Forward Analysis"""
+"""Backtest Engine - Gerçek Tarihsel Veri ile Doğru Simülasyon"""
 import yfinance as yf
 import pandas as pd
-from symbol_analyzer import SymbolAnalyzer
 from datetime import datetime, timedelta
 import numpy as np
+import logging
+
+logger = logging.getLogger(__name__)
 
 class BacktestEngine:
     def __init__(self):
-        self.analyzer = SymbolAnalyzer()
         self.results = {}
+        self.strategy_performance = {}
+    
+    def calculate_rsi_series(self, prices, period=14):
+        """RSI hesapla (tarihsel veri üzerinde)"""
+        delta = prices.diff()
+        gain = (delta.where(delta > 0, 0)).rolling(window=period).mean()
+        loss = (-delta.where(delta < 0, 0)).rolling(window=period).mean()
+        rs = gain / loss
+        return 100 - (100 / (1 + rs))
+    
+    def calculate_macd_series(self, prices):
+        """MACD hesapla (tarihsel veri üzerinde)"""
+        exp12 = prices.ewm(span=12, adjust=False).mean()
+        exp26 = prices.ewm(span=26, adjust=False).mean()
+        macd = exp12 - exp26
+        signal = macd.ewm(span=9, adjust=False).mean()
+        histogram = macd - signal
+        return macd, signal, histogram
+    
+    def generate_historical_signal(self, row):
+        """Tarihsel veri üzerinde sinyal üret (deterministik)"""
+        rsi = row.get('rsi', 50)
+        macd_hist = row.get('macd_hist', 0)
+        volume_ratio = row.get('volume_ratio', 1)
+        
+        score = 0
+        
+        if rsi < 30:
+            score += 30
+        elif rsi < 40:
+            score += 15
+        elif rsi > 70:
+            score -= 20
+        
+        if macd_hist > 0:
+            score += 25
+        else:
+            score -= 15
+        
+        if volume_ratio > 1.5:
+            score += 20
+        elif volume_ratio > 1.2:
+            score += 10
+        
+        if score >= 40:
+            return "🟢 AL"
+        elif score <= -20:
+            return "🔴 SAT"
+        else:
+            return "⚪ BEKLE"
     
     def backtest_symbol(self, symbol, days=180):
-        """Sembol için backtest yap"""
+        """Gerçek tarihsel veri ile backtest"""
         try:
-            print(f"\n📊 {symbol} Backtest Başlıyor ({days} gün)...")
+            logger.info(f"📊 {symbol} Backtest Başlıyor ({days} gün)...")
             
-            # Data indir
             end_date = datetime.now()
-            start_date = end_date - timedelta(days=days+30)
+            start_date = end_date - timedelta(days=days+60)
             data = yf.download(symbol, start=start_date, end=end_date, progress=False)
             
-            # Null check
             if data is None or data.empty or len(data) < 60:
-                print(f"⚠️ {symbol}: Yetersiz veri")
+                logger.warning(f"⚠️ {symbol}: Yetersiz veri")
                 return None
             
-            # Her gün analiz yap ve sonuç kayıt et
+            close = data['Close'].squeeze() if hasattr(data['Close'], 'squeeze') else data['Close']
+            volume = data['Volume'].squeeze() if hasattr(data['Volume'], 'squeeze') else data['Volume']
+            
+            data['rsi'] = self.calculate_rsi_series(close)
+            macd, signal, histogram = self.calculate_macd_series(close)
+            data['macd_hist'] = histogram
+            data['volume_ma'] = volume.rolling(20).mean()
+            data['volume_ratio'] = volume / data['volume_ma']
+            
             trades = []
             correct = 0
             total = 0
+            total_profit = 0
             
             for i in range(60, len(data)-2):
-                # Bugün sinyali ver
                 try:
-                    today_high = data['High'].iloc[i]
-                    today_low = data['Low'].iloc[i]
-                    today_close = data['Close'].iloc[i]
+                    row = {
+                        'rsi': data['rsi'].iloc[i],
+                        'macd_hist': data['macd_hist'].iloc[i],
+                        'volume_ratio': data['volume_ratio'].iloc[i]
+                    }
                     
-                    # Yarının sonucuna bak
-                    tomorrow_close = data['Close'].iloc[i+1]
-                    tomorrow_change = ((tomorrow_close - today_close) / today_close) * 100
-                    
-                    # Analiz yap
-                    result = self.analyzer.generate_signal(symbol)
-                    if result['signal'] == "?":
+                    if pd.isna(row['rsi']) or pd.isna(row['macd_hist']):
                         continue
                     
-                    signal = result['signal']
+                    signal_result = self.generate_historical_signal(row)
+                    
+                    if signal_result == "⚪ BEKLE":
+                        continue
+                    
+                    today_close = float(close.iloc[i])
+                    tomorrow_close = float(close.iloc[i+1])
+                    change = ((tomorrow_close - today_close) / today_close) * 100
+                    
                     total += 1
                     
-                    # Doğru mu yanlış mı?
-                    if "🟢" in signal and tomorrow_change > 0:
+                    if "🟢" in signal_result and change > 0:
                         correct += 1
                         result_str = "✅"
-                    elif "🔴" in signal and tomorrow_change < 0:
+                        total_profit += change
+                    elif "🔴" in signal_result and change < 0:
                         correct += 1
                         result_str = "✅"
+                        total_profit += abs(change)
                     else:
                         result_str = "❌"
+                        total_profit -= abs(change)
                     
                     trades.append({
-                        'date': data.index[i],
-                        'signal': signal,
-                        'change': tomorrow_change,
+                        'date': data.index[i].strftime('%Y-%m-%d'),
+                        'signal': signal_result,
+                        'change': round(change, 2),
                         'result': result_str
                     })
                 except Exception as e:
@@ -71,16 +134,18 @@ class BacktestEngine:
             accuracy = (correct / total * 100) if total > 0 else 0
             
             self.results[symbol] = {
-                'accuracy': accuracy,
+                'accuracy': round(accuracy, 1),
                 'total_trades': total,
                 'correct_trades': correct,
+                'total_profit': round(total_profit, 2),
+                'avg_trade': round(total_profit / total, 2) if total > 0 else 0,
                 'trades': trades[-10:] if trades else []
             }
             
             return accuracy
         
         except Exception as e:
-            print(f"❌ Hata: {str(e)}")
+            logger.error(f"❌ Backtest Hata: {str(e)}")
             return None
     
     def walk_forward_analysis(self, symbol, train_days=90, test_days=30, step_days=15):
