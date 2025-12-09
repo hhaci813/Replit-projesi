@@ -130,6 +130,11 @@ try:
 except:
     sniper = None
 
+try:
+    from historical_analyzer import HistoricalPatternAnalyzer, historical_analyzer
+except:
+    historical_analyzer = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1325,6 +1330,20 @@ def run_telegram_bot():
                                     send_telegram_to(chat_id, report)
                                 else:
                                     send_telegram_to(chat_id, "🎯 Sniper modülü yükleniyor...")
+                            
+                            # /derin - Derin tarihsel analiz
+                            elif cmd == '/derin':
+                                if historical_analyzer:
+                                    send_telegram_to(chat_id, "🔬 Derin tarihsel analiz başlıyor... (15-20 sn)")
+                                    tickers = get_btcturk_data()
+                                    rising = analyze_rising_cryptos(tickers)
+                                    if rising:
+                                        report = historical_analyzer.deep_analysis_rising(rising)
+                                        send_telegram_to(chat_id, report)
+                                    else:
+                                        send_telegram_to(chat_id, "📊 Şu an yükselen coin bulunamadı")
+                                else:
+                                    send_telegram_to(chat_id, "🔬 Tarihsel analiz modülü yükleniyor...")
             
             time.sleep(1)
         except Exception as e:

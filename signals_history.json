@@ -69,10 +69,10 @@
     "target_price": 0.5654,
     "stop_price": 0.49500000000000005,
     "timestamp": "2025-12-09 14:01",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "WIN",
+    "result": "HEDEF",
+    "result_percent": 2.84,
+    "closed_at": "2025-12-09 16:57"
   },
   {
     "id": 6,
@@ -144,10 +144,10 @@
     "target_price": 0.091111,
     "stop_price": 0.08055,
     "timestamp": "2025-12-09 14:14",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "WIN",
+    "result": "HEDEF",
+    "result_percent": 2.23,
+    "closed_at": "2025-12-09 16:57"
   },
   {
     "id": 11,
@@ -189,10 +189,10 @@
     "target_price": 9.38528,
     "stop_price": 8.006400000000001,
     "timestamp": "2025-12-09 15:59",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "WIN",
+    "result": "HEDEF",
+    "result_percent": 6.12,
+    "closed_at": "2025-12-09 17:10"
   },
   {
     "id": 14,
@@ -234,6 +234,36 @@
     "target_price": 16.204968,
     "stop_price": 13.969800000000001,
     "timestamp": "2025-12-09 16:06",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 17,
+    "symbol": "PSG",
+    "signal_type": "POTENTIAL",
+    "entry_price": 38.5,
+    "target_percent": 3.0,
+    "stop_percent": -10,
+    "target_price": 39.655,
+    "stop_price": 34.65,
+    "timestamp": "2025-12-09 16:57",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 18,
+    "symbol": "BAR",
+    "signal_type": "POTENTIAL",
+    "entry_price": 26.099,
+    "target_percent": 7.3,
+    "stop_percent": -10,
+    "target_price": 28.004227,
+    "stop_price": 23.4891,
+    "timestamp": "2025-12-09 17:10",
     "status": "ACTIVE",
     "result": null,
     "result_percent": null,
