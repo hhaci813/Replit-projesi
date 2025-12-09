@@ -149,70 +149,87 @@ class BacktestEngine:
             return None
     
     def walk_forward_analysis(self, symbol, train_days=90, test_days=30, step_days=15):
-        """Walk-forward analiz - gerçekçi accuracy ölçümü"""
+        """Walk-forward analiz - deterministik tarihsel sinyal üretimi"""
         try:
-            print(f"\n🚶 {symbol} Walk-Forward Analiz ({train_days} gün train, {test_days} gün test)...")
+            logger.info(f"🚶 {symbol} Walk-Forward Analiz ({train_days} gün train, {test_days} gün test)...")
             
-            # Tüm data indir
             end_date = datetime.now()
-            start_date = end_date - timedelta(days=train_days + test_days + step_days * 4)
+            start_date = end_date - timedelta(days=train_days + test_days + step_days * 6 + 60)
             data = yf.download(symbol, start=start_date, end=end_date, progress=False)
             
-            if data is None or data.empty or len(data) < train_days + test_days:
+            if data is None or data.empty or len(data) < train_days + test_days + 60:
                 return None
             
+            close = data['Close'].squeeze() if hasattr(data['Close'], 'squeeze') else data['Close']
+            volume = data['Volume'].squeeze() if hasattr(data['Volume'], 'squeeze') else data['Volume']
+            
+            data['rsi'] = self.calculate_rsi_series(close)
+            _, _, histogram = self.calculate_macd_series(close)
+            data['macd_hist'] = histogram
+            data['volume_ma'] = volume.rolling(20).mean()
+            data['volume_ratio'] = volume / data['volume_ma']
+            
             results = []
-            i = 0
+            i = 60
             
             while i + train_days + test_days < len(data):
-                # Train seti
-                train_data = data.iloc[i:i+train_days]
-                test_data = data.iloc[i+train_days:i+train_days+test_days]
+                test_start = i + train_days
+                test_end = test_start + test_days
                 
-                # Test et
                 correct = 0
                 total = 0
                 
-                for j in range(1, len(test_data)-1):
-                    today_close = test_data['Close'].iloc[j]
-                    tomorrow_close = test_data['Close'].iloc[j+1]
-                    tomorrow_change = ((tomorrow_close - today_close) / today_close) * 100
-                    
-                    result = self.analyzer.generate_signal(symbol)
-                    if result['signal'] != "?":
+                for j in range(test_start, min(test_end - 1, len(data) - 2)):
+                    try:
+                        row = {
+                            'rsi': data['rsi'].iloc[j],
+                            'macd_hist': data['macd_hist'].iloc[j],
+                            'volume_ratio': data['volume_ratio'].iloc[j]
+                        }
+                        
+                        if pd.isna(row['rsi']) or pd.isna(row['macd_hist']):
+                            continue
+                        
+                        signal_result = self.generate_historical_signal(row)
+                        
+                        if signal_result == "⚪ BEKLE":
+                            continue
+                        
+                        today_close = float(close.iloc[j])
+                        tomorrow_close = float(close.iloc[j+1])
+                        change = ((tomorrow_close - today_close) / today_close) * 100
+                        
                         total += 1
-                        if "🟢" in result['signal'] and tomorrow_change > 0:
+                        if "🟢" in signal_result and change > 0:
                             correct += 1
-                        elif "🔴" in result['signal'] and tomorrow_change < 0:
+                        elif "🔴" in signal_result and change < 0:
                             correct += 1
+                    except:
+                        continue
                 
                 if total > 0:
                     accuracy = (correct / total) * 100
                     results.append(accuracy)
-                    print(f"   Window {len(results)}: {accuracy:.1f}% ({correct}/{total})")
                 
                 i += step_days
             
             if results:
                 avg_acc = np.mean(results)
                 std_acc = np.std(results)
-                print(f"\n📊 Walk-Forward Sonuç:")
-                print(f"   Ort. Accuracy: {avg_acc:.1f}%")
-                print(f"   Std Dev: {std_acc:.1f}%")
-                print(f"   Min: {min(results):.1f}% / Max: {max(results):.1f}%")
                 
                 return {
-                    'mean': avg_acc,
-                    'std': std_acc,
-                    'min': min(results),
-                    'max': max(results),
+                    'mean': round(avg_acc, 1),
+                    'std': round(std_acc, 1),
+                    'min': round(min(results), 1),
+                    'max': round(max(results), 1),
+                    'windows': len(results),
                     'results': results
                 }
             
             return None
         
         except Exception as e:
-            print(f"❌ Walk-Forward Hata: {str(e)}")
+            logger.error(f"❌ Walk-Forward Hata: {str(e)}")
             return None
     
     def run_multi_backtest(self, symbols, days=180):

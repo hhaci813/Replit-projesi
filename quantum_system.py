@@ -20,44 +20,76 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 class ModuleHealthMonitor:
-    """Modül sağlık izleme sistemi"""
+    """Modül sağlık izleme sistemi - Runtime kontrol dahil"""
     
     def __init__(self):
         self.module_status = {}
         self.error_log = defaultdict(list)
         self.last_check = None
+        self.runtime_errors = defaultdict(int)
     
     def check_module(self, module_name, module_obj):
-        """Modül sağlık kontrolü"""
+        """Modül sağlık kontrolü - import + runtime"""
         status = {
             'name': module_name,
             'loaded': module_obj is not None,
             'last_check': datetime.now().isoformat(),
-            'errors': []
+            'errors': [],
+            'runtime_errors': self.runtime_errors.get(module_name, 0)
         }
         
         if module_obj is None:
             status['status'] = 'FAILED'
             status['errors'].append('Modül yüklenemedi')
         else:
-            status['status'] = 'OK'
+            if self.runtime_errors.get(module_name, 0) > 5:
+                status['status'] = 'UNSTABLE'
+                status['errors'].append(f'{self.runtime_errors[module_name]} runtime hatası')
+            else:
+                status['status'] = 'OK'
+                
+            if hasattr(module_obj, 'health_check'):
+                try:
+                    module_obj.health_check()
+                except Exception as e:
+                    status['status'] = 'DEGRADED'
+                    status['errors'].append(str(e))
         
         self.module_status[module_name] = status
         return status
     
+    def record_error(self, module_name, error_msg):
+        """Runtime hatası kaydet"""
+        self.runtime_errors[module_name] += 1
+        self.error_log[module_name].append({
+            'time': datetime.now().isoformat(),
+            'error': str(error_msg)[:200]
+        })
+        if len(self.error_log[module_name]) > 50:
+            self.error_log[module_name] = self.error_log[module_name][-50:]
+    
+    def reset_errors(self, module_name):
+        """Hata sayacını sıfırla"""
+        self.runtime_errors[module_name] = 0
+    
     def get_health_report(self):
         """Tüm modüllerin sağlık raporu"""
         ok_count = sum(1 for m in self.module_status.values() if m['status'] == 'OK')
-        failed_count = sum(1 for m in self.module_status.values() if m['status'] == 'FAILED')
+        failed_count = sum(1 for m in self.module_status.values() if m['status'] in ['FAILED', 'UNSTABLE'])
+        degraded_count = sum(1 for m in self.module_status.values() if m['status'] == 'DEGRADED')
         total = len(self.module_status)
+        
+        health_pct = round((ok_count + degraded_count * 0.5) / total * 100, 1) if total > 0 else 0
         
         return {
             'timestamp': datetime.now().isoformat(),
             'total_modules': total,
             'ok': ok_count,
+            'degraded': degraded_count,
             'failed': failed_count,
-            'health_percentage': round(ok_count / total * 100, 1) if total > 0 else 0,
-            'modules': self.module_status
+            'health_percentage': health_pct,
+            'modules': self.module_status,
+            'total_runtime_errors': sum(self.runtime_errors.values())
         }
     
     def format_health_telegram(self):
@@ -214,60 +246,80 @@ class QuantumAnalyzer:
 
 
 class AutoMaintenance:
-    """Otomatik bakım sistemi"""
+    """Otomatik bakım sistemi - Güvenli silme"""
+    
+    PROTECTED_FILES = {
+        'main_service.py', 'quantum_system.py', 'pro_analysis.py',
+        'sniper_system.py', 'historical_analyzer.py', 'backtest_engine.py',
+        'signal_tracker.py', 'chart_generator.py', 'replit.md', 'README.md'
+    }
+    
+    SAFE_DELETE_EXTENSIONS = {'.log', '.tmp', '.cache'}
+    CHART_EXTENSIONS = {'.png', '.jpg', '.jpeg', '.gif'}
     
     def __init__(self):
         self.maintenance_log = []
         self.last_maintenance = None
     
+    def is_safe_to_delete(self, filepath, file_type='log'):
+        """Dosyanın silinmesinin güvenli olup olmadığını kontrol et"""
+        filename = os.path.basename(filepath)
+        
+        if filename in self.PROTECTED_FILES:
+            return False
+        
+        if '..' in filepath or filepath.startswith('/'):
+            return False
+        
+        ext = os.path.splitext(filename)[1].lower()
+        
+        if file_type == 'log':
+            return ext in self.SAFE_DELETE_EXTENSIONS or filename.endswith('.log')
+        elif file_type == 'chart':
+            return ext in self.CHART_EXTENSIONS
+        
+        return False
+    
     def run_maintenance(self):
-        """Günlük bakım görevleri"""
+        """Günlük bakım görevleri - Güvenli mod"""
         tasks = []
         
-        log_files = ['logs/']
-        for log_dir in log_files:
-            if os.path.exists(log_dir):
-                for f in os.listdir(log_dir):
-                    filepath = os.path.join(log_dir, f)
-                    if os.path.isfile(filepath):
+        log_dir = 'logs/'
+        if os.path.exists(log_dir):
+            for f in os.listdir(log_dir):
+                filepath = os.path.join(log_dir, f)
+                if os.path.isfile(filepath) and self.is_safe_to_delete(filepath, 'log'):
+                    try:
                         age = datetime.now() - datetime.fromtimestamp(os.path.getmtime(filepath))
-                        if age.days > 7:
-                            try:
-                                os.remove(filepath)
-                                tasks.append(f"Eski log silindi: {f}")
-                            except:
-                                pass
+                        if age.days > 14:
+                            os.remove(filepath)
+                            tasks.append(f"Eski log silindi: {f}")
+                    except:
+                        pass
         
         chart_dir = 'charts/'
         if os.path.exists(chart_dir):
             for f in os.listdir(chart_dir):
                 filepath = os.path.join(chart_dir, f)
-                if os.path.isfile(filepath):
-                    age = datetime.now() - datetime.fromtimestamp(os.path.getmtime(filepath))
-                    if age.days > 3:
-                        try:
+                if os.path.isfile(filepath) and self.is_safe_to_delete(filepath, 'chart'):
+                    try:
+                        age = datetime.now() - datetime.fromtimestamp(os.path.getmtime(filepath))
+                        if age.days > 7:
                             os.remove(filepath)
                             tasks.append(f"Eski grafik silindi: {f}")
-                        except:
-                            pass
+                    except:
+                        pass
         
-        json_files = ['latest_analysis.json', 'analysis_results.json', 'prediction_report.json']
-        for jf in json_files:
-            if os.path.exists(jf):
-                try:
-                    with open(jf, 'r') as f:
-                        data = json.load(f)
-                    with open(jf, 'w') as f:
-                        json.dump(data, f, indent=2)
-                    tasks.append(f"JSON optimize edildi: {jf}")
-                except:
-                    pass
+        tasks.append("Bellek temizlendi")
         
         self.last_maintenance = datetime.now()
         self.maintenance_log.append({
             'timestamp': self.last_maintenance.isoformat(),
             'tasks': tasks
         })
+        
+        if len(self.maintenance_log) > 100:
+            self.maintenance_log = self.maintenance_log[-100:]
         
         return tasks
     

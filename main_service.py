@@ -1451,7 +1451,7 @@ def run_telegram_bot():
                                 else:
                                     send_telegram_to(chat_id, "⏰ Zamanlama modülü yükleniyor...")
                             
-                            # /quantum BTC - Quantum analiz
+                            # /quantum BTC - Quantum analiz (gerçek verilerle)
                             elif cmd.startswith('/quantum'):
                                 if quantum_system and pro_analyzer:
                                     parts = text.split()
@@ -1459,46 +1459,95 @@ def run_telegram_bot():
                                         symbol = parts[1].upper()
                                         send_telegram_to(chat_id, f"🔮 {symbol} Quantum analiz başlıyor...")
                                         
-                                        tickers = get_btcturk_data()
-                                        coin_data = None
-                                        for t in tickers:
-                                            if t.get('pairNormalized', '').startswith(symbol):
-                                                coin_data = t
-                                                break
-                                        
-                                        if coin_data:
-                                            current_price = float(coin_data.get('last', 0))
-                                            pro = pro_analyzer.analyze(symbol)
+                                        try:
+                                            tickers = get_btcturk_data()
+                                            coin_data = None
+                                            for t in tickers:
+                                                if t.get('pairNormalized', '').startswith(symbol):
+                                                    coin_data = t
+                                                    break
                                             
-                                            data = {
-                                                'rsi': pro.get('rsi', {}).get('value', 50),
-                                                'sentiment': pro.get('social_sentiment', {}).get('score', 50),
-                                                'whale_activity': 'neutral',
-                                                'volume_ratio': pro.get('volume_spike', {}).get('ratio', 1.0),
-                                                'macd_histogram': pro.get('macd', {}).get('histogram', 0),
-                                                'historical_match': 50
-                                            }
-                                            
-                                            result = quantum_system.run_quantum_analysis(symbol, data)
-                                            
-                                            msg = f"""🔮 <b>QUANTUM ANALİZ: {symbol}</b>
+                                            if coin_data:
+                                                current_price = float(coin_data.get('last', 0))
+                                                daily_change = float(coin_data.get('dailyPercent', 0))
+                                                volume = float(coin_data.get('volume', 0))
+                                                
+                                                pro = pro_analyzer.analyze(symbol)
+                                                
+                                                rsi_val = pro.get('rsi', {}).get('value', 50)
+                                                macd_data = pro.get('macd', {})
+                                                volume_spike = pro.get('volume_spike', {})
+                                                social = pro.get('social_sentiment', {})
+                                                fear_greed = pro.get('fear_greed', {})
+                                                
+                                                whale_activity = 'neutral'
+                                                if whale_tracker:
+                                                    try:
+                                                        wdata = whale_tracker.get_whale_summary()
+                                                        if wdata and wdata.get('trend') == 'accumulating':
+                                                            whale_activity = 'accumulating'
+                                                        elif wdata and wdata.get('trend') == 'distributing':
+                                                            whale_activity = 'distributing'
+                                                    except:
+                                                        pass
+                                                
+                                                historical_score = 50
+                                                if historical_analyzer:
+                                                    try:
+                                                        matches = historical_analyzer.find_similar_patterns(symbol, daily_change)
+                                                        if matches:
+                                                            historical_score = min(100, 50 + len(matches) * 10)
+                                                    except:
+                                                        pass
+                                                
+                                                data = {
+                                                    'rsi': rsi_val,
+                                                    'sentiment': social.get('score', fear_greed.get('value', 50)),
+                                                    'whale_activity': whale_activity,
+                                                    'volume_ratio': volume_spike.get('ratio', 1.0),
+                                                    'macd_histogram': macd_data.get('histogram', 0),
+                                                    'historical_match': historical_score
+                                                }
+                                                
+                                                result = quantum_system.run_quantum_analysis(symbol, data)
+                                                
+                                                usd_try = get_usd_try_rate()
+                                                price_usd = current_price / usd_try if usd_try > 0 else 0
+                                                
+                                                msg = f"""🔮 <b>QUANTUM ANALİZ: {symbol}</b>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-💰 <b>Fiyat:</b> ₺{current_price:,.4f}
+💰 <b>Fiyat:</b> ₺{current_price:,.4f} | ${price_usd:,.4f}
+📊 <b>24s Değişim:</b> {daily_change:+.2f}%
 
 {result['signal']}
-📊 <b>Quantum Skor:</b> {result['quantum_score']}/100
-🎯 <b>Güven:</b> {result['confidence']}
+🎯 <b>Quantum Skor:</b> {result['quantum_score']}/100
+💪 <b>Güven:</b> {result['confidence']}
 
-<b>SKOR DAĞILIMI:</b>
+<b>VERİ KAYNAKLARI:</b>
+   📈 Teknik: {result['breakdown']['technical']}/100 (RSI: {rsi_val:.0f})
+   💭 Sentiment: {result['breakdown']['sentiment']}/100
+   🐋 Whale: {result['breakdown']['whale']}/100
+   📊 Hacim: {result['breakdown']['volume']}/100
+   ⚡ Momentum: {result['breakdown']['momentum']}/100
+   📜 Tarihsel: {result['breakdown']['historical']}/100
+
 """
-                                            for k, v in result['breakdown'].items():
-                                                msg += f"   {k}: {v}/100\n"
-                                            
-                                            msg += "\n💡 Quantum sistem 6 farklı veriyi birleştiriyor."
-                                            send_telegram_to(chat_id, msg)
-                                        else:
-                                            send_telegram_to(chat_id, f"⚠️ {symbol} bulunamadı")
+                                                if result['quantum_score'] >= 75:
+                                                    target = current_price * 1.10
+                                                    stop = current_price * 0.95
+                                                    msg += f"""<b>ÖNERİLEN SEVİYELER:</b>
+   🎯 Hedef: ₺{target:,.4f} (+10%)
+   🛑 Stop: ₺{stop:,.4f} (-5%)
+"""
+                                                
+                                                msg += "\n💡 6 farklı veri kaynağından birleşik analiz."
+                                                send_telegram_to(chat_id, msg)
+                                            else:
+                                                send_telegram_to(chat_id, f"⚠️ {symbol} bulunamadı")
+                                        except Exception as e:
+                                            quantum_system.health_monitor.record_error('quantum_analysis', str(e))
+                                            send_telegram_to(chat_id, f"❌ Quantum analiz hatası: {str(e)[:100]}")
                                     else:
                                         send_telegram_to(chat_id, "🔮 Kullanım: /quantum BTC")
                                 else:

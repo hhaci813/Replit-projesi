@@ -343,5 +343,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 24,
+    "symbol": "LUNA",
+    "signal_type": "STRONG_BUY",
+    "entry_price": 6.406,
+    "target_percent": 15,
+    "stop_percent": -8,
+    "target_price": 7.366899999999999,
+    "stop_price": 5.89352,
+    "timestamp": "2025-12-09 21:59",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 25,
+    "symbol": "S",
+    "signal_type": "POTENTIAL",
+    "entry_price": 4.118,
+    "target_percent": 10.2,
+    "stop_percent": -10,
+    "target_price": 4.538036000000001,
+    "stop_price": 3.7062000000000004,
+    "timestamp": "2025-12-09 22:00",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
