@@ -125,6 +125,11 @@ try:
 except:
     signal_tracker = None
 
+try:
+    from sniper_system import SniperSystem, sniper
+except:
+    sniper = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1243,6 +1248,16 @@ def run_telegram_bot():
                                     send_telegram_to(chat_id, msg)
                                 else:
                                     send_telegram_to(chat_id, "📊 Performans modülü yükleniyor...")
+                            
+                            # /sniper - Gelişmiş fırsat tarama
+                            elif cmd == '/sniper':
+                                if sniper:
+                                    send_telegram_to(chat_id, "🎯 Sniper taraması başlıyor... (10-15 sn)")
+                                    scan = sniper.run_sniper_scan()
+                                    report = sniper.format_sniper_report(scan)
+                                    send_telegram_to(chat_id, report)
+                                else:
+                                    send_telegram_to(chat_id, "🎯 Sniper modülü yükleniyor...")
             
             time.sleep(1)
         except Exception as e:
