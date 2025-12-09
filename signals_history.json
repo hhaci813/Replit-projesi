@@ -39,10 +39,10 @@
     "target_price": 1.439473,
     "stop_price": 1.2789000000000001,
     "timestamp": "2025-12-09 14:01",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "WIN",
+    "result": "HEDEF",
+    "result_percent": 2.39,
+    "closed_at": "2025-12-09 15:54"
   },
   {
     "id": 4,
@@ -129,10 +129,10 @@
     "target_price": 89.75564800000001,
     "stop_price": 78.88680000000001,
     "timestamp": "2025-12-09 14:14",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "WIN",
+    "result": "HEDEF",
+    "result_percent": 2.54,
+    "closed_at": "2025-12-09 15:54"
   },
   {
     "id": 10,
@@ -144,6 +144,36 @@
     "target_price": 0.091111,
     "stop_price": 0.08055,
     "timestamp": "2025-12-09 14:14",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 11,
+    "symbol": "NAP",
+    "signal_type": "POTENTIAL",
+    "entry_price": 17.231,
+    "target_percent": 8.5,
+    "stop_percent": -10,
+    "target_price": 18.695635000000003,
+    "stop_price": 15.507900000000001,
+    "timestamp": "2025-12-09 15:54",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 12,
+    "symbol": "FB",
+    "signal_type": "POTENTIAL",
+    "entry_price": 16.32,
+    "target_percent": 2.9,
+    "stop_percent": -10,
+    "target_price": 16.79328,
+    "stop_price": 14.688,
+    "timestamp": "2025-12-09 15:54",
     "status": "ACTIVE",
     "result": null,
     "result_percent": null,

@@ -136,10 +136,109 @@ class ChartGenerator:
         except:
             return False
     
+    def calculate_trade_levels(self, symbol: str) -> Dict:
+        """Alım/satım seviyeleri hesapla"""
+        try:
+            data = self.get_price_history(symbol, 14)
+            if not data or len(data['close']) < 5:
+                return None
+            
+            closes = data['close']
+            highs = data['high']
+            lows = data['low']
+            
+            current = closes[-1]
+            high_14 = max(highs)
+            low_14 = min(lows)
+            
+            # RSI hesaplama
+            gains = []
+            losses = []
+            for i in range(1, len(closes)):
+                change = closes[i] - closes[i-1]
+                if change > 0:
+                    gains.append(change)
+                    losses.append(0)
+                else:
+                    gains.append(0)
+                    losses.append(abs(change))
+            
+            avg_gain = sum(gains[-14:]) / 14 if len(gains) >= 14 else sum(gains) / len(gains) if gains else 0
+            avg_loss = sum(losses[-14:]) / 14 if len(losses) >= 14 else sum(losses) / len(losses) if losses else 0.001
+            rs = avg_gain / avg_loss if avg_loss > 0 else 100
+            rsi = 100 - (100 / (1 + rs))
+            
+            # Skor ve tavsiye
+            if rsi < 30:
+                action = "🟢 GÜÇLÜ AL"
+                score = 8.5
+                rsi_text = "Aşırı satım (ucuz)"
+            elif rsi < 40:
+                action = "🟢 AL"
+                score = 7.5
+                rsi_text = "Düşük (fırsat)"
+            elif rsi > 70:
+                action = "🔴 SAT"
+                score = 3
+                rsi_text = "Aşırı alım (pahalı)"
+            elif rsi > 60:
+                action = "🟡 DİKKAT"
+                score = 5
+                rsi_text = "Yüksek"
+            else:
+                action = "🟡 BEKLE"
+                score = 6
+                rsi_text = "Normal"
+            
+            # Hedef ve stop hesapla
+            if score >= 7:
+                target = current * 1.12  # %12 hedef
+                stop = current * 0.94   # %6 stop
+            else:
+                target = current * 1.08
+                stop = current * 0.92
+            
+            # Destek/direnç
+            support = low_14 * 1.02
+            resistance = high_14 * 0.98
+            
+            return {
+                'current': current,
+                'rsi': rsi,
+                'rsi_text': rsi_text,
+                'score': score,
+                'action': action,
+                'target': target,
+                'stop': stop,
+                'support': support,
+                'resistance': resistance
+            }
+        except:
+            return None
+    
     def generate_and_send(self, symbol: str, chat_id: str, days: int = 30) -> bool:
-        """Grafik oluştur ve gönder"""
+        """Grafik oluştur ve alım/satım bilgisi ile gönder"""
         chart_path = self.create_price_chart(symbol, days)
         if chart_path:
-            caption = f"📊 <b>{symbol}/TRY</b> - {days} Günlük Grafik"
+            # Trade seviyeleri hesapla
+            levels = self.calculate_trade_levels(symbol)
+            
+            if levels:
+                caption = f"""📊 <b>{symbol}/TRY</b> - {days} Günlük Grafik
+
+💰 <b>Şu An:</b> ₺{levels['current']:,.4f}
+📈 <b>RSI({levels['rsi']:.0f}):</b> {levels['rsi_text']}
+📊 <b>Skor:</b> {levels['score']}/10 → {levels['action']}
+
+━━━ <b>İŞLEM SEVİYELERİ</b> ━━━
+🎯 <b>Hedef (AL):</b> ₺{levels['target']:,.4f} (+%12)
+🛑 <b>Stop (SAT):</b> ₺{levels['stop']:,.4f} (-%6)
+🛡️ <b>Destek:</b> ₺{levels['support']:,.4f}
+⚡ <b>Direnç:</b> ₺{levels['resistance']:,.4f}
+
+💡 <i>Hedef fiyata ulaşınca kar al, stop'a düşerse zarar kes!</i>"""
+            else:
+                caption = f"📊 <b>{symbol}/TRY</b> - {days} Günlük Grafik"
+            
             return self.send_chart_to_telegram(chart_path, chat_id, caption)
         return False
