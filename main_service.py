@@ -648,7 +648,11 @@ def run_full_analysis():
             price_usd = price_tl / usd_try if usd_try > 0 else 0
             risk_level = c.get('risk_level', 'NORMAL')
             warning = c.get('warning', '')
-            rec = c.get('rec', 'BUY')
+            change = c.get('change', 0)
+            
+            # Hedef ve stop hesapla
+            target_price = price_tl * 1.10  # %10 hedef
+            stop_price = price_tl * 0.92   # %8 stop
             
             # Risk seviyesine göre emoji
             if risk_level == "YUKSEK_RISK":
@@ -660,9 +664,10 @@ def run_full_analysis():
             else:
                 emoji = "🔵"
             
-            msg2 += f"{emoji} <b>{c['symbol']}</b> +{c['change']:.1f}%\n"
+            msg2 += f"{emoji} <b>{c['symbol']}</b> +{change:.1f}%\n"
             msg2 += f"   ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
             msg2 += f"   {warning}\n"
+            msg2 += f"   🎯 Hedef: ₺{target_price:,.4f} | 🛑 Stop: ₺{stop_price:,.4f}\n"
     else:
         msg2 += "⚠️ Yok\n"
     

@@ -223,5 +223,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 16,
+    "symbol": "TRA",
+    "signal_type": "POTENTIAL",
+    "entry_price": 15.522,
+    "target_percent": 4.4,
+    "stop_percent": -10,
+    "target_price": 16.204968,
+    "stop_price": 13.969800000000001,
+    "timestamp": "2025-12-09 16:06",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
