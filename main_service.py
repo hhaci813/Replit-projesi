@@ -252,7 +252,7 @@ def analyze_crypto_detailed(symbol):
         return None
 
 def analyze_rising_cryptos(tickers):
-    """Yükselen kriptolar (TL)"""
+    """Yükselen kriptolar (TL) - Akıllı risk filtresi ile"""
     cryptos = []
     seen = set()
     for t in tickers:
@@ -266,9 +266,29 @@ def analyze_rising_cryptos(tickers):
                 if price > 0 and change > 5:
                     momentum = 100 if change > 15 else (80 if change > 10 else 60)
                     if volume > 1000000: momentum += 10
+                    
+                    # YENİ: Yüksek değişim riski filtresi
+                    if change > 30:
+                        risk_level = "YUKSEK_RISK"
+                        warning = "⚠️ ÇOK YÜKSEK - Kar satışı gelebilir!"
+                        rec = "DIKKATLI_AL"
+                    elif change > 20:
+                        risk_level = "ORTA_RISK"
+                        warning = "⚡ Hızlı yükseliş - Stop-loss şart!"
+                        rec = "DIKKATLI_AL"
+                    elif change > 15:
+                        risk_level = "NORMAL"
+                        warning = "📈 Momentum güçlü"
+                        rec = 'STRONG_BUY' if momentum >= 80 else 'BUY'
+                    else:
+                        risk_level = "GUVENLI"
+                        warning = "✅ Güvenli giriş bölgesi"
+                        rec = 'STRONG_BUY' if momentum >= 80 else 'BUY'
+                    
                     cryptos.append({
                         'symbol': symbol, 'change': change, 'price': price,
-                        'momentum': momentum, 'rec': 'STRONG_BUY' if momentum >= 80 else 'BUY',
+                        'momentum': momentum, 'rec': rec,
+                        'risk_level': risk_level, 'warning': warning,
                         'target': price * (1 + min(change + 25, 100) / 100),
                         'stop': price * 0.92
                     })
@@ -576,8 +596,23 @@ def run_full_analysis():
         for c in rising[:5]:
             price_tl = c.get('price', 0)
             price_usd = price_tl / usd_try if usd_try > 0 else 0
-            msg2 += f"🟢 <b>{c['symbol']}</b> +{c['change']:.1f}%\n"
+            risk_level = c.get('risk_level', 'NORMAL')
+            warning = c.get('warning', '')
+            rec = c.get('rec', 'BUY')
+            
+            # Risk seviyesine göre emoji
+            if risk_level == "YUKSEK_RISK":
+                emoji = "🔴"
+            elif risk_level == "ORTA_RISK":
+                emoji = "🟡"
+            elif risk_level == "GUVENLI":
+                emoji = "🟢"
+            else:
+                emoji = "🔵"
+            
+            msg2 += f"{emoji} <b>{c['symbol']}</b> +{c['change']:.1f}%\n"
             msg2 += f"   ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
+            msg2 += f"   {warning}\n"
     else:
         msg2 += "⚠️ Yok\n"
     
