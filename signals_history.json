@@ -118,5 +118,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 9,
+    "symbol": "XRP",
+    "signal_type": "POTENTIAL",
+    "entry_price": 87.652,
+    "target_percent": 2.4,
+    "stop_percent": -10,
+    "target_price": 89.75564800000001,
+    "stop_price": 78.88680000000001,
+    "timestamp": "2025-12-09 14:14",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 10,
+    "symbol": "AMP",
+    "signal_type": "POTENTIAL",
+    "entry_price": 0.0895,
+    "target_percent": 1.8,
+    "stop_percent": -10,
+    "target_price": 0.091111,
+    "stop_price": 0.08055,
+    "timestamp": "2025-12-09 14:14",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]

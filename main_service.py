@@ -523,9 +523,10 @@ def run_full_analysis():
             btc_tl = float(t.get('last', 0))
             break
     
-    # PRO Analiz - Top 5 Coin
+    # PRO Analiz - Top 5 Coin (Açıklayıcı)
     if pro_analyzer:
         msg1 += "\n🔥 <b>PRO ANALİZ - EN İYİ 5</b>\n"
+        msg1 += "<i>Skor 7+: AL | 5-7: TUT | 5-: SAT</i>\n\n"
         top_coins = ['BTC', 'ETH', 'SOL', 'XRP', 'AVAX']
         pro_results = []
         for coin in top_coins:
@@ -533,9 +534,48 @@ def run_full_analysis():
                 analysis = pro_analyzer.full_pro_analysis(coin)
                 if analysis:
                     pro_results.append(analysis)
+                    price = analysis.get('price', 0)
+                    pro_score = analysis['pro_score']
+                    rsi_val = analysis['rsi']['value']
+                    
+                    # Aksiyon belirleme
+                    if pro_score >= 8:
+                        action = "🟢 GÜÇLÜ AL"
+                        stop_pct = 5
+                        target_pct = 15
+                    elif pro_score >= 7:
+                        action = "🟢 AL"
+                        stop_pct = 6
+                        target_pct = 12
+                    elif pro_score >= 5:
+                        action = "🟡 BEKLE"
+                        stop_pct = 0
+                        target_pct = 0
+                    else:
+                        action = "🔴 UZAK DUR"
+                        stop_pct = 0
+                        target_pct = 0
+                    
                     msg1 += f"<b>{coin}</b> {analysis['price_formatted']}\n"
-                    msg1 += f"   📊 PRO: <b>{analysis['pro_score']}/10</b> {analysis['final_text']}\n"
-                    msg1 += f"   📈 RSI: {analysis['rsi']['value']:.1f} | {analysis['macd']['text']}\n"
+                    msg1 += f"   📊 Skor: <b>{pro_score}/10</b> → {action}\n"
+                    
+                    # RSI açıklaması
+                    if rsi_val < 30:
+                        rsi_text = "Aşırı satım (ucuz)"
+                    elif rsi_val > 70:
+                        rsi_text = "Aşırı alım (pahalı)"
+                    else:
+                        rsi_text = "Normal"
+                    msg1 += f"   📈 RSI {rsi_val:.0f}: {rsi_text}\n"
+                    
+                    # Stop ve hedef (sadece AL sinyali için)
+                    if pro_score >= 7 and price > 0:
+                        stop = price * (1 - stop_pct/100)
+                        target = price * (1 + target_pct/100)
+                        msg1 += f"   🎯 Hedef: ₺{target:,.0f} (+%{target_pct})\n"
+                        msg1 += f"   🛑 Stop: ₺{stop:,.0f} (-%{stop_pct})\n"
+                    
+                    msg1 += "\n"
             except Exception as e:
                 logger.error(f"PRO {coin} hatası: {e}")
         
@@ -627,13 +667,37 @@ def run_full_analysis():
         msg2 += "⚠️ Yok\n"
     
     msg2 += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔮 <b>YÜKSELECEKLER (TAHMİN):</b>\n"
+    msg2 += "<i>Potansiyel: Beklenen kar | Risk: Düşük=iyi, Yüksek=dikkat</i>\n\n"
     if potential:
         for p in potential[:5]:
             price_tl = p['price']
             price_usd = price_tl / usd_try if usd_try > 0 else 0
+            pot = p.get('potential', 0)
+            risk = p.get('risk', 5)
+            
+            # Hedef ve stop hesapla
+            target_price = price_tl * (1 + pot/100)
+            stop_price = price_tl * 0.92  # %8 stop
+            
+            # Risk açıklaması
+            if risk <= 3:
+                risk_text = "Düşük risk ✅"
+                rec = "Güvenli al"
+            elif risk <= 5:
+                risk_text = "Orta risk 🟡"
+                rec = "Dikkatli al"
+            elif risk <= 7:
+                risk_text = "Yüksek risk ⚠️"
+                rec = "Az miktarda"
+            else:
+                risk_text = "Çok riskli 🔴"
+                rec = "Tavsiye edilmez"
+            
             msg2 += f"🎯 <b>{p['symbol']}</b>\n"
-            msg2 += f"   💰 ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
-            msg2 += f"   📈 Potansiyel: +{p['potential']}% | Risk: {p['risk']}/10\n"
+            msg2 += f"   💰 Şu an: ₺{price_tl:,.4f}\n"
+            msg2 += f"   📈 Hedef: ₺{target_price:,.4f} (+%{pot})\n"
+            msg2 += f"   🛑 Stop: ₺{stop_price:,.4f} (-%8)\n"
+            msg2 += f"   ⚖️ {risk_text} → <b>{rec}</b>\n\n"
     else:
         msg2 += "⚠️ Sinyal yok\n"
     
