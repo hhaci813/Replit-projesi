@@ -268,5 +268,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 19,
+    "symbol": "WIF",
+    "signal_type": "STRONG_BUY",
+    "entry_price": 18.92,
+    "target_percent": 15,
+    "stop_percent": -8,
+    "target_price": 21.758,
+    "stop_price": 17.4064,
+    "timestamp": "2025-12-09 17:59",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
