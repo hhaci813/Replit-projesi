@@ -667,7 +667,6 @@ def run_full_analysis():
         msg2 += "⚠️ Yok\n"
     
     msg2 += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔮 <b>YÜKSELECEKLER (TAHMİN):</b>\n"
-    msg2 += "<i>Potansiyel: Beklenen kar | Risk: Düşük=iyi, Yüksek=dikkat</i>\n\n"
     if potential:
         for p in potential[:5]:
             price_tl = p['price']
@@ -679,25 +678,24 @@ def run_full_analysis():
             target_price = price_tl * (1 + pot/100)
             stop_price = price_tl * 0.92  # %8 stop
             
-            # Risk açıklaması
+            # Risk seviyesine göre emoji ve açıklama
             if risk <= 3:
-                risk_text = "Düşük risk ✅"
-                rec = "Güvenli al"
+                emoji = "🟢"
+                risk_text = "Güvenli giriş bölgesi"
             elif risk <= 5:
-                risk_text = "Orta risk 🟡"
-                rec = "Dikkatli al"
+                emoji = "🟡"
+                risk_text = "Dikkatli al"
             elif risk <= 7:
-                risk_text = "Yüksek risk ⚠️"
-                rec = "Az miktarda"
+                emoji = "🟠"
+                risk_text = "Yüksek risk - Az miktarda"
             else:
-                risk_text = "Çok riskli 🔴"
-                rec = "Tavsiye edilmez"
+                emoji = "🔴"
+                risk_text = "ÇOK YÜKSEK - Tavsiye edilmez"
             
-            msg2 += f"🎯 <b>{p['symbol']}</b>\n"
-            msg2 += f"   💰 Şu an: ₺{price_tl:,.4f}\n"
-            msg2 += f"   📈 Hedef: ₺{target_price:,.4f} (+%{pot})\n"
-            msg2 += f"   🛑 Stop: ₺{stop_price:,.4f} (-%8)\n"
-            msg2 += f"   ⚖️ {risk_text} → <b>{rec}</b>\n\n"
+            msg2 += f"{emoji} <b>{p['symbol']}</b> +{pot}%\n"
+            msg2 += f"   ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
+            msg2 += f"   {risk_text}\n"
+            msg2 += f"   🎯 Hedef: ₺{target_price:,.4f} | 🛑 Stop: ₺{stop_price:,.4f}\n"
     else:
         msg2 += "⚠️ Sinyal yok\n"
     

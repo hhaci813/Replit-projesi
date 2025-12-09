@@ -178,5 +178,50 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 13,
+    "symbol": "FLOW",
+    "signal_type": "POTENTIAL",
+    "entry_price": 8.896,
+    "target_percent": 5.5,
+    "stop_percent": -10,
+    "target_price": 9.38528,
+    "stop_price": 8.006400000000001,
+    "timestamp": "2025-12-09 15:59",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 14,
+    "symbol": "GLMR",
+    "signal_type": "POTENTIAL",
+    "entry_price": 1.4525,
+    "target_percent": 8.8,
+    "stop_percent": -10,
+    "target_price": 1.58032,
+    "stop_price": 1.30725,
+    "timestamp": "2025-12-09 16:00",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 15,
+    "symbol": "USDT",
+    "signal_type": "POTENTIAL",
+    "entry_price": 42.488,
+    "target_percent": 0.3,
+    "stop_percent": -10,
+    "target_price": 42.615463999999996,
+    "stop_price": 38.239200000000004,
+    "timestamp": "2025-12-09 16:01",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
