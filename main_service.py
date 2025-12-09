@@ -120,6 +120,11 @@ try:
 except:
     pro_analyzer = None
 
+try:
+    from signal_tracker import SignalTracker, signal_tracker
+except:
+    signal_tracker = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -664,6 +669,23 @@ def run_full_analysis():
     else:
         msg3 += "⚠️ STRONG_BUY yok\n"
     
+    # Sinyal Performansı
+    if signal_tracker:
+        try:
+            signal_tracker.auto_record_signals(rising, potential)
+            signal_tracker.check_signals()
+            stats = signal_tracker.get_performance_stats()
+            
+            if stats["total_signals"] > 0:
+                msg3 += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                msg3 += f"\n📊 <b>SİNYAL PERFORMANSI:</b>\n"
+                msg3 += f"   🎯 Başarı Oranı: <b>%{stats['win_rate']}</b>\n"
+                msg3 += f"   ✅ Kazanan: {stats['wins']} | ❌ Kaybeden: {stats['losses']}\n"
+                msg3 += f"   🔄 Aktif: {stats['active']} sinyal\n"
+                msg3 += f"   💰 Toplam Kar: %{stats['total_profit']}\n"
+        except Exception as e:
+            logger.error(f"Sinyal tracker hatası: {e}")
+    
     msg3 += """
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -672,11 +694,10 @@ def run_full_analysis():
 📱 <b>KOMUTLAR:</b>
 /pro BTC - PRO Analiz (8 modül)
 /pump - Pump tespit
+/performans - Sinyal başarı oranı
 /analiz BTC - Detaylı analiz
 /btc - Yükselecekler
 /portfoy - Portföy durumu
-/whale - Whale takip
-/ml - ML Tahmin
 """
     
     if send_telegram(msg3):
@@ -1214,6 +1235,14 @@ def run_telegram_bot():
                                     send_telegram_to(chat_id, msg)
                                 else:
                                     send_telegram_to(chat_id, "😱 Fear & Greed modülü yükleniyor...")
+                            
+                            # /performans - Sinyal başarı oranı
+                            elif cmd == '/performans':
+                                if signal_tracker:
+                                    msg = signal_tracker.format_performance_message()
+                                    send_telegram_to(chat_id, msg)
+                                else:
+                                    send_telegram_to(chat_id, "📊 Performans modülü yükleniyor...")
             
             time.sleep(1)
         except Exception as e:
