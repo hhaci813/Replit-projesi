@@ -763,21 +763,64 @@ def run_full_analysis():
         except Exception as e:
             logger.error(f"Sinyal tracker hatası: {e}")
     
-    msg3 += """
+    msg3 += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    
+    send_telegram(msg3)
+    time.sleep(1)
+    
+    # ==================== MESAJ 4: DERİN ANALİZ ====================
+    if historical_analyzer and rising:
+        try:
+            msg4 = historical_analyzer.deep_analysis_rising(rising[:3])
+            send_telegram(msg4)
+            time.sleep(1)
+        except Exception as e:
+            logger.error(f"Derin analiz hatası: {e}")
+    
+    # ==================== MESAJ 5: SNIPER ====================
+    if sniper:
+        try:
+            scan = sniper.run_sniper_scan()
+            if scan['opportunities']:
+                msg5 = sniper.format_sniper_report(scan)
+                send_telegram(msg5)
+                time.sleep(1)
+        except Exception as e:
+            logger.error(f"Sniper hatası: {e}")
+    
+    # ==================== MESAJ 6: GRAFİKLER (Top 3) ====================
+    if chart_gen and rising:
+        try:
+            for coin in rising[:3]:
+                symbol = coin['symbol']
+                chart_gen.generate_and_send(symbol, TELEGRAM_CHAT_ID, 14)
+                time.sleep(2)
+        except Exception as e:
+            logger.error(f"Grafik hatası: {e}")
+    
+    # ==================== MESAJ 7: ÖZET ====================
+    msg_final = f"""📊 <b>RAPOR TAMAMLANDI</b>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ PRO Analiz (8 modül)
+✅ Pump Tespit
+✅ Yükselenler + Yükselecekler
+✅ Whale & Sosyal Analiz
+✅ Derin Tarihsel Karşılaştırma
+✅ Sniper (6 kaynak) Tarama
+✅ Grafikler (Top 3)
 
 ⏰ <b>Sonraki rapor: 2 saat</b>
 
 📱 <b>KOMUTLAR:</b>
-/pro BTC - PRO Analiz (8 modül)
-/pump - Pump tespit
+/pro BTC - PRO Analiz
+/derin - Derin tarihsel analiz
+/sniper - 6 kaynak fırsat tarama
+/grafik BTC - Grafik + seviyeler
 /performans - Sinyal başarı oranı
-/analiz BTC - Detaylı analiz
-/btc - Yükselecekler
-/portfoy - Portföy durumu
 """
     
-    if send_telegram(msg3):
+    if send_telegram(msg_final):
         logger.info("✅ ULTRA Rapor Telegram'a gönderildi!")
     else:
         logger.error("❌ Telegram hatası")
