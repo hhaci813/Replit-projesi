@@ -135,6 +135,14 @@ try:
 except:
     historical_analyzer = None
 
+try:
+    from backtest_engine import BacktestEngine, TimingOptimizer
+    backtest_engine = BacktestEngine()
+    timing_optimizer = TimingOptimizer()
+except:
+    backtest_engine = None
+    timing_optimizer = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1387,6 +1395,56 @@ def run_telegram_bot():
                                         send_telegram_to(chat_id, "📊 Şu an yükselen coin bulunamadı")
                                 else:
                                     send_telegram_to(chat_id, "🔬 Tarihsel analiz modülü yükleniyor...")
+                            
+                            # /backtest BTC - Geriye dönük test
+                            elif cmd.startswith('/backtest'):
+                                if backtest_engine:
+                                    parts = text.split()
+                                    if len(parts) > 1:
+                                        symbol = parts[1].upper()
+                                        if not symbol.endswith('-USD'):
+                                            symbol = f"{symbol}-USD"
+                                        send_telegram_to(chat_id, f"📊 {symbol} backtest başlıyor... (30-60 sn)")
+                                        report = backtest_engine.format_backtest_telegram(symbol)
+                                        send_telegram_to(chat_id, report)
+                                    else:
+                                        send_telegram_to(chat_id, "📊 Kullanım: /backtest BTC")
+                                else:
+                                    send_telegram_to(chat_id, "📊 Backtest modülü yükleniyor...")
+                            
+                            # /zamanlama BTC - Al-sat zamanlama analizi
+                            elif cmd.startswith('/zamanlama'):
+                                if timing_optimizer and pro_analyzer:
+                                    parts = text.split()
+                                    if len(parts) > 1:
+                                        symbol = parts[1].upper()
+                                        send_telegram_to(chat_id, f"⏰ {symbol} zamanlama analizi...")
+                                        
+                                        tickers = get_btcturk_data()
+                                        coin_data = None
+                                        for t in tickers:
+                                            if t.get('pairNormalized', '').startswith(symbol):
+                                                coin_data = t
+                                                break
+                                        
+                                        if coin_data:
+                                            current_price = float(coin_data.get('last', 0))
+                                            pro = pro_analyzer.analyze(symbol)
+                                            rsi = pro.get('rsi', {}).get('value', 50)
+                                            macd_hist = pro.get('macd', {}).get('histogram', 0)
+                                            volume_ratio = pro.get('volume_spike', {}).get('ratio', 1.0)
+                                            
+                                            analysis = timing_optimizer.analyze_entry_timing(
+                                                symbol, current_price, rsi, macd_hist, volume_ratio
+                                            )
+                                            report = timing_optimizer.format_timing_report(analysis)
+                                            send_telegram_to(chat_id, report)
+                                        else:
+                                            send_telegram_to(chat_id, f"⚠️ {symbol} bulunamadı")
+                                    else:
+                                        send_telegram_to(chat_id, "⏰ Kullanım: /zamanlama BTC")
+                                else:
+                                    send_telegram_to(chat_id, "⏰ Zamanlama modülü yükleniyor...")
             
             time.sleep(1)
         except Exception as e:

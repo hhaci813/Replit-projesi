@@ -200,16 +200,170 @@ class BacktestEngine:
                 for trade in data['trades'][-5:]:
                     print(f"      {trade['result']} {trade['signal']}: {trade['change']:+.2f}%")
 
+    def format_backtest_telegram(self, symbol):
+        """Telegram için backtest raporu"""
+        try:
+            result = self.backtest_symbol(symbol, days=180)
+            if result is None:
+                return f"⚠️ {symbol} için yeterli veri yok"
+            
+            data = self.results.get(symbol, {})
+            acc = data.get('accuracy', 0)
+            total = data.get('total_trades', 0)
+            correct = data.get('correct_trades', 0)
+            
+            if acc >= 60:
+                emoji = "🟢"
+                status = "GÜVENİLİR"
+            elif acc >= 50:
+                emoji = "🟡"
+                status = "ORTA"
+            else:
+                emoji = "🔴"
+                status = "DÜŞÜK"
+            
+            msg = f"""📊 <b>BACKTEST RAPORU: {symbol}</b>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📅 Son 180 gün analizi
+
+{emoji} <b>DOĞRULUK:</b> %{acc:.1f} ({status})
+📈 <b>TOPLAM İŞLEM:</b> {total}
+✅ <b>DOĞRU TAHMİN:</b> {correct}
+❌ <b>YANLIŞ:</b> {total - correct}
+
+"""
+            trades = data.get('trades', [])[-5:]
+            if trades:
+                msg += "<b>SON İŞLEMLER:</b>\n"
+                for t in trades:
+                    msg += f"   {t['result']} {t['change']:+.2f}%\n"
+            
+            msg += """
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+💡 <b>YORUM:</b>
+"""
+            if acc >= 60:
+                msg += "Bu coin için sinyaller güvenilir görünüyor."
+            elif acc >= 50:
+                msg += "Sinyaller yarı yarıya doğru, dikkatli ol."
+            else:
+                msg += "Bu coin için sinyaller güvenilir DEĞİL."
+            
+            return msg
+        except Exception as e:
+            return f"❌ Backtest hatası: {e}"
+
+
+class TimingOptimizer:
+    """Al-sat zamanlama optimizasyonu"""
+    
+    def __init__(self):
+        self.price_alerts = {}
+    
+    def analyze_entry_timing(self, symbol, current_price, rsi, macd_hist, volume_ratio):
+        """Giriş zamanlaması analizi"""
+        score = 0
+        reasons = []
+        wait_for = []
+        
+        if rsi < 30:
+            score += 30
+            reasons.append("✅ RSI aşırı satım (<30)")
+        elif rsi < 40:
+            score += 15
+            reasons.append("🟡 RSI düşük bölgede (30-40)")
+        elif rsi > 70:
+            score -= 20
+            wait_for.append("⏳ RSI 50 altına düşmesini bekle")
+        else:
+            reasons.append("⚪ RSI nötr bölgede")
+        
+        if macd_hist > 0:
+            score += 25
+            reasons.append("✅ MACD yukarı kesmiş")
+        else:
+            wait_for.append("⏳ MACD sinyal çizgisini yukarı kesmesini bekle")
+        
+        if volume_ratio > 1.5:
+            score += 25
+            reasons.append("✅ Hacim patlaması (1.5x+)")
+        elif volume_ratio > 1.2:
+            score += 15
+            reasons.append("🟡 Hacim artışı (1.2x)")
+        else:
+            wait_for.append("⏳ Hacim artışını bekle")
+        
+        if score >= 70:
+            timing = "🟢 HEMEN AL"
+            action = "Giriş için ideal zaman!"
+        elif score >= 50:
+            timing = "🟡 YAKIN TAKİP"
+            action = "Birkaç saat içinde fırsat olabilir"
+        elif score >= 30:
+            timing = "🟠 BEKLE"
+            action = "Koşullar henüz uygun değil"
+        else:
+            timing = "🔴 ERKEN"
+            action = "Şartlar oluşmadı, sabırlı ol"
+        
+        support = current_price * 0.95
+        resistance = current_price * 1.08
+        optimal_entry = current_price * 0.97
+        
+        return {
+            'symbol': symbol,
+            'current_price': current_price,
+            'timing_score': score,
+            'timing_signal': timing,
+            'action': action,
+            'reasons': reasons,
+            'wait_for': wait_for,
+            'optimal_entry': optimal_entry,
+            'support': support,
+            'resistance': resistance
+        }
+    
+    def format_timing_report(self, analysis):
+        """Zamanlama raporu formatla"""
+        msg = f"""⏰ <b>ZAMANLAMA ANALİZİ: {analysis['symbol']}</b>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 <b>Şu anki fiyat:</b> ₺{analysis['current_price']:,.4f}
+
+{analysis['timing_signal']} <b>{analysis['action']}</b>
+📊 Zamanlama Skoru: {analysis['timing_score']}/100
+
+<b>DURUM:</b>
+"""
+        for r in analysis['reasons']:
+            msg += f"   {r}\n"
+        
+        if analysis['wait_for']:
+            msg += "\n<b>BEKLENİLENLER:</b>\n"
+            for w in analysis['wait_for']:
+                msg += f"   {w}\n"
+        
+        msg += f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+<b>ÖNERİLEN SEVİYELER:</b>
+
+🎯 <b>İdeal Giriş:</b> ₺{analysis['optimal_entry']:,.4f}
+🛡️ <b>Destek:</b> ₺{analysis['support']:,.4f}
+🚀 <b>Direnç:</b> ₺{analysis['resistance']:,.4f}
+
+💡 Bu fiyata düşerse AL komutuyla alarm kur!
+"""
+        return msg
+
+
 if __name__ == "__main__":
     bt = BacktestEngine()
     
     symbols = ['BTC-USD', 'AAPL', 'MSFT', 'GOOGL']
     
-    # Standard backtest
     avg_acc = bt.run_multi_backtest(symbols, days=120)
     bt.print_results()
     
-    # Walk-forward analysis
     wf_results = bt.run_walk_forward_multi(symbols)
     
     print("\n" + "="*80)

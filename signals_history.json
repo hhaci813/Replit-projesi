@@ -313,5 +313,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 22,
+    "symbol": "TURBO",
+    "signal_type": "POTENTIAL",
+    "entry_price": 0.09183,
+    "target_percent": 5.2,
+    "stop_percent": -10,
+    "target_price": 0.09660516,
+    "stop_price": 0.082647,
+    "timestamp": "2025-12-09 21:45",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 23,
+    "symbol": "SKY",
+    "signal_type": "POTENTIAL",
+    "entry_price": 2.2772,
+    "target_percent": 4.9,
+    "stop_percent": -10,
+    "target_price": 2.3887828,
+    "stop_price": 2.04948,
+    "timestamp": "2025-12-09 21:45",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
