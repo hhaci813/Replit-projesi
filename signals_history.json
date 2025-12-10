@@ -9,10 +9,10 @@
     "target_price": 1.7939999999999998,
     "stop_price": 1.4352,
     "timestamp": "2025-12-09 14:01",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -8.65,
+    "closed_at": "2025-12-10 22:34"
   },
   {
     "id": 2,
@@ -309,10 +309,10 @@
     "target_price": 14.626029599999999,
     "stop_price": 12.383280000000001,
     "timestamp": "2025-12-09 21:39",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -10.16,
+    "closed_at": "2025-12-10 22:34"
   },
   {
     "id": 22,
@@ -594,6 +594,21 @@
     "target_price": 0.34326589999999996,
     "stop_price": 0.29907,
     "timestamp": "2025-12-10 17:07",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 41,
+    "symbol": "XLM",
+    "signal_type": "POTENTIAL",
+    "entry_price": 10.742,
+    "target_percent": 8.0,
+    "stop_percent": -10,
+    "target_price": 11.601360000000001,
+    "stop_price": 9.667800000000002,
+    "timestamp": "2025-12-10 22:34",
     "status": "ACTIVE",
     "result": null,
     "result_percent": null,
