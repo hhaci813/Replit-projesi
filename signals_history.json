@@ -613,5 +613,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 42,
+    "symbol": "OMG",
+    "signal_type": "STRONG_BUY",
+    "entry_price": 4.074,
+    "target_percent": 15,
+    "stop_percent": -8,
+    "target_price": 4.685099999999999,
+    "stop_price": 3.74808,
+    "timestamp": "2025-12-10 22:41",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]

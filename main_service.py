@@ -1820,17 +1820,16 @@ def main():
     logger.info(f"✅ Risk Profile: {'Aktif' if risk_prof else 'Yok'}")
     logger.info(f"✅ Trade History: {'Aktif' if trade_hist else 'Yok'}")
     
-    # Scheduler
+    # Scheduler - Sadece alarm kontrolü (2 saatlik otomatik analiz KAPALI)
     scheduler = BackgroundScheduler()
-    scheduler.add_job(run_full_analysis, IntervalTrigger(hours=2), id='analysis', replace_existing=True)
     
-    # Alarm kontrolü her 5 dakika
+    # Alarm kontrolü her 5 dakika (aktif kalıyor)
     if alert_system:
         scheduler.add_job(alert_system.check_alerts, IntervalTrigger(minutes=5), id='alerts', replace_existing=True)
         alert_system.start_monitoring()
     
     scheduler.start()
-    logger.info("✅ Scheduler aktif (2 saat)")
+    logger.info("✅ Scheduler aktif (sadece alarm kontrolü)")
     
     # Telegram bot
     bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
