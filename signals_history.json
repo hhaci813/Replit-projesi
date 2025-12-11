@@ -823,5 +823,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 56,
+    "symbol": "CITY",
+    "signal_type": "POTENTIAL",
+    "entry_price": 25.979,
+    "target_percent": 11.6,
+    "stop_percent": -10,
+    "target_price": 28.992564,
+    "stop_price": 23.3811,
+    "timestamp": "2025-12-11 18:45",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 57,
+    "symbol": "BIO",
+    "signal_type": "POTENTIAL",
+    "entry_price": 2.1147,
+    "target_percent": 14.9,
+    "stop_percent": -10,
+    "target_price": 2.4297903,
+    "stop_price": 1.90323,
+    "timestamp": "2025-12-11 18:45",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
