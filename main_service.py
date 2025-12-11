@@ -148,6 +148,17 @@ try:
 except:
     quantum_system = None
 
+try:
+    from deep_analyzer import DeepAnalyzer, deep_analyzer
+except:
+    deep_analyzer = None
+
+try:
+    from telegram_compact import send_compact, signal_alert, coin_analysis_compact, market_pulse, quick_alert
+    USE_COMPACT_TELEGRAM = True
+except:
+    USE_COMPACT_TELEGRAM = False
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
