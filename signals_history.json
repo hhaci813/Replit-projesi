@@ -778,5 +778,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 53,
+    "symbol": "SKL",
+    "signal_type": "POTENTIAL",
+    "entry_price": 0.5099,
+    "target_percent": 6.6,
+    "stop_percent": -10,
+    "target_price": 0.5435534000000001,
+    "stop_price": 0.45891000000000004,
+    "timestamp": "2025-12-11 14:15",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
