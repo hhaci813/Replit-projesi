@@ -17,6 +17,12 @@ from datetime import datetime, timedelta
 from collections import defaultdict
 import numpy as np
 
+try:
+    from prediction_tracker import PredictionTracker
+    prediction_tracker = PredictionTracker()
+except:
+    prediction_tracker = None
+
 logger = logging.getLogger(__name__)
 
 class ModuleHealthMonitor:
@@ -420,6 +426,44 @@ class QuantumSystem:
         result = self.quantum_analyzer.quantum_score(data)
         self.stats['analyses'] += 1
         return result
+    
+    def save_prediction(self, symbol, direction, entry_price, target_percent=None, reasoning=""):
+        """Tahmini kaydet ve takip et"""
+        if prediction_tracker:
+            try:
+                pred_id = prediction_tracker.add_prediction(
+                    symbol=symbol,
+                    direction=direction,
+                    entry_price=entry_price,
+                    target_percent=target_percent,
+                    source="QUANTUM_SYSTEM",
+                    reasoning=reasoning,
+                    evaluation_days=10
+                )
+                self.stats['predictions'] += 1
+                return pred_id
+            except Exception as e:
+                logger.error(f"Tahmin kaydetme hatası: {e}")
+                return None
+        return None
+    
+    def get_prediction_stats(self):
+        """Tahmin istatistiklerini getir"""
+        if prediction_tracker:
+            return prediction_tracker.get_stats()
+        return None
+    
+    def get_prediction_report(self):
+        """Tahmin başarı raporunu getir"""
+        if prediction_tracker:
+            return prediction_tracker.get_accuracy_report()
+        return "Tahmin takip sistemi aktif değil."
+    
+    def evaluate_predictions(self):
+        """Zamanı gelen tahminleri değerlendir"""
+        if prediction_tracker:
+            return prediction_tracker.evaluate_due_predictions()
+        return []
     
     def run_maintenance_cycle(self):
         """Bakım döngüsü"""
