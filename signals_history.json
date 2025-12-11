@@ -793,5 +793,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 54,
+    "symbol": "CVC",
+    "signal_type": "POTENTIAL",
+    "entry_price": 2.0,
+    "target_percent": 13.1,
+    "stop_percent": -10,
+    "target_price": 2.262,
+    "stop_price": 1.8,
+    "timestamp": "2025-12-11 14:49",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 55,
+    "symbol": "RAD",
+    "signal_type": "POTENTIAL",
+    "entry_price": 12.359,
+    "target_percent": 8.3,
+    "stop_percent": -10,
+    "target_price": 13.384796999999999,
+    "stop_price": 11.1231,
+    "timestamp": "2025-12-11 14:49",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]

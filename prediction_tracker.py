@@ -72,7 +72,12 @@ class PredictionTracker:
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
         
-        created_at = datetime.now()
+        try:
+            import pytz
+            tr_tz = pytz.timezone('Europe/Istanbul')
+            created_at = datetime.now(tr_tz).replace(tzinfo=None)
+        except:
+            created_at = datetime.now()
         evaluation_at = created_at + timedelta(days=evaluation_days)
         
         if target_percent and not target_price:
@@ -89,7 +94,7 @@ class PredictionTracker:
         ''', (symbol.upper(), direction.upper(), entry_price, target_price, 
               target_percent, source, reasoning, created_at, evaluation_at))
         
-        prediction_id = cursor.lastrowid
+        prediction_id = cursor.lastrowid or 0
         conn.commit()
         conn.close()
         
