@@ -159,6 +159,11 @@ try:
 except:
     USE_COMPACT_TELEGRAM = False
 
+try:
+    from auto_chart_analyzer import AutoChartAnalyzer, auto_chart_analyzer
+except:
+    auto_chart_analyzer = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1831,16 +1836,21 @@ def main():
     logger.info(f"✅ Risk Profile: {'Aktif' if risk_prof else 'Yok'}")
     logger.info(f"✅ Trade History: {'Aktif' if trade_hist else 'Yok'}")
     
-    # Scheduler - Sadece alarm kontrolü (2 saatlik otomatik analiz KAPALI)
+    # Scheduler - Alarm + Otomatik Grafik Analizi
     scheduler = BackgroundScheduler()
     
-    # Alarm kontrolü her 5 dakika (aktif kalıyor)
+    # Alarm kontrolü her 5 dakika
     if alert_system:
         scheduler.add_job(alert_system.check_alerts, IntervalTrigger(minutes=5), id='alerts', replace_existing=True)
         alert_system.start_monitoring()
     
+    # Otomatik grafik analizi her 2 saatte bir
+    if auto_chart_analyzer:
+        scheduler.add_job(auto_chart_analyzer.run_full_analysis, IntervalTrigger(hours=2), id='chart_analysis', replace_existing=True)
+        logger.info("✅ Otomatik Grafik Analizi: Her 2 saatte bir")
+    
     scheduler.start()
-    logger.info("✅ Scheduler aktif (sadece alarm kontrolü)")
+    logger.info("✅ Scheduler aktif (Alarm + Grafik Analizi)")
     
     # Telegram bot
     bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
