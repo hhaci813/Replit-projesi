@@ -241,35 +241,43 @@ class QuantumAnalyzerV2:
                 else:
                     will_rise.append(r)
         
-        # Mesaj oluştur
-        msg = f"📊 {now}\n"
-        
-        # Fear & Greed göster
+        # TEK MESAJ - TABLO FORMATI
         fng_emoji = "😱" if fng['value'] < 30 else "😨" if fng['value'] < 45 else "😐" if fng['value'] < 55 else "😊" if fng['value'] < 75 else "🤑"
-        msg += f"{fng_emoji} Korku/Açgözlülük: {fng['value']}\n"
-        msg += "━━━━━━━━━━━━━━━\n"
+        
+        msg = f"📊 <b>ANALİZ</b> {now}\n"
+        msg += f"{fng_emoji} F&G: {fng['value']} | "
+        
+        # Tahmin doğruluğu
+        stats = self.tracker.get_accuracy_stats(7)
+        if stats['total'] > 0:
+            msg += f"📈 %{stats['accuracy']}\n"
+        else:
+            msg += "📈 --\n"
+        
+        msg += "━━━━━━━━━━━━━━━━━━━━\n"
+        
+        # Tablo başlık
+        msg += "<code>Coin     Sinyal    Skor</code>\n"
+        msg += "━━━━━━━━━━━━━━━━━━━━\n"
         
         has_signals = False
         
-        # Yükselen coinler
-        if rising:
+        # Yükselen coinler - tablo formatı
+        for r in rising[:3]:
             has_signals = True
-            for r in rising[:4]:
-                msg += f"🟢 {r['symbol']} AL %{r['score']:.0f}\n"
+            symbol = r['symbol'].ljust(8)
+            msg += f"<code>{symbol} 🟢AL      {r['score']:.0f}</code>\n"
         
-        # Yükselecek coinler  
-        if will_rise:
+        # Yükselecek coinler - tablo formatı
+        for r in will_rise[:3]:
             has_signals = True
-            for r in will_rise[:4]:
-                msg += f"🔵 {r['symbol']} YÜKSELECEK %{r['score']:.0f}\n"
+            symbol = r['symbol'].ljust(8)
+            msg += f"<code>{symbol} 🔵YÜKSEL  {r['score']:.0f}</code>\n"
         
         if not has_signals:
-            msg += "⏸ Sinyal yok - bekle"
+            msg += "<code>Sinyal yok - bekle   </code>\n"
         
-        # Tahmin doğruluğu göster
-        stats = self.tracker.get_accuracy_stats(7)
-        if stats['total'] > 0:
-            msg += f"\n📈 Doğruluk: %{stats['accuracy']} ({stats['correct']}/{stats['total']})"
+        msg += "━━━━━━━━━━━━━━━━━━━━"
         
         self.send_telegram(msg)
         logger.info(f"✅ MAX Rapor: {len(rising)} yükselen, {len(will_rise)} yükselecek")
