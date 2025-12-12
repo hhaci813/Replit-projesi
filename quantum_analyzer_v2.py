@@ -208,34 +208,45 @@ class QuantumAnalyzerV2:
         return avoid[:limit]
     
     def send_analysis_report(self):
-        """Telegram'a basit analiz raporu gönder - sadece AL ve YÜKSELECEK"""
+        """Telegram'a basit analiz raporu gönder - Fear & Greed + AL/YÜKSELECEK"""
         tr_tz = pytz.timezone('Europe/Istanbul')
         now = datetime.now(tr_tz).strftime('%d.%m.%Y %H:%M')
         
-        logger.info("🔬 Quantum V2 analiz başlıyor...")
+        logger.info("🔬 Quantum MAX analiz başlıyor...")
         
-        # Tüm coinleri tara
-        all_results = self.scan_all(min_score=70)
+        # Market sentiment al
+        try:
+            from src.analysis.market_data import MarketDataProvider
+            market = MarketDataProvider()
+            fng = market.get_fear_greed_index()
+            funding = market.get_funding_rates()
+        except:
+            fng = {'value': 50, 'classification': 'Neutral'}
+            funding = {}
         
-        # Yükselen coinler (şu an pozitif değişim + iyi skor)
+        # Tüm coinleri tara (dengeli eşik: 60)
+        all_results = self.scan_all(min_score=60)
+        
+        # Yükselen ve yükselecek coinler
         rising = []
-        # Yükselecek coinler (iyi skor ama henüz yükselmemiş)
         will_rise = []
         
         for r in all_results:
             score = r['score']
             change = r['change']
-            conf = r.get('confidence', 'LOW')
             
-            # Sadece iyi skorlu olanları al
-            if score >= 75:
-                if change > 2:  # Şu an yükseliyor
+            if score >= 65:  # Dengeli eşik
+                if change > 2:
                     rising.append(r)
-                else:  # Henüz yükselmemiş ama yükselecek
+                else:
                     will_rise.append(r)
         
-        # Mesaj oluştur - çok basit ve temiz
+        # Mesaj oluştur
         msg = f"📊 {now}\n"
+        
+        # Fear & Greed göster
+        fng_emoji = "😱" if fng['value'] < 30 else "😨" if fng['value'] < 45 else "😐" if fng['value'] < 55 else "😊" if fng['value'] < 75 else "🤑"
+        msg += f"{fng_emoji} Korku/Açgözlülük: {fng['value']}\n"
         msg += "━━━━━━━━━━━━━━━\n"
         
         has_signals = False
@@ -243,24 +254,29 @@ class QuantumAnalyzerV2:
         # Yükselen coinler
         if rising:
             has_signals = True
-            for r in rising[:3]:
+            for r in rising[:4]:
                 msg += f"🟢 {r['symbol']} AL %{r['score']:.0f}\n"
         
         # Yükselecek coinler  
         if will_rise:
             has_signals = True
-            for r in will_rise[:3]:
+            for r in will_rise[:4]:
                 msg += f"🔵 {r['symbol']} YÜKSELECEK %{r['score']:.0f}\n"
         
         if not has_signals:
             msg += "⏸ Sinyal yok - bekle"
         
+        # Tahmin doğruluğu göster
+        stats = self.tracker.get_accuracy_stats(7)
+        if stats['total'] > 0:
+            msg += f"\n📈 Doğruluk: %{stats['accuracy']} ({stats['correct']}/{stats['total']})"
+        
         self.send_telegram(msg)
-        logger.info(f"✅ Rapor gönderildi: {len(rising)} yükselen, {len(will_rise)} yükselecek")
+        logger.info(f"✅ MAX Rapor: {len(rising)} yükselen, {len(will_rise)} yükselecek")
         
         # Tahminleri kaydet
         for r in rising + will_rise:
-            if r['score'] >= 75:
+            if r['score'] >= 65:
                 self.tracker.add_prediction(
                     r['symbol'], 
                     r['price'], 
@@ -268,7 +284,27 @@ class QuantumAnalyzerV2:
                     r['score']
                 )
         
+        # Eski tahminleri doğrula
+        self._verify_old_predictions()
+        
         return rising + will_rise
+    
+    def _verify_old_predictions(self):
+        """Eski tahminleri doğrula"""
+        try:
+            pending = [p for p in self.tracker.predictions if not p.get('verified')]
+            
+            for pred in pending:
+                check_time = datetime.fromisoformat(pred['check_after'])
+                if datetime.now() > check_time:
+                    # Güncel fiyatı al
+                    ticker = self.ohlcv.get_ticker(f"{pred['symbol']}TRY")
+                    if ticker:
+                        self.tracker.verify_prediction(pred['id'], ticker['price'])
+            
+            self.tracker.save_predictions()
+        except Exception as e:
+            logger.warning(f"Verify predictions error: {e}")
     
     def analyze_single_detailed(self, symbol):
         """Tek coin için detaylı analiz ve Telegram'a gönder"""

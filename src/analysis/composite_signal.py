@@ -1,9 +1,9 @@
 """
-Composite Signal Engine
+Composite Signal Engine - MAX VERSION
 - Multi-timeframe analiz
-- Tüm sinyalleri birleştir
-- Güvenilirlik skoru
-- Sıkı eşikler
+- Fear & Greed Index
+- Funding Rates
+- Dengeli skor sistemi
 """
 
 import numpy as np
@@ -14,23 +14,35 @@ logger = logging.getLogger(__name__)
 
 class CompositeSignalEngine:
     def __init__(self):
-        # Daha sıkı eşikler
+        # Dengeli eşikler (önceki çok sıkıydı)
         self.thresholds = {
-            'STRONG_BUY': 85,    # Çok güçlü sinyal
-            'BUY': 75,           # Güçlü sinyal
-            'WATCH': 60,         # İzle
-            'NEUTRAL': 45,       # Nötr
-            'AVOID': 30,         # Uzak dur
+            'STRONG_BUY': 75,    # Güçlü sinyal
+            'BUY': 65,           # Al sinyali
+            'WATCH': 50,         # İzle
+            'NEUTRAL': 40,       # Nötr
+            'AVOID': 25,         # Uzak dur
             'SELL': 0            # Sat
         }
         
+        # Market data provider
+        self.market_data = None
+        self._init_market_data()
+        
         # Timeframe ağırlıkları
         self.tf_weights = {
-            '15m': 0.15,  # Kısa vade - düşük ağırlık
-            '1h': 0.25,   # Orta-kısa
-            '4h': 0.35,   # Orta - en önemli
-            '1d': 0.25    # Uzun vade
+            '15m': 0.15,
+            '1h': 0.25,
+            '4h': 0.35,
+            '1d': 0.25
         }
+    
+    def _init_market_data(self):
+        try:
+            from src.analysis.market_data import MarketDataProvider
+            self.market_data = MarketDataProvider()
+        except Exception as e:
+            logger.warning(f"Market data init failed: {e}")
+            self.market_data = None
     
     def calculate_rsi(self, prices, period=14):
         if len(prices) < period + 1:
@@ -159,43 +171,43 @@ class CompositeSignalEngine:
         ema_stack = self.calculate_ema_stack(prices)
         pump_dump = self.detect_pump_dump(prices, volumes)
         
-        # Bu timeframe için skor hesapla
+        # Bu timeframe için skor hesapla - DENGELI
         score = 50
         signals = []
         
-        # RSI
-        if rsi < 30:
-            score += 20
-            signals.append(f"RSI {rsi:.0f} AŞIRI SATIM")
-        elif rsi < 40:
-            score += 10
-            signals.append(f"RSI {rsi:.0f} alım bölgesi")
-        elif rsi > 70:
-            score -= 20
-            signals.append(f"RSI {rsi:.0f} AŞIRI ALIM")
-        elif rsi > 60:
-            score -= 10
-        
-        # MACD
-        if macd['trend'] == 'BULLISH':
+        # RSI - daha dengeli
+        if rsi < 25:
             score += 15
+            signals.append(f"RSI {rsi:.0f} AŞIRI SATIM - fırsat!")
+        elif rsi < 35:
+            score += 8
+            signals.append(f"RSI {rsi:.0f} alım bölgesi")
+        elif rsi > 75:
+            score -= 12
+            signals.append(f"RSI {rsi:.0f} AŞIRI ALIM")
+        elif rsi > 65:
+            score -= 5
+        
+        # MACD - daha az ağırlık
+        if macd['trend'] == 'BULLISH':
+            score += 10
             if macd['crossover']:
-                score += 10
+                score += 8
                 signals.append("MACD bullish crossover!")
         else:
-            score -= 15
+            score -= 8  # Eskisi -15'ti, çok fazlaydı
             if macd['crossover']:
-                score -= 10
-                signals.append("MACD bearish crossover")
+                score -= 5
+                signals.append("MACD bearish")
         
-        # EMA Stack
+        # EMA Stack - daha dengeli
         if ema_stack['aligned']:
             if ema_stack['direction'] == 'BULLISH':
-                score += 20 if ema_stack['strength'] == 'STRONG' else 10
-                signals.append(f"EMA stack BULLISH ({ema_stack['strength']})")
+                score += 12 if ema_stack['strength'] == 'STRONG' else 6
+                signals.append(f"EMA BULLISH ({ema_stack['strength']})")
             else:
-                score -= 20 if ema_stack['strength'] == 'STRONG' else 10
-                signals.append(f"EMA stack BEARISH ({ema_stack['strength']})")
+                score -= 10 if ema_stack['strength'] == 'STRONG' else 5
+                signals.append(f"EMA BEARISH")
         
         # Pump/Dump riski
         if pump_dump['risk'] > 50:
@@ -259,6 +271,20 @@ class CompositeSignalEngine:
         if max_risk > 60:
             weighted_score -= 15
         
+        # Market sentiment bonus/ceza ekle
+        market_sentiment = None
+        if self.market_data:
+            try:
+                market_sentiment = self.market_data.get_market_sentiment_score()
+                sentiment_adjustment = (market_sentiment['score'] - 50) / 5  # -10 ile +10 arası
+                weighted_score += sentiment_adjustment
+                
+                # Fear & Greed sinyalleri ekle
+                for sig in market_sentiment.get('signals', [])[:2]:
+                    all_signals.append(sig)
+            except Exception as e:
+                logger.warning(f"Market sentiment error: {e}")
+        
         final_score = max(0, min(100, weighted_score))
         
         # Sinyal üret
@@ -289,7 +315,8 @@ class CompositeSignalEngine:
             'pump_risk': max_risk,
             'timeframes': results,
             'signals': all_signals[:6],
-            'confidence': 'HIGH' if alignment != 'NONE' and max_risk < 30 else 'LOW'
+            'confidence': 'HIGH' if alignment != 'NONE' and max_risk < 30 else 'MEDIUM' if len(results) >= 2 else 'LOW',
+            'market_sentiment': market_sentiment
         }
 
 
