@@ -164,6 +164,11 @@ try:
 except:
     auto_chart_analyzer = None
 
+try:
+    from quantum_analyzer_v2 import QuantumAnalyzerV2, quantum_v2
+except:
+    quantum_v2 = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1835,6 +1840,7 @@ def main():
     logger.info(f"✅ Watchlist: {'Aktif' if watchlist else 'Yok'}")
     logger.info(f"✅ Risk Profile: {'Aktif' if risk_prof else 'Yok'}")
     logger.info(f"✅ Trade History: {'Aktif' if trade_hist else 'Yok'}")
+    logger.info(f"✅ Quantum V2: {'Aktif' if quantum_v2 else 'Yok'}")
     
     # Scheduler - Alarm + Otomatik Grafik Analizi
     scheduler = BackgroundScheduler()
@@ -1844,13 +1850,13 @@ def main():
         scheduler.add_job(alert_system.check_alerts, IntervalTrigger(minutes=5), id='alerts', replace_existing=True)
         alert_system.start_monitoring()
     
-    # Otomatik grafik analizi her 2 saatte bir
-    if auto_chart_analyzer:
-        scheduler.add_job(auto_chart_analyzer.run_full_analysis, IntervalTrigger(hours=2), id='chart_analysis', replace_existing=True)
-        logger.info("✅ Otomatik Grafik Analizi: Her 2 saatte bir")
+    # Quantum V2 analizi her 2 saatte bir (yeni gelişmiş sistem)
+    if quantum_v2:
+        scheduler.add_job(quantum_v2.send_analysis_report, IntervalTrigger(hours=2), id='quantum_v2_analysis', replace_existing=True)
+        logger.info("✅ Quantum V2 Analiz: Her 2 saatte bir (Multi-TF + Sıkı Eşikler)")
     
     scheduler.start()
-    logger.info("✅ Scheduler aktif (Alarm + Grafik Analizi)")
+    logger.info("✅ Scheduler aktif (Alarm + Quantum V2)")
     
     # Telegram bot
     bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
