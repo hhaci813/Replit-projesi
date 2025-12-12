@@ -619,11 +619,12 @@ def run_full_analysis():
     msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
     msg += "⏰ Sonraki analiz: 2 saat"
     
-    send_telegram(msg)
-    logger.info("✅ ULTRA Rapor Telegram'a gönderildi!")
-    return
+    # YENİ TEK MESAJ DEVRE DIŞI - ESKİ SİSTEM AKTİF
+    # send_telegram(msg)
+    # logger.info("✅ ULTRA Rapor Telegram'a gönderildi!")
+    # return
     
-    # ESKİ KOD DEVRE DIŞI
+    # ESKİ SİSTEM AKTİF
     stocks = []
     strong_stocks = []
     global_sentiment = {'sentiment': '', 'crypto_impact': '', 'indices': {}}
@@ -901,15 +902,16 @@ def run_full_analysis():
         except Exception as e:
             logger.error(f"Sniper hatası: {e}")
     
-    # ==================== MESAJ 6: GRAFİKLER (Top 3) ====================
-    if chart_gen and rising:
-        try:
-            for coin in rising[:3]:
-                symbol = coin['symbol']
-                chart_gen.generate_and_send(symbol, TELEGRAM_CHAT_ID, 14)
-                time.sleep(2)
-        except Exception as e:
-            logger.error(f"Grafik hatası: {e}")
+    # ==================== MESAJ 6: GRAFİKLER KAPALI ====================
+    # Grafik gönderimi kapatıldı - kullanıcı isteği
+    # if chart_gen and rising:
+    #     try:
+    #         for coin in rising[:3]:
+    #             symbol = coin['symbol']
+    #             chart_gen.generate_and_send(symbol, TELEGRAM_CHAT_ID, 14)
+    #             time.sleep(2)
+    #     except Exception as e:
+    #         logger.error(f"Grafik hatası: {e}")
     
     # ==================== MESAJ 7: ÖZET ====================
     msg_final = f"""📊 <b>RAPOR TAMAMLANDI</b>
@@ -921,7 +923,6 @@ def run_full_analysis():
 ✅ Whale & Sosyal Analiz
 ✅ Derin Tarihsel Karşılaştırma
 ✅ Sniper (6 kaynak) Tarama
-✅ Grafikler (Top 3)
 
 ⏰ <b>Sonraki rapor: 2 saat</b>
 
@@ -929,7 +930,6 @@ def run_full_analysis():
 /pro BTC - PRO Analiz
 /derin - Derin tarihsel analiz
 /sniper - 6 kaynak fırsat tarama
-/grafik BTC - Grafik + seviyeler
 /performans - Sinyal başarı oranı
 """
     
