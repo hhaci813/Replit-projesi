@@ -524,12 +524,13 @@ def get_usd_try_rate():
     return 34.5
 
 def run_full_analysis():
-    """TEK MESAJ - TABLO FORMATI"""
+    """TEK MESAJ - GELİŞMİŞ FORMAT"""
     logger.info("🔄 ULTRA Tam analiz başlıyor...")
     
     tickers = get_btcturk_data()
     rising = analyze_rising_cryptos(tickers)
     potential = analyze_potential_risers(tickers)
+    btc_analysis = get_btc_technical_analysis()
     
     # USD/TRY kuru
     usd_try = get_usd_try_rate()
@@ -542,41 +543,89 @@ def run_full_analysis():
     
     now = datetime.now()
     
-    # ==================== TEK MESAJ ====================
-    msg = f"📊 <b>ANALİZ</b> {now.strftime('%d.%m.%Y %H:%M')}\n"
-    msg += "━━━━━━━━━━━━━━━━━━━━\n"
-    msg += "<code>Coin     Durum     Değişim</code>\n"
-    msg += "━━━━━━━━━━━━━━━━━━━━\n"
+    # BTC fiyatı
+    btc_tl = 0
+    for t in tickers:
+        if t.get('pairNormalized') == 'BTC_TRY':
+            btc_tl = float(t.get('last', 0))
+            break
+    btc_usd = btc_tl / usd_try if usd_try > 0 else 0
     
-    has_signals = False
+    # Fear & Greed
+    fg_value = 50
+    fg_text = "Nötr"
+    if pro_analyzer:
+        try:
+            fg = pro_analyzer.get_fear_greed_index()
+            fg_value = fg.get('value', 50)
+            fg_text = fg.get('classification', 'Neutral')
+        except:
+            pass
+    
+    fg_emoji = "😱" if fg_value < 30 else "😨" if fg_value < 45 else "😐" if fg_value < 55 else "😊" if fg_value < 75 else "🤑"
+    
+    # ==================== TEK GELİŞMİŞ MESAJ ====================
+    msg = f"""🚀 <b>AKILLI YATIRIM ASİSTANI</b>
+📅 {now.strftime('%d.%m.%Y %H:%M')}
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 <b>BTC:</b> ₺{btc_tl:,.0f} | ${btc_usd:,.0f}
+{fg_emoji} <b>Piyasa:</b> {fg_value} - {fg_text}
+"""
+    
+    # BTC Teknik
+    if btc_analysis:
+        msg += f"📊 RSI: {btc_analysis['rsi']} | {btc_analysis['recommendation']}\n"
+    
+    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
     
     # Yükselen coinler
-    for c in rising[:4]:
-        has_signals = True
-        symbol = c['symbol'].ljust(8)
-        change = c.get('change', 0)
-        msg += f"<code>{symbol} 🟢AL      +{change:.1f}%</code>\n"
+    if rising:
+        msg += "🟢 <b>YÜKSELEN - AL SİNYALİ</b>\n"
+        for c in rising[:5]:
+            price_tl = c.get('price', 0)
+            price_usd = price_tl / usd_try if usd_try > 0 else 0
+            change = c.get('change', 0)
+            target = price_tl * 1.10
+            stop = price_tl * 0.95
+            msg += f"\n<b>{c['symbol']}</b> +{change:.1f}%\n"
+            msg += f"   ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
+            msg += f"   🎯 ₺{target:,.4f} | 🛑 ₺{stop:,.4f}\n"
+    
+    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
     
     # Potansiyel coinler
-    for p in potential[:4]:
-        has_signals = True
-        symbol = p['symbol'].ljust(8)
-        pot = p.get('potential', 0)
-        msg += f"<code>{symbol} 🔵YÜKSEL  +{pot}%</code>\n"
+    if potential:
+        msg += "🔵 <b>YÜKSELECEK - TAHMİN</b>\n"
+        for p in potential[:5]:
+            price_tl = p.get('price', 0)
+            price_usd = price_tl / usd_try if usd_try > 0 else 0
+            pot = p.get('potential', 0)
+            risk = p.get('risk', 5)
+            
+            if risk <= 3:
+                risk_icon = "🟢"
+            elif risk <= 5:
+                risk_icon = "🟡"
+            else:
+                risk_icon = "🔴"
+            
+            msg += f"\n{risk_icon} <b>{p['symbol']}</b> +{pot}%\n"
+            msg += f"   ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
     
-    if not has_signals:
-        msg += "<code>Sinyal yok - bekle      </code>\n"
+    if not rising and not potential:
+        msg += "\n⏸ Şu an güçlü sinyal yok - beklemede kal\n"
     
-    msg += "━━━━━━━━━━━━━━━━━━━━"
+    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
+    msg += "⏰ Sonraki analiz: 2 saat"
     
     send_telegram(msg)
     logger.info("✅ ULTRA Rapor Telegram'a gönderildi!")
-    return  # Tek mesaj gönderildi, çık
+    return
     
     # ESKİ KOD DEVRE DIŞI
     stocks = []
     strong_stocks = []
-    btc_analysis = None
     global_sentiment = {'sentiment': '', 'crypto_impact': '', 'indices': {}}
     
     # ==================== MESAJ 1: ANA RAPOR ====================
