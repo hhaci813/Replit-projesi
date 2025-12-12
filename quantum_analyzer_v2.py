@@ -208,67 +208,63 @@ class QuantumAnalyzerV2:
         return avoid[:limit]
     
     def send_analysis_report(self):
-        """Telegram'a analiz raporu gönder"""
+        """Telegram'a basit analiz raporu gönder - sadece AL ve YÜKSELECEK"""
         tr_tz = pytz.timezone('Europe/Istanbul')
         now = datetime.now(tr_tz).strftime('%d.%m.%Y %H:%M')
         
         logger.info("🔬 Quantum V2 analiz başlıyor...")
         
-        # En iyi fırsatlar
-        best = self.get_best_opportunities(5)
+        # Tüm coinleri tara
+        all_results = self.scan_all(min_score=70)
         
-        # Uzak durulacaklar
-        avoid = self.get_avoid_list(3)
+        # Yükselen coinler (şu an pozitif değişim + iyi skor)
+        rising = []
+        # Yükselecek coinler (iyi skor ama henüz yükselmemiş)
+        will_rise = []
         
-        # Accuracy stats
-        stats = self.tracker.get_accuracy_stats(7)
+        for r in all_results:
+            score = r['score']
+            change = r['change']
+            conf = r.get('confidence', 'LOW')
+            
+            # Sadece iyi skorlu olanları al
+            if score >= 75:
+                if change > 2:  # Şu an yükseliyor
+                    rising.append(r)
+                else:  # Henüz yükselmemiş ama yükselecek
+                    will_rise.append(r)
         
-        msg = f'''🔬 <b>QUANTUM V2 ANALİZ</b>
-⏰ {now}
-📊 Multi-Timeframe | Sıkı Eşikler
-
-'''
+        # Mesaj oluştur - basit format
+        msg = f"📊 <b>ANALİZ</b> | {now}\n\n"
         
-        if best:
-            msg += "<b>🟢 EN İYİ FIRSATLAR:</b>\n"
-            for r in best[:4]:
-                conf_icon = "✓" if r.get('confidence') == 'HIGH' else "?"
-                msg += f"\n<b>{r['symbol']}</b> ₺{r['price']:,.2f} ({r['change']:+.1f}%)\n"
-                msg += f"Skor: {r['score']}/100 {conf_icon} | {r['prediction']}\n"
-                
-                # Timeframe özeti
-                tf_summary = []
-                for tf, data in r.get('timeframes', {}).items():
-                    if data:
-                        tf_summary.append(f"{tf}:{data['score']}")
-                if tf_summary:
-                    msg += f"TF: {' | '.join(tf_summary)}\n"
-                
-                if r.get('signals'):
-                    msg += f"💡 {r['signals'][0]}\n"
-        else:
-            msg += "⚠️ Şu an güçlü fırsat yok\n"
+        has_signals = False
         
-        if avoid:
-            msg += "\n<b>🔴 UZAK DUR:</b>\n"
-            for r in avoid[:3]:
-                msg += f"• {r['symbol']} ({r['change']:+.1f}%) - Skor: {r['score']}\n"
-                if r.get('pump_risk', 0) > 50:
-                    msg += f"  ⚠️ Pump riski: {r['pump_risk']}%\n"
+        # Yükselen coinler
+        if rising:
+            has_signals = True
+            msg += "🟢 <b>YÜKSELEN:</b>\n"
+            for r in rising[:5]:
+                action = "AL" if r['score'] >= 85 else "İZLE"
+                msg += f"• <b>{r['symbol']}</b> → {action} %{r['score']:.0f}\n"
         
-        # Accuracy
-        if stats['total'] > 0:
-            msg += f"\n<b>📈 TAHMİN DOĞRULUĞU (7 gün):</b>\n"
-            msg += f"Toplam: {stats['total']} | Doğru: {stats['correct']}\n"
-            msg += f"Oran: %{stats['accuracy']}\n"
+        # Yükselecek coinler  
+        if will_rise:
+            has_signals = True
+            if rising:
+                msg += "\n"
+            msg += "🔵 <b>YÜKSELECEK:</b>\n"
+            for r in will_rise[:5]:
+                msg += f"• <b>{r['symbol']}</b> → YÜKSELECEK %{r['score']:.0f}\n"
         
-        msg += "\n🤖 Quantum V2 - Sıkı Eşikler"
+        if not has_signals:
+            msg += "⚠️ Şu an güçlü sinyal yok\n"
+            msg += "Piyasa belirsiz, beklemede kal."
         
         self.send_telegram(msg)
-        logger.info(f"✅ Quantum V2 rapor gönderildi: {len(best)} fırsat")
+        logger.info(f"✅ Rapor gönderildi: {len(rising)} yükselen, {len(will_rise)} yükselecek")
         
         # Tahminleri kaydet
-        for r in best:
+        for r in rising + will_rise:
             if r['score'] >= 75:
                 self.tracker.add_prediction(
                     r['symbol'], 
@@ -277,7 +273,7 @@ class QuantumAnalyzerV2:
                     r['score']
                 )
         
-        return best
+        return rising + will_rise
     
     def analyze_single_detailed(self, symbol):
         """Tek coin için detaylı analiz ve Telegram'a gönder"""
