@@ -524,15 +524,12 @@ def get_usd_try_rate():
     return 34.5
 
 def run_full_analysis():
+    """TEK MESAJ - TABLO FORMATI"""
     logger.info("🔄 ULTRA Tam analiz başlıyor...")
     
     tickers = get_btcturk_data()
     rising = analyze_rising_cryptos(tickers)
     potential = analyze_potential_risers(tickers)
-    stocks = get_stock_data()
-    strong_stocks = [s for s in stocks if s['rec'] == 'STRONG_BUY'][:3]
-    btc_analysis = get_btc_technical_analysis()
-    global_sentiment = get_global_market_sentiment()
     
     # USD/TRY kuru
     usd_try = get_usd_try_rate()
@@ -543,11 +540,44 @@ def run_full_analysis():
     if alert_system:
         alert_system.check_alerts()
     
-    # Backtest güncelleme
-    if backtest:
-        backtest.check_recommendations()
-    
     now = datetime.now()
+    
+    # ==================== TEK MESAJ ====================
+    msg = f"📊 <b>ANALİZ</b> {now.strftime('%d.%m.%Y %H:%M')}\n"
+    msg += "━━━━━━━━━━━━━━━━━━━━\n"
+    msg += "<code>Coin     Durum     Değişim</code>\n"
+    msg += "━━━━━━━━━━━━━━━━━━━━\n"
+    
+    has_signals = False
+    
+    # Yükselen coinler
+    for c in rising[:4]:
+        has_signals = True
+        symbol = c['symbol'].ljust(8)
+        change = c.get('change', 0)
+        msg += f"<code>{symbol} 🟢AL      +{change:.1f}%</code>\n"
+    
+    # Potansiyel coinler
+    for p in potential[:4]:
+        has_signals = True
+        symbol = p['symbol'].ljust(8)
+        pot = p.get('potential', 0)
+        msg += f"<code>{symbol} 🔵YÜKSEL  +{pot}%</code>\n"
+    
+    if not has_signals:
+        msg += "<code>Sinyal yok - bekle      </code>\n"
+    
+    msg += "━━━━━━━━━━━━━━━━━━━━"
+    
+    send_telegram(msg)
+    logger.info("✅ ULTRA Rapor Telegram'a gönderildi!")
+    return  # Tek mesaj gönderildi, çık
+    
+    # ESKİ KOD DEVRE DIŞI
+    stocks = []
+    strong_stocks = []
+    btc_analysis = None
+    global_sentiment = {'sentiment': '', 'crypto_impact': '', 'indices': {}}
     
     # ==================== MESAJ 1: ANA RAPOR ====================
     msg1 = f"""🔔 <b>AKILLI YATIRIM RAPORU - ULTRA</b>
