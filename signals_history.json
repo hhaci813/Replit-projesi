@@ -1063,5 +1063,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 72,
+    "symbol": "ENJ",
+    "signal_type": "POTENTIAL",
+    "entry_price": 1.331,
+    "target_percent": 7.7,
+    "stop_percent": -10,
+    "target_price": 1.433487,
+    "stop_price": 1.1979,
+    "timestamp": "2025-12-12 18:52",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 73,
+    "symbol": "OMG",
+    "signal_type": "POTENTIAL",
+    "entry_price": 3.75,
+    "target_percent": 8.6,
+    "stop_percent": -10,
+    "target_price": 4.072500000000001,
+    "stop_price": 3.375,
+    "timestamp": "2025-12-12 18:52",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
