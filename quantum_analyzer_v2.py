@@ -234,31 +234,26 @@ class QuantumAnalyzerV2:
                 else:  # Henüz yükselmemiş ama yükselecek
                     will_rise.append(r)
         
-        # Mesaj oluştur - basit format
-        msg = f"📊 <b>ANALİZ</b> | {now}\n\n"
+        # Mesaj oluştur - çok basit ve temiz
+        msg = f"📊 {now}\n"
+        msg += "━━━━━━━━━━━━━━━\n"
         
         has_signals = False
         
         # Yükselen coinler
         if rising:
             has_signals = True
-            msg += "🟢 <b>YÜKSELEN:</b>\n"
-            for r in rising[:5]:
-                action = "AL" if r['score'] >= 85 else "İZLE"
-                msg += f"• <b>{r['symbol']}</b> → {action} %{r['score']:.0f}\n"
+            for r in rising[:3]:
+                msg += f"🟢 {r['symbol']} AL %{r['score']:.0f}\n"
         
         # Yükselecek coinler  
         if will_rise:
             has_signals = True
-            if rising:
-                msg += "\n"
-            msg += "🔵 <b>YÜKSELECEK:</b>\n"
-            for r in will_rise[:5]:
-                msg += f"• <b>{r['symbol']}</b> → YÜKSELECEK %{r['score']:.0f}\n"
+            for r in will_rise[:3]:
+                msg += f"🔵 {r['symbol']} YÜKSELECEK %{r['score']:.0f}\n"
         
         if not has_signals:
-            msg += "⚠️ Şu an güçlü sinyal yok\n"
-            msg += "Piyasa belirsiz, beklemede kal."
+            msg += "⏸ Sinyal yok - bekle"
         
         self.send_telegram(msg)
         logger.info(f"✅ Rapor gönderildi: {len(rising)} yükselen, {len(will_rise)} yükselecek")
