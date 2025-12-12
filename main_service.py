@@ -1929,13 +1929,12 @@ def main():
         scheduler.add_job(alert_system.check_alerts, IntervalTrigger(minutes=5), id='alerts', replace_existing=True)
         alert_system.start_monitoring()
     
-    # Quantum V2 analizi her 2 saatte bir (yeni gelişmiş sistem)
-    if quantum_v2:
-        scheduler.add_job(quantum_v2.send_analysis_report, IntervalTrigger(hours=2), id='quantum_v2_analysis', replace_existing=True)
-        logger.info("✅ Quantum V2 Analiz: Her 2 saatte bir (Multi-TF + Sıkı Eşikler)")
+    # Eski sistem - run_full_analysis her 2 saatte bir (grafik yok)
+    scheduler.add_job(run_full_analysis, IntervalTrigger(hours=2), id='full_analysis', replace_existing=True)
+    logger.info("✅ Eski Sistem Aktif: Her 2 saatte bir analiz (grafik yok)")
     
     scheduler.start()
-    logger.info("✅ Scheduler aktif (Alarm + Quantum V2)")
+    logger.info("✅ Scheduler aktif (Alarm + Eski Sistem)")
     
     # Telegram bot
     bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
