@@ -1,7 +1,11 @@
 """
-TARİHSEL PATTERN ANALİZCİSİ
+TARİHSEL PATTERN ANALİZCİSİ - GELİŞMİŞ VERSİYON
 Yükselen kriptoları geçmiş verilerle karşılaştır
-"Bu coin daha önce böyle yükseldi, sonra X oldu" analizi
++ Fibonacci seviyeleri
++ Destek/Direnç analizi
++ BTC korelasyonu
++ Trend kanalı
++ Risk/ödül oranı
 """
 
 import requests
@@ -10,6 +14,7 @@ import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +22,190 @@ class HistoricalPatternAnalyzer:
     def __init__(self):
         self.cache_file = "historical_events.json"
         self.events = self.load_events()
+        self.btc_cache = {'data': None, 'timestamp': None}
+    
+    def calculate_fibonacci_levels(self, high: float, low: float) -> Dict:
+        """Fibonacci düzeltme seviyeleri hesapla"""
+        diff = high - low
+        return {
+            '0.0': high,
+            '0.236': high - (diff * 0.236),
+            '0.382': high - (diff * 0.382),
+            '0.5': high - (diff * 0.5),
+            '0.618': high - (diff * 0.618),
+            '0.786': high - (diff * 0.786),
+            '1.0': low,
+            'ext_1.272': high + (diff * 0.272),
+            'ext_1.618': high + (diff * 0.618)
+        }
+    
+    def find_support_resistance(self, closes: List[float], window: int = 10) -> Dict:
+        """Destek ve direnç seviyelerini bul"""
+        if len(closes) < window * 2:
+            return {'supports': [], 'resistances': [], 'current_zone': 'UNKNOWN'}
+        
+        supports = []
+        resistances = []
+        
+        for i in range(window, len(closes) - window):
+            is_support = all(closes[i] <= closes[i-j] and closes[i] <= closes[i+j] for j in range(1, min(window, len(closes)-i)))
+            is_resistance = all(closes[i] >= closes[i-j] and closes[i] >= closes[i+j] for j in range(1, min(window, len(closes)-i)))
+            
+            if is_support:
+                supports.append(closes[i])
+            if is_resistance:
+                resistances.append(closes[i])
+        
+        supports = sorted(set([round(s, 4) for s in supports]))[-3:] if supports else []
+        resistances = sorted(set([round(r, 4) for r in resistances]))[:3] if resistances else []
+        
+        current = closes[-1]
+        if resistances and current > resistances[-1] * 0.98:
+            zone = 'RESISTANCE'
+        elif supports and current < supports[0] * 1.02:
+            zone = 'SUPPORT'
+        else:
+            zone = 'MIDDLE'
+        
+        return {
+            'supports': supports,
+            'resistances': resistances,
+            'current_zone': zone
+        }
+    
+    def calculate_btc_correlation(self, coin_closes: List[float], btc_closes: List[float]) -> Dict:
+        """BTC ile korelasyon hesapla"""
+        if len(coin_closes) < 10 or len(btc_closes) < 10:
+            return {'correlation': 0, 'strength': 'UNKNOWN', 'divergence': False}
+        
+        min_len = min(len(coin_closes), len(btc_closes))
+        coin_data = coin_closes[-min_len:]
+        btc_data = btc_closes[-min_len:]
+        
+        coin_returns = [(coin_data[i] - coin_data[i-1]) / coin_data[i-1] for i in range(1, len(coin_data))]
+        btc_returns = [(btc_data[i] - btc_data[i-1]) / btc_data[i-1] for i in range(1, len(btc_data))]
+        
+        if len(coin_returns) < 5:
+            return {'correlation': 0, 'strength': 'UNKNOWN', 'divergence': False}
+        
+        try:
+            correlation = np.corrcoef(coin_returns, btc_returns)[0, 1]
+        except:
+            correlation = 0
+        
+        if correlation > 0.7:
+            strength = 'STRONG_POSITIVE'
+        elif correlation > 0.4:
+            strength = 'MODERATE_POSITIVE'
+        elif correlation > -0.4:
+            strength = 'WEAK'
+        elif correlation > -0.7:
+            strength = 'MODERATE_NEGATIVE'
+        else:
+            strength = 'STRONG_NEGATIVE'
+        
+        recent_coin_change = (coin_closes[-1] - coin_closes[-7]) / coin_closes[-7] * 100 if len(coin_closes) >= 7 else 0
+        recent_btc_change = (btc_closes[-1] - btc_closes[-7]) / btc_closes[-7] * 100 if len(btc_closes) >= 7 else 0
+        
+        divergence = (recent_coin_change > 10 and recent_btc_change < 5) or (recent_coin_change < -10 and recent_btc_change > -5)
+        
+        return {
+            'correlation': round(correlation, 2),
+            'strength': strength,
+            'divergence': divergence,
+            'coin_7d': round(recent_coin_change, 1),
+            'btc_7d': round(recent_btc_change, 1)
+        }
+    
+    def calculate_trend_channel(self, closes: List[float]) -> Dict:
+        """Trend kanalı hesapla"""
+        if len(closes) < 20:
+            return {'trend': 'UNKNOWN', 'strength': 0, 'channel_position': 50}
+        
+        ma7 = sum(closes[-7:]) / 7
+        ma20 = sum(closes[-20:]) / 20
+        ma50 = sum(closes[-50:]) / 50 if len(closes) >= 50 else ma20
+        
+        current = closes[-1]
+        
+        if ma7 > ma20 > ma50:
+            trend = 'STRONG_UP'
+            strength = 80
+        elif ma7 > ma20:
+            trend = 'UP'
+            strength = 60
+        elif ma7 < ma20 < ma50:
+            trend = 'STRONG_DOWN'
+            strength = 20
+        elif ma7 < ma20:
+            trend = 'DOWN'
+            strength = 40
+        else:
+            trend = 'SIDEWAYS'
+            strength = 50
+        
+        high_20 = max(closes[-20:])
+        low_20 = min(closes[-20:])
+        channel_position = ((current - low_20) / (high_20 - low_20) * 100) if high_20 != low_20 else 50
+        
+        return {
+            'trend': trend,
+            'strength': strength,
+            'channel_position': round(channel_position, 1),
+            'ma7': round(ma7, 4),
+            'ma20': round(ma20, 4),
+            'ma50': round(ma50, 4)
+        }
+    
+    def calculate_risk_reward(self, current_price: float, supports: List[float], resistances: List[float], fib_levels: Dict) -> Dict:
+        """Risk/Ödül oranı hesapla"""
+        if resistances:
+            target = resistances[0] if resistances[0] > current_price else fib_levels.get('ext_1.272', current_price * 1.15)
+        else:
+            target = fib_levels.get('ext_1.272', current_price * 1.15)
+        
+        if supports:
+            stop = supports[-1] if supports[-1] < current_price else fib_levels.get('0.618', current_price * 0.92)
+        else:
+            stop = fib_levels.get('0.618', current_price * 0.92)
+        
+        potential_gain = ((target - current_price) / current_price) * 100
+        potential_loss = ((current_price - stop) / current_price) * 100
+        
+        if potential_loss > 0:
+            ratio = potential_gain / potential_loss
+        else:
+            ratio = 0
+        
+        if ratio >= 3:
+            rating = 'EXCELLENT'
+        elif ratio >= 2:
+            rating = 'GOOD'
+        elif ratio >= 1:
+            rating = 'FAIR'
+        else:
+            rating = 'POOR'
+        
+        return {
+            'target': round(target, 4),
+            'stop': round(stop, 4),
+            'potential_gain_pct': round(potential_gain, 1),
+            'potential_loss_pct': round(potential_loss, 1),
+            'ratio': round(ratio, 2),
+            'rating': rating
+        }
+    
+    def get_btc_data(self) -> Optional[List[float]]:
+        """BTC fiyat verisini al (cache ile)"""
+        if self.btc_cache['data'] and self.btc_cache['timestamp']:
+            if (datetime.now() - self.btc_cache['timestamp']).seconds < 3600:
+                return self.btc_cache['data']
+        
+        data = self.get_historical_data('BTC', 90)
+        if data and 'close' in data:
+            self.btc_cache = {'data': data['close'], 'timestamp': datetime.now()}
+            return data['close']
+        return None
         
     def load_events(self) -> Dict:
         """Kayıtlı event'leri yükle"""
@@ -255,20 +444,79 @@ class HistoricalPatternAnalyzer:
             }
         }
     
+    def advanced_coin_analysis(self, symbol: str, price: float, change: float) -> Dict:
+        """Tek coin için gelişmiş derin analiz"""
+        data = self.get_historical_data(symbol, 90)
+        btc_data = self.get_btc_data()
+        
+        result = {
+            'symbol': symbol,
+            'price': price,
+            'change': change,
+            'has_data': False
+        }
+        
+        if not data or len(data['close']) < 20:
+            return result
+        
+        closes = data['close']
+        highs = data['high']
+        lows = data['low']
+        
+        result['has_data'] = True
+        
+        high_90d = max(highs) if highs else price
+        low_90d = min(lows) if lows else price
+        result['fib'] = self.calculate_fibonacci_levels(high_90d, low_90d)
+        
+        result['sr'] = self.find_support_resistance(closes)
+        
+        result['trend'] = self.calculate_trend_channel(closes)
+        
+        result['rsi'] = self.calculate_rsi(closes)
+        
+        if btc_data:
+            result['btc_corr'] = self.calculate_btc_correlation(closes, btc_data)
+        else:
+            result['btc_corr'] = {'correlation': 0, 'strength': 'UNKNOWN', 'divergence': False}
+        
+        result['risk_reward'] = self.calculate_risk_reward(
+            price, 
+            result['sr']['supports'], 
+            result['sr']['resistances'],
+            result['fib']
+        )
+        
+        pattern_analysis = self.analyze_current_surge(symbol, change)
+        result['pattern'] = pattern_analysis
+        
+        return result
+    
     def deep_analysis_rising(self, rising_list: List[Dict]) -> str:
-        """Yükselen coinler için derin analiz raporu"""
-        msg = """🔬 <b>DERİN TARİHSEL ANALİZ</b>
+        """Yükselen coinler için GELİŞMİŞ derin analiz raporu"""
+        msg = """🔬 <b>DERİN ANALİZ - GELİŞMİŞ</b>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-<i>Geçmiş 90 günlük verilerle karşılaştırma</i>
+<i>Fibonacci + Destek/Direnç + BTC Korelasyon + Trend</i>
 
 """
         
-        for coin in rising_list[:5]:
+        for coin in rising_list[:4]:
             symbol = coin.get('symbol', '')
             change = coin.get('change', 0)
             price = coin.get('price', 0)
             
-            analysis = self.analyze_current_surge(symbol, change)
+            analysis = self.advanced_coin_analysis(symbol, price, change)
+            
+            if not analysis['has_data']:
+                msg += f"<b>{symbol}</b> - Yetersiz veri\n\n"
+                continue
+            
+            pattern = analysis['pattern']
+            trend = analysis['trend']
+            sr = analysis['sr']
+            rr = analysis['risk_reward']
+            btc = analysis['btc_corr']
+            fib = analysis['fib']
             
             rec_emoji = {
                 "GÜÇLÜ AL": "🟢",
@@ -277,37 +525,68 @@ class HistoricalPatternAnalyzer:
                 "İZLE": "🔵",
                 "BEKLE": "🟡",
                 "SATMA ZAMANI": "🔴"
-            }.get(analysis['recommendation'], "⚪")
+            }.get(pattern['recommendation'], "⚪")
+            
+            trend_emoji = {
+                "STRONG_UP": "📈📈",
+                "UP": "📈",
+                "SIDEWAYS": "➡️",
+                "DOWN": "📉",
+                "STRONG_DOWN": "📉📉"
+            }.get(trend['trend'], "❓")
+            
+            zone_text = {
+                "RESISTANCE": "⚠️ Direnç bölgesinde",
+                "SUPPORT": "✅ Destek bölgesinde",
+                "MIDDLE": "🔵 Orta bölge"
+            }.get(sr['current_zone'], "")
+            
+            rr_emoji = {
+                "EXCELLENT": "🌟",
+                "GOOD": "✅",
+                "FAIR": "🟡",
+                "POOR": "🔴"
+            }.get(rr['rating'], "")
             
             msg += f"""<b>{symbol}</b> +{change:.1f}%
 💰 ₺{price:,.4f}
-📊 RSI: {analysis['rsi']} | Hacim: {analysis['vol_spike']}x
-🔍 Pattern: {analysis['pattern']}
 
-{analysis['analysis']}
+{trend_emoji} <b>TREND:</b> {trend['trend']}
+   Kanal pozisyonu: %{trend['channel_position']:.0f}
+   MA7: ₺{trend['ma7']:,.4f} | MA20: ₺{trend['ma20']:,.4f}
 
-{rec_emoji} <b>TAVSİYE: {analysis['recommendation']}</b>
-📈 Güven: %{analysis['confidence']}
+📊 <b>TEKNİK:</b>
+   RSI: {analysis['rsi']:.0f} | Pattern: {pattern['pattern']}
+   {zone_text}
+
+📐 <b>FİBONACCİ:</b>
+   0.382: ₺{fib['0.382']:,.4f}
+   0.618: ₺{fib['0.618']:,.4f}
+   Ext 1.272: ₺{fib['ext_1.272']:,.4f}
+
+🎯 <b>HEDEF & STOP:</b>
+   Hedef: ₺{rr['target']:,.4f} (+%{rr['potential_gain_pct']:.1f})
+   Stop: ₺{rr['stop']:,.4f} (-%{rr['potential_loss_pct']:.1f})
+   {rr_emoji} Risk/Ödül: {rr['ratio']:.1f}x ({rr['rating']})
+
+🔗 <b>BTC KORELASYON:</b> {btc['correlation']:.2f}
+   {btc['strength']}
+   {"⚡ DİVERJANS TESPİT!" if btc['divergence'] else ""}
+
+{rec_emoji} <b>TAVSİYE: {pattern['recommendation']}</b>
+📈 Güven: %{pattern['confidence']} | Benzer: {pattern['similar_cases']} vaka
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 """
-            if analysis['similar_cases'] > 0:
-                stats = analysis['historical_stats']
-                msg += f"""<i>📜 {analysis['similar_cases']} benzer vaka analizi:
-   • Başarı oranı: %{stats['win_rate']:.0f}
-   • 3g max kar: %{stats['avg_max_gain_3d']:.1f}
-   • 3g max kayıp: %{stats['avg_max_loss_3d']:.1f}
-   • 1 hafta sonra: %{stats['avg_week_change']:.1f}</i>
-
-"""
-            msg += "━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
         
-        msg += """💡 <b>PATTERN AÇIKLAMALARI:</b>
-• <b>PARABOLIC:</b> Çok hızlı yükseliş, düşme riski yüksek
-• <b>VOLUME_BREAKOUT:</b> Hacimle kırılım, devam potansiyeli
-• <b>OVERSOLD_BOUNCE:</b> Dipten dönüş, iyi fırsat olabilir
-• <b>STRONG_SURGE:</b> Güçlü hareket, momentum takibi
+        msg += """💡 <b>AÇIKLAMALAR:</b>
+• <b>Risk/Ödül 2x+:</b> İyi giriş noktası
+• <b>BTC Diverjanş:</b> Bağımsız hareket
+• <b>Kanal %80+:</b> Zirve yakın, dikkat
+• <b>Destek bölgesi:</b> Alım fırsatı
 
-⚠️ Geçmiş performans gelecek sonuçları garanti etmez!
+⚠️ Geçmiş performans garanti değildir!
 """
         return msg
 
