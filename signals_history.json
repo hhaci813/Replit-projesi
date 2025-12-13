@@ -1273,5 +1273,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 86,
+    "symbol": "CHZ",
+    "signal_type": "POTENTIAL",
+    "entry_price": 1.422,
+    "target_percent": 2.7,
+    "stop_percent": -10,
+    "target_price": 1.4603939999999997,
+    "stop_price": 1.2798,
+    "timestamp": "2025-12-13 20:00",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
