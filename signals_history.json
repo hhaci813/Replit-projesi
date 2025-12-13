@@ -1258,5 +1258,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 85,
+    "symbol": "ATM",
+    "signal_type": "POTENTIAL",
+    "entry_price": 39.281,
+    "target_percent": 6.2,
+    "stop_percent": -10,
+    "target_price": 41.716422,
+    "stop_price": 35.3529,
+    "timestamp": "2025-12-13 19:22",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
