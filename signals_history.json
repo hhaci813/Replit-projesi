@@ -1528,5 +1528,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 103,
+    "symbol": "ADA",
+    "signal_type": "POTENTIAL",
+    "entry_price": 16.558,
+    "target_percent": 5.1,
+    "stop_percent": -7,
+    "target_price": 17.402458,
+    "stop_price": 15.39894,
+    "timestamp": "2025-12-15 15:23",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 104,
+    "symbol": "SHIB",
+    "signal_type": "POTENTIAL",
+    "entry_price": 0.00033643,
+    "target_percent": 5.0,
+    "stop_percent": -7,
+    "target_price": 0.00035325149999999996,
+    "stop_price": 0.00031287989999999994,
+    "timestamp": "2025-12-15 15:23",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
