@@ -789,10 +789,10 @@
     "target_price": 0.5435534000000001,
     "stop_price": 0.45891000000000004,
     "timestamp": "2025-12-11 14:15",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -10.1,
+    "closed_at": "2025-12-15 17:19"
   },
   {
     "id": 54,
