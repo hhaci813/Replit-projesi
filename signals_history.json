@@ -114,10 +114,10 @@
     "target_price": 0.33271280000000003,
     "stop_price": 0.26712,
     "timestamp": "2025-12-09 14:09",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -10.04,
+    "closed_at": "2025-12-15 11:12"
   },
   {
     "id": 9,
@@ -234,10 +234,10 @@
     "target_price": 16.204968,
     "stop_price": 13.969800000000001,
     "timestamp": "2025-12-09 16:06",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -15.59,
+    "closed_at": "2025-12-15 11:12"
   },
   {
     "id": 17,
@@ -699,10 +699,10 @@
     "target_price": 4.429799999999999,
     "stop_price": 3.54384,
     "timestamp": "2025-12-11 08:02",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -8.02,
+    "closed_at": "2025-12-15 11:12"
   },
   {
     "id": 48,
@@ -864,10 +864,10 @@
     "target_price": 13.818399999999999,
     "stop_price": 11.05472,
     "timestamp": "2025-12-12 10:33",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -13.27,
+    "closed_at": "2025-12-15 11:12"
   },
   {
     "id": 59,
@@ -939,10 +939,10 @@
     "target_price": 7.204749999999999,
     "stop_price": 5.7638,
     "timestamp": "2025-12-12 11:25",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -11.57,
+    "closed_at": "2025-12-15 11:12"
   },
   {
     "id": 64,
@@ -1104,10 +1104,10 @@
     "target_price": 47.72959999999999,
     "stop_price": 38.18368,
     "timestamp": "2025-12-12 19:53",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -8.4,
+    "closed_at": "2025-12-15 11:12"
   },
   {
     "id": 75,
@@ -1299,10 +1299,10 @@
     "target_price": 7.56815,
     "stop_price": 6.054520000000001,
     "timestamp": "2025-12-14 08:59",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -15.82,
+    "closed_at": "2025-12-15 11:12"
   },
   {
     "id": 88,
@@ -1374,10 +1374,10 @@
     "target_price": 2.2241,
     "stop_price": 1.77928,
     "timestamp": "2025-12-14 11:56",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -9.82,
+    "closed_at": "2025-12-15 11:13"
   },
   {
     "id": 93,
@@ -1389,10 +1389,10 @@
     "target_price": 1.5352499999999998,
     "stop_price": 1.2282,
     "timestamp": "2025-12-14 11:56",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -10.79,
+    "closed_at": "2025-12-15 11:13"
   },
   {
     "id": 94,
@@ -1404,6 +1404,66 @@
     "target_price": 3.761472,
     "stop_price": 3.2058,
     "timestamp": "2025-12-14 11:56",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 95,
+    "symbol": "INTER",
+    "signal_type": "STRONG_BUY",
+    "entry_price": 16.501,
+    "target_percent": 15,
+    "stop_percent": -8,
+    "target_price": 18.97615,
+    "stop_price": 15.180920000000002,
+    "timestamp": "2025-12-15 11:12",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 96,
+    "symbol": "USDT",
+    "signal_type": "POTENTIAL",
+    "entry_price": 42.665,
+    "target_percent": 0.2,
+    "stop_percent": -10,
+    "target_price": 42.75033,
+    "stop_price": 38.3985,
+    "timestamp": "2025-12-15 11:12",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 97,
+    "symbol": "AMP",
+    "signal_type": "POTENTIAL",
+    "entry_price": 0.0865,
+    "target_percent": 1.2,
+    "stop_percent": -10,
+    "target_price": 0.08753799999999999,
+    "stop_price": 0.07785,
+    "timestamp": "2025-12-15 11:12",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 98,
+    "symbol": "FLR",
+    "signal_type": "POTENTIAL",
+    "entry_price": 0.5152,
+    "target_percent": 2.6,
+    "stop_percent": -10,
+    "target_price": 0.5285952,
+    "stop_price": 0.46368,
+    "timestamp": "2025-12-15 11:12",
     "status": "ACTIVE",
     "result": null,
     "result_percent": null,
