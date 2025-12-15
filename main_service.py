@@ -196,6 +196,12 @@ try:
 except:
     super_analyzer = None
 
+try:
+    from ultimate_analyzer import UltimateAnalyzer
+    ultimate_analyzer = UltimateAnalyzer()
+except:
+    ultimate_analyzer = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1392,6 +1398,36 @@ def run_telegram_bot():
                                         send_telegram_to(chat_id, f"❌ Analiz hatası: {str(e)[:100]}")
                                 else:
                                     send_telegram_to(chat_id, "🧠 Süper analiz sistemi yükleniyor...")
+                            
+                            # /ultimate [COIN] - Ultimate analiz (tüm sistemler)
+                            elif cmd == '/ultimate':
+                                symbol = args[0].upper() if args else 'BTC'
+                                if ultimate_analyzer:
+                                    send_telegram_to(chat_id, f"🚀 {symbol} için ULTIMATE ANALİZ\n⏳ ML + Whale + Haber + Teknik + Sosyal + Pattern")
+                                    try:
+                                        report = ultimate_analyzer.generate_report(symbol)
+                                        send_telegram_to(chat_id, report)
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Ultimate hata: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "🚀 Ultimate analyzer yükleniyor...")
+                            
+                            # /tarama - Tüm coinleri tara
+                            elif cmd == '/tarama':
+                                if ultimate_analyzer:
+                                    send_telegram_to(chat_id, "🔍 40 coin taranıyor... (1-2 dk)")
+                                    try:
+                                        results = ultimate_analyzer.scan_all_coins()
+                                        msg = "🏆 <b>EN İYİ FIRSATLAR</b>\n━━━━━━━━━━━━━━\n\n"
+                                        for i, r in enumerate(results[:10], 1):
+                                            msg += f"{r['emoji']} <b>{i}. {r['symbol']}</b> - Skor: {r['score']:.0f}\n"
+                                            msg += f"   📊 {r['recommendation']} | 24s: {r['change_24h']:+.1f}%\n\n"
+                                        msg += "━━━━━━━━━━━━━━\n/ultimate COIN ile detay"
+                                        send_telegram_to(chat_id, msg)
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Tarama hatası: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "🔍 Tarama sistemi yükleniyor...")
                             
                             # /piyasa - Global
                             elif cmd == '/piyasa':
