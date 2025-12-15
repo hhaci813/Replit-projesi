@@ -151,9 +151,34 @@ class ScalpingSystem:
             pass
         return []
     
-    def analyze_scalp_opportunity(self, ticker: Dict) -> Optional[Dict]:
+    def get_btc_trend(self) -> Dict:
+        """BTC trend analizi - piyasa yönü"""
+        try:
+            import yfinance as yf
+            ticker = yf.Ticker("BTC-USD")
+            hist = ticker.history(period="2d", interval="1h")
+            if len(hist) >= 4:
+                last_4h = hist['Close'].iloc[-4:]
+                change_4h = ((last_4h.iloc[-1] - last_4h.iloc[0]) / last_4h.iloc[0]) * 100
+                last_24h = hist['Close']
+                change_24h = ((last_24h.iloc[-1] - last_24h.iloc[0]) / last_24h.iloc[0]) * 100
+                
+                if change_4h < -2 or change_24h < -5:
+                    return {'trend': 'BEARISH', 'change_4h': change_4h, 'change_24h': change_24h, 'allow_scalp': False}
+                elif change_4h > 1 and change_24h > 0:
+                    return {'trend': 'BULLISH', 'change_4h': change_4h, 'change_24h': change_24h, 'allow_scalp': True}
+                else:
+                    return {'trend': 'NEUTRAL', 'change_4h': change_4h, 'change_24h': change_24h, 'allow_scalp': True}
+        except Exception as e:
+            logger.error(f"BTC trend hatası: {e}")
+        return {'trend': 'UNKNOWN', 'change_4h': 0, 'change_24h': 0, 'allow_scalp': True}
+    
+    def analyze_scalp_opportunity(self, ticker: Dict, btc_trend: Dict = None) -> Optional[Dict]:
         """
-        Scalping fırsatı analizi - GELİŞTİRİLMİŞ
+        Scalping fırsatı analizi - ULTRA GÜÇLENDİRİLMİŞ V2
+        - BTC düşüşte = sinyal yok
+        - Minimum skor 70
+        - Daha sıkı kriterler
         """
         pair = ticker.get('pairNormalized', '')
         if '_TRY' not in pair:
@@ -171,8 +196,12 @@ class ScalpingSystem:
         if price <= 0:
             return None
         
+        # BTC trend kontrolü - düşüşte scalp yok
+        if btc_trend and not btc_trend.get('allow_scalp', True):
+            return None
+        
         spread = ((ask - bid) / price * 100) if price > 0 else 0
-        if spread > 1:
+        if spread > 0.8:  # Daha sıkı spread
             return None
         
         if high > 0 and low > 0 and high != low:
@@ -245,18 +274,20 @@ class ScalpingSystem:
         elif spread > 0.5:
             scalp_score -= 10
         
-        if scalp_score < 50:
+        # V2: Minimum skor 70'e yükseldi
+        if scalp_score < 70:
             return None
         
+        # V2: Daha dar hedef/stop - hızlı çıkış
         if daily_change > 4:
+            target_pct = 2.0
+            stop_pct = 1.0
+        elif daily_change > 2:
             target_pct = 2.5
             stop_pct = 1.5
-        elif daily_change > 2:
-            target_pct = 3.5
-            stop_pct = 2
         else:
-            target_pct = 4.5
-            stop_pct = 2.5
+            target_pct = 3.0
+            stop_pct = 1.5
         
         target_price = price * (1 + target_pct / 100)
         stop_price = price * (1 - stop_pct / 100)
@@ -298,7 +329,15 @@ class ScalpingSystem:
         }
     
     def scan_scalp_opportunities(self) -> List[Dict]:
-        """Tüm coinleri tara ve scalp fırsatlarını bul"""
+        """Tüm coinleri tara ve scalp fırsatlarını bul - V2 BTC TREND KONTROLÜ"""
+        # Önce BTC trendini kontrol et
+        btc_trend = self.get_btc_trend()
+        logger.info(f"📊 BTC Trend: {btc_trend['trend']} | 4s: {btc_trend.get('change_4h', 0):.2f}% | 24s: {btc_trend.get('change_24h', 0):.2f}%")
+        
+        if not btc_trend.get('allow_scalp', True):
+            logger.warning("⚠️ BTC düşüşte - Scalp sinyal verilmiyor!")
+            return []
+        
         tickers = self.get_btcturk_data()
         opportunities = []
         
@@ -469,14 +508,28 @@ class ScalpingSystem:
         if self.active_scalps:
             msg += f"📊 <b>AKTİF:</b> {len(self.active_scalps)} pozisyon\n\n"
         
+        # BTC trend bilgisi ekle
+        btc_trend = self.get_btc_trend()
+        trend_emoji = "🟢" if btc_trend['trend'] == 'BULLISH' else "🔴" if btc_trend['trend'] == 'BEARISH' else "🟡"
+        msg += f"{trend_emoji} <b>BTC:</b> {btc_trend['trend']} | 4s: {btc_trend.get('change_4h', 0):.1f}%\n\n"
+        
+        if not btc_trend.get('allow_scalp', True):
+            msg += """🔴 <b>BTC DÜŞÜŞTE - SİNYAL VERİLMİYOR!</b>
+
+Piyasa düşüş trendinde olduğu için
+scalp sinyali üretilmiyor.
+
+⏳ BTC yükselişe geçince sinyal verilecek..."""
+            return msg
+        
         if not opportunities:
             msg += """❌ <b>ŞU AN UYGUN FIRSAT YOK</b>
 
-Bekleme kriterleri:
-• %1-6 arası yükseliş
-• Kanal ortasında (25-65%)
+V2 Kriterleri (Sıkılaştırılmış):
+• Minimum skor: 70/100
 • RSI 30-60 arası
-• Yeterli hacim + Dar spread
+• Kanal 25-65% arası
+• BTC yükseliş/nötr trendi
 
 ⏳ 15 dakika sonra tekrar taranacak..."""
             return msg
