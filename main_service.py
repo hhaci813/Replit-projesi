@@ -191,6 +191,11 @@ try:
 except:
     scalping_system = None
 
+try:
+    from super_analyzer import SuperAnalyzer, super_analyzer
+except:
+    super_analyzer = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1373,6 +1378,20 @@ def run_telegram_bot():
                                         send_telegram_to(chat_id, "📊 Aktif pozisyon yok")
                                 else:
                                     send_telegram_to(chat_id, "📊 Scalping sistemi yükleniyor...")
+                            
+                            # /superanaliz [COIN] - Süper kapsamlı analiz
+                            elif cmd == '/superanaliz':
+                                symbol = args[0].upper() if args else 'BTC'
+                                if super_analyzer:
+                                    send_telegram_to(chat_id, f"🧠 {symbol} için SÜPER ANALİZ yapılıyor...\n⏳ Tüm kaynaklar taranıyor (15-30 sn)")
+                                    try:
+                                        result = super_analyzer.super_analyze(symbol)
+                                        msg = super_analyzer.format_super_analysis(result)
+                                        send_telegram_to(chat_id, msg)
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Analiz hatası: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "🧠 Süper analiz sistemi yükleniyor...")
                             
                             # /piyasa - Global
                             elif cmd == '/piyasa':
