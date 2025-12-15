@@ -1275,6 +1275,11 @@ def run_telegram_bot():
                                     opportunities = scalping_system.scan_scalp_opportunities()
                                     msg = scalping_system.format_scalp_message(opportunities)
                                     send_telegram_to(chat_id, msg)
+                                    for opp in opportunities:
+                                        if opp['action'] in ['HIZLI_AL', 'AL']:
+                                            scalping_system.add_to_active(opp)
+                                    if opportunities:
+                                        logger.info(f"✅ {len(opportunities)} scalp pozisyon eklendi")
                                 else:
                                     send_telegram_to(chat_id, "⚡ Scalping sistemi yükleniyor...")
                             

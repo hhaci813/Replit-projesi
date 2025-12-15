@@ -359,9 +359,12 @@ class ScalpingSystem:
             
             try:
                 entry_time = datetime.strptime(scalp['entry_time'], "%H:%M:%S")
-                entry_datetime = datetime.combine(now.date(), entry_time.time())
+                entry_datetime = TURKEY_TZ.localize(datetime.combine(now.date(), entry_time.time()))
                 minutes_held = (now - entry_datetime).total_seconds() / 60
-            except:
+                if minutes_held < 0:
+                    minutes_held = 0
+            except Exception as e:
+                logger.error(f"Zaman hesaplama hatası: {e}")
                 minutes_held = 0
             
             result = None
