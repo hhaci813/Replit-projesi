@@ -206,7 +206,10 @@ class SignalTracker:
         return msg
     
     def auto_record_signals(self, rising_cryptos: List[Dict], potential_cryptos: List[Dict]):
-        """Otomatik olarak verilen sinyalleri kaydet"""
+        """
+        Otomatik olarak verilen sinyalleri kaydet
+        GELİŞMİŞ FİLTRELEME: Sadece güçlü sinyalleri kaydet
+        """
         today = datetime.now().strftime("%Y-%m-%d")
         
         existing_today = [s for s in self.signals 
@@ -217,25 +220,45 @@ class SignalTracker:
             symbol = crypto.get('symbol', '')
             if symbol and symbol not in existing_symbols:
                 rec = crypto.get('rec', 'BUY')
-                if rec in ['STRONG_BUY', 'BUY']:
-                    self.add_signal(
-                        symbol=symbol,
-                        signal_type=rec,
-                        price=crypto.get('price', 0),
-                        target_percent=15,
-                        stop_percent=-8
-                    )
-                    existing_symbols.append(symbol)
+                pump_score = crypto.get('pump_score', 0)
+                rsi = crypto.get('rsi', 50)
+                channel_position = crypto.get('channel_position', 50)
+                
+                if rec not in ['STRONG_BUY', 'AL']:
+                    continue
+                
+                if pump_score < 50:
+                    continue
+                
+                if rsi > 70:
+                    continue
+                
+                if channel_position > 85:
+                    continue
+                
+                self.add_signal(
+                    symbol=symbol,
+                    signal_type=rec,
+                    price=crypto.get('price', 0),
+                    target_percent=12,
+                    stop_percent=-5
+                )
+                existing_symbols.append(symbol)
         
-        for crypto in potential_cryptos[:3]:
+        for crypto in potential_cryptos[:2]:
             symbol = crypto.get('symbol', '')
             if symbol and symbol not in existing_symbols:
+                score = crypto.get('score', 0)
+                
+                if score < 50:
+                    continue
+                
                 self.add_signal(
                     symbol=symbol,
                     signal_type="POTENTIAL",
                     price=crypto.get('price', 0),
-                    target_percent=crypto.get('potential', 20),
-                    stop_percent=-10
+                    target_percent=min(crypto.get('potential', 15), 20),
+                    stop_percent=-7
                 )
                 existing_symbols.append(symbol)
 

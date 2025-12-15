@@ -169,6 +169,16 @@ try:
 except:
     quantum_v2 = None
 
+try:
+    from pump_validator import PumpValidator, pump_validator
+except:
+    pump_validator = None
+
+try:
+    from advanced_technical import AdvancedTechnical, advanced_tech
+except:
+    advanced_tech = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -301,9 +311,10 @@ def analyze_crypto_detailed(symbol):
         return None
 
 def analyze_rising_cryptos(tickers):
-    """Yükselen kriptolar (TL) - Akıllı risk filtresi ile"""
+    """Yükselen kriptolar (TL) - GELİŞMİŞ PUMP DOĞRULAMA ile"""
     cryptos = []
     seen = set()
+    
     for t in tickers:
         if isinstance(t, dict):
             pair = t.get('pairNormalized', '')
@@ -312,36 +323,90 @@ def analyze_rising_cryptos(tickers):
                 change = float(t.get('dailyPercent', 0))
                 price = float(t.get('last', 0))
                 volume = float(t.get('volume', 0))
+                high = float(t.get('high', 0))
+                low = float(t.get('low', 0))
+                
                 if price > 0 and change > 5:
-                    momentum = 100 if change > 15 else (80 if change > 10 else 60)
-                    if volume > 1000000: momentum += 10
+                    pump_valid = True
+                    pump_score = 50
+                    pump_warnings = []
                     
-                    # YENİ: Yüksek değişim riski filtresi
+                    if pump_validator:
+                        try:
+                            validation = pump_validator.should_send_signal(symbol)
+                            pump_valid = validation.get('should_send', True)
+                            pump_score = validation.get('analysis', {}).get('reliability_score', 50)
+                            pump_warnings = validation.get('analysis', {}).get('warnings', [])
+                        except:
+                            pass
+                    
+                    if high > 0 and low > 0 and high != low:
+                        channel_position = ((price - low) / (high - low)) * 100
+                    else:
+                        channel_position = 50
+                    
+                    prices = get_crypto_history(symbol, 30)
+                    rsi = calculate_rsi(prices) if prices else 50
+                    
                     if change > 30:
                         risk_level = "YUKSEK_RISK"
-                        warning = "⚠️ ÇOK YÜKSEK - Kar satışı gelebilir!"
-                        rec = "DIKKATLI_AL"
-                    elif change > 20:
+                        warning = "🔴 ÇOK YÜKSEK YÜKSELİŞ - TUZAK OLABİLİR!"
+                        rec = "UZAK_DUR"
+                        pump_valid = False
+                    elif change > 20 and channel_position > 85:
+                        risk_level = "YUKSEK_RISK"
+                        warning = "🔴 ZİRVEDE - Düşüş riski yüksek!"
+                        rec = "UZAK_DUR"
+                        pump_valid = False
+                    elif rsi > 75:
                         risk_level = "ORTA_RISK"
-                        warning = "⚡ Hızlı yükseliş - Stop-loss şart!"
-                        rec = "DIKKATLI_AL"
-                    elif change > 15:
+                        warning = "🟠 RSI AŞIRI ALIM - Düzeltme gelebilir"
+                        rec = "DIKKATLI_OL"
+                        pump_valid = False
+                    elif channel_position > 90:
+                        risk_level = "ORTA_RISK"
+                        warning = "🟠 KANAL ZİRVESİNDE - Bekle"
+                        rec = "BEKLE"
+                        pump_valid = False
+                    elif pump_score < 40:
+                        risk_level = "SUPHELI"
+                        warning = "🟠 SAHTE PUMP ŞÜPHESİ!"
+                        rec = "DIKKATLI_OL"
+                        pump_valid = False
+                    elif change > 15 and channel_position < 70:
                         risk_level = "NORMAL"
-                        warning = "📈 Momentum güçlü"
-                        rec = 'STRONG_BUY' if momentum >= 80 else 'BUY'
-                    else:
+                        warning = "🟢 Güçlü momentum, güvenli bölge"
+                        rec = "AL"
+                    elif change > 10 and rsi < 65:
+                        risk_level = "GUVENLI"
+                        warning = "🟢 İyi giriş noktası"
+                        rec = "AL"
+                    elif change > 5 and rsi < 60 and channel_position < 60:
                         risk_level = "GUVENLI"
                         warning = "✅ Güvenli giriş bölgesi"
-                        rec = 'STRONG_BUY' if momentum >= 80 else 'BUY'
+                        rec = "STRONG_BUY"
+                    else:
+                        risk_level = "NORMAL"
+                        warning = "🟡 Normal momentum"
+                        rec = "BEKLE"
+                        pump_valid = False
                     
-                    cryptos.append({
-                        'symbol': symbol, 'change': change, 'price': price,
-                        'momentum': momentum, 'rec': rec,
-                        'risk_level': risk_level, 'warning': warning,
-                        'target': price * (1 + min(change + 25, 100) / 100),
-                        'stop': price * 0.92
-                    })
-    return sorted(cryptos, key=lambda x: x['change'], reverse=True)[:10]
+                    if pump_valid and rec in ['AL', 'STRONG_BUY']:
+                        cryptos.append({
+                            'symbol': symbol, 'change': change, 'price': price,
+                            'momentum': min(100, pump_score + change), 
+                            'rec': rec,
+                            'risk_level': risk_level, 
+                            'warning': warning,
+                            'rsi': rsi,
+                            'channel_position': round(channel_position, 1),
+                            'pump_score': pump_score,
+                            'pump_warnings': pump_warnings[:3],
+                            'target': price * 1.12,
+                            'stop': price * 0.95
+                        })
+    
+    return sorted(cryptos, key=lambda x: x.get('pump_score', 0), reverse=True)[:5]
 
 def analyze_potential_risers(tickers):
     """Yükselecek kriptolar (TL)"""
@@ -1179,6 +1244,17 @@ def run_telegram_bot():
                                         send_telegram_to(chat_id, msg)
                                     else:
                                         send_telegram_to(chat_id, f"❌ {symbol} TL paritesi bulunamadı")
+                            
+                            # /pump [COIN] - Pump doğrulama analizi
+                            elif cmd == '/pump':
+                                symbol = args[0].upper() if args else 'BTC'
+                                if pump_validator:
+                                    send_telegram_to(chat_id, f"🔍 {symbol} pump analizi yapılıyor...")
+                                    analysis = pump_validator.calculate_pump_reliability_score(symbol)
+                                    msg = pump_validator.format_pump_analysis_message(analysis)
+                                    send_telegram_to(chat_id, msg)
+                                else:
+                                    send_telegram_to(chat_id, "🔍 Pump validator yükleniyor...")
                             
                             # /piyasa - Global
                             elif cmd == '/piyasa':
