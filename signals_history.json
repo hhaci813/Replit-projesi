@@ -1468,5 +1468,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 99,
+    "symbol": "MAGIC",
+    "signal_type": "BUY",
+    "entry_price": 4.797,
+    "target_percent": 15,
+    "stop_percent": -8,
+    "target_price": 5.51655,
+    "stop_price": 4.41324,
+    "timestamp": "2025-12-15 11:23",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 100,
+    "symbol": "AUDIO",
+    "signal_type": "POTENTIAL",
+    "entry_price": 1.385,
+    "target_percent": 2.4,
+    "stop_percent": -10,
+    "target_price": 1.41824,
+    "stop_price": 1.2465,
+    "timestamp": "2025-12-15 11:23",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
