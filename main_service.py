@@ -179,6 +179,11 @@ try:
 except:
     advanced_tech = None
 
+try:
+    from scalping_system import ScalpingSystem, scalping_system
+except:
+    scalping_system = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1256,6 +1261,16 @@ def run_telegram_bot():
                                 else:
                                     send_telegram_to(chat_id, "🔍 Pump validator yükleniyor...")
                             
+                            # /scalp veya /15dk - 15 dakika scalping sinyalleri
+                            elif cmd in ['/scalp', '/15dk']:
+                                if scalping_system:
+                                    send_telegram_to(chat_id, "⚡ 15 dakika scalping taraması yapılıyor...")
+                                    opportunities = scalping_system.scan_scalp_opportunities()
+                                    msg = scalping_system.format_scalp_message(opportunities)
+                                    send_telegram_to(chat_id, msg)
+                                else:
+                                    send_telegram_to(chat_id, "⚡ Scalping sistemi yükleniyor...")
+                            
                             # /piyasa - Global
                             elif cmd == '/piyasa':
                                 gs = get_global_market_sentiment()
@@ -2009,8 +2024,13 @@ def main():
     scheduler.add_job(run_full_analysis, IntervalTrigger(hours=2), id='full_analysis', replace_existing=True)
     logger.info("✅ Eski Sistem Aktif: Her 2 saatte bir analiz (grafik yok)")
     
+    # 15 Dakika Scalping Sistemi
+    if scalping_system:
+        scheduler.add_job(scalping_system.run_scalp_scan, IntervalTrigger(minutes=15), id='scalping', replace_existing=True)
+        logger.info("⚡ Scalping Sistemi Aktif: Her 15 dakikada bir tarama")
+    
     scheduler.start()
-    logger.info("✅ Scheduler aktif (Alarm + Eski Sistem)")
+    logger.info("✅ Scheduler aktif (Alarm + Eski Sistem + Scalping)")
     
     # Telegram bot
     bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
