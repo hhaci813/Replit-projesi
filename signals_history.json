@@ -1498,5 +1498,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 101,
+    "symbol": "LUNA",
+    "signal_type": "POTENTIAL",
+    "entry_price": 6.705,
+    "target_percent": 10.3,
+    "stop_percent": -7,
+    "target_price": 7.395615,
+    "stop_price": 6.23565,
+    "timestamp": "2025-12-15 12:16",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]

@@ -1261,15 +1261,40 @@ def run_telegram_bot():
                                 else:
                                     send_telegram_to(chat_id, "🔍 Pump validator yükleniyor...")
                             
-                            # /scalp veya /15dk - 15 dakika scalping sinyalleri
+                            # /scalp veya /15dk - Hybrid scalping sinyalleri
                             elif cmd in ['/scalp', '/15dk']:
                                 if scalping_system:
-                                    send_telegram_to(chat_id, "⚡ 15 dakika scalping taraması yapılıyor...")
+                                    send_telegram_to(chat_id, "⚡ Hybrid scalping taraması yapılıyor...")
                                     opportunities = scalping_system.scan_scalp_opportunities()
                                     msg = scalping_system.format_scalp_message(opportunities)
                                     send_telegram_to(chat_id, msg)
                                 else:
                                     send_telegram_to(chat_id, "⚡ Scalping sistemi yükleniyor...")
+                            
+                            # /scalpistat - Scalping istatistikleri
+                            elif cmd == '/scalpistat':
+                                if scalping_system:
+                                    msg = scalping_system.format_stats_message()
+                                    send_telegram_to(chat_id, msg)
+                                else:
+                                    send_telegram_to(chat_id, "📊 Scalping sistemi yükleniyor...")
+                            
+                            # /scalpkontrol - Aktif pozisyonları kontrol et
+                            elif cmd == '/scalpkontrol':
+                                if scalping_system:
+                                    send_telegram_to(chat_id, "📊 Pozisyonlar kontrol ediliyor...")
+                                    result = scalping_system.check_active_positions()
+                                    if result['active']:
+                                        msg = "📊 <b>AKTİF POZİSYONLAR:</b>\n\n"
+                                        for a in result['active']:
+                                            change = a.get('current_change', 0)
+                                            emoji = "🟢" if change > 0 else "🔴"
+                                            msg += f"{emoji} {a['symbol']}: {change:+.2f}% | {a.get('minutes_held', 0):.0f} dk\n"
+                                        send_telegram_to(chat_id, msg)
+                                    else:
+                                        send_telegram_to(chat_id, "📊 Aktif pozisyon yok")
+                                else:
+                                    send_telegram_to(chat_id, "📊 Scalping sistemi yükleniyor...")
                             
                             # /piyasa - Global
                             elif cmd == '/piyasa':
@@ -2024,13 +2049,16 @@ def main():
     scheduler.add_job(run_full_analysis, IntervalTrigger(hours=2), id='full_analysis', replace_existing=True)
     logger.info("✅ Eski Sistem Aktif: Her 2 saatte bir analiz (grafik yok)")
     
-    # 15 Dakika Scalping Sistemi
+    # Hybrid Scalping Sistemi
     if scalping_system:
-        scheduler.add_job(scalping_system.run_scalp_scan, IntervalTrigger(minutes=15), id='scalping', replace_existing=True)
-        logger.info("⚡ Scalping Sistemi Aktif: Her 15 dakikada bir tarama")
+        # Sinyal tarama: Her 15 dakika
+        scheduler.add_job(scalping_system.run_scalp_scan, IntervalTrigger(minutes=15), id='scalping_scan', replace_existing=True)
+        # Pozisyon kontrolü: Her 5 dakika
+        scheduler.add_job(scalping_system.run_position_check, IntervalTrigger(minutes=5), id='scalping_check', replace_existing=True)
+        logger.info("⚡ Hybrid Scalping Aktif: Sinyal 15dk | Kontrol 5dk | Max 30dk")
     
     scheduler.start()
-    logger.info("✅ Scheduler aktif (Alarm + Eski Sistem + Scalping)")
+    logger.info("✅ Scheduler aktif (Alarm + Eski Sistem + Hybrid Scalping)")
     
     # Telegram bot
     bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
