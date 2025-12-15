@@ -140,7 +140,7 @@ class SuperAnalyzer:
         return {}
     
     def symbol_to_coingecko_id(self, symbol: str) -> str:
-        """Symbol'u CoinGecko ID'ye çevir"""
+        """Symbol'u CoinGecko ID'ye çevir - Dinamik arama ile"""
         mapping = {
             'BTC': 'bitcoin', 'ETH': 'ethereum', 'SOL': 'solana', 'AVAX': 'avalanche-2',
             'XRP': 'ripple', 'DOGE': 'dogecoin', 'ADA': 'cardano', 'DOT': 'polkadot',
@@ -152,9 +152,56 @@ class SuperAnalyzer:
             'MANA': 'decentraland', 'GALA': 'gala', 'APE': 'apecoin', 'CRO': 'crypto-com-chain',
             'EGLD': 'elrond-erd-2', 'THETA': 'theta-token', 'AAVE': 'aave', 'MKR': 'maker',
             'GRT': 'the-graph', 'SNX': 'synthetix-network-token', 'LDO': 'lido-dao',
-            'RNDR': 'render-token', 'INJ': 'injective-protocol', 'SUI': 'sui', 'SEI': 'sei-network'
+            'RNDR': 'render-token', 'INJ': 'injective-protocol', 'SUI': 'sui', 'SEI': 'sei-network',
+            'PEPE': 'pepe', 'WIF': 'dogwifcoin', 'BONK': 'bonk', 'FLOKI': 'floki',
+            'XLM': 'stellar', 'EOS': 'eos', 'XMR': 'monero', 'ETC': 'ethereum-classic',
+            'RUNE': 'thorchain', 'IMX': 'immutable-x', 'FLOW': 'flow', 'KAVA': 'kava',
+            'CAKE': 'pancakeswap-token', '1INCH': '1inch', 'CRV': 'curve-dao-token',
+            'COMP': 'compound-governance-token', 'YFI': 'yearn-finance', 'BAT': 'basic-attention-token',
+            'ZIL': 'zilliqa', 'ENJ': 'enjincoin', 'CHZ': 'chiliz', 'HOT': 'holotoken',
+            'IOTA': 'iota', 'ZEC': 'zcash', 'DASH': 'dash', 'NEO': 'neo', 'WAVES': 'waves',
+            'KSM': 'kusama', 'CELO': 'celo', 'ANKR': 'ankr', 'SKL': 'skale',
+            'STORJ': 'storj', 'OCEAN': 'ocean-protocol', 'AUDIO': 'audius', 'RAY': 'raydium',
+            'ROSE': 'oasis-network', 'ONE': 'harmony', 'ZRX': '0x', 'BAL': 'balancer',
+            'SUSHI': 'sushi', 'DYDX': 'dydx', 'GMX': 'gmx', 'ENS': 'ethereum-name-service',
+            'RPL': 'rocket-pool', 'SSV': 'ssv-network', 'BLUR': 'blur', 'MAGIC': 'magic',
+            'CFX': 'conflux-token', 'AGIX': 'singularitynet', 'FET': 'fetch-ai', 'RNDR': 'render-token',
+            'WLD': 'worldcoin-wld', 'ARK': 'ark', 'JASMY': 'jasmy', 'MASK': 'mask-network',
+            'CELR': 'celer-network', 'BAND': 'band-protocol', 'API3': 'api3', 'TWT': 'trust-wallet-token',
+            'STX': 'blockstack', 'MINA': 'mina-protocol', 'QTUM': 'qtum', 'OMG': 'omisego',
+            'ICX': 'icon', 'KLAY': 'klay-token', 'LUNC': 'terra-luna', 'LUNA': 'terra-luna-2',
+            'USTC': 'terrausd', 'BSV': 'bitcoin-cash-sv', 'BTT': 'bittorrent', 'WIN': 'wink',
+            'SXP': 'swipe', 'RSR': 'reserve-rights-token', 'RVN': 'ravencoin', 'SC': 'siacoin',
+            'HIVE': 'hive', 'STEEM': 'steem', 'DGB': 'digibyte', 'XEM': 'nem', 'XTZ': 'tezos'
         }
-        return mapping.get(symbol.upper(), symbol.lower())
+        
+        if symbol.upper() in mapping:
+            return mapping[symbol.upper()]
+        
+        return self.search_coingecko_id(symbol)
+    
+    def search_coingecko_id(self, symbol: str) -> str:
+        """CoinGecko'da symbol ara ve ID bul"""
+        cache_key = f"cg_id_{symbol.upper()}"
+        if cache_key in self.cache:
+            return self.cache[cache_key]['data']
+        
+        try:
+            resp = requests.get(
+                f"https://api.coingecko.com/api/v3/search?query={symbol}",
+                timeout=10
+            )
+            if resp.status_code == 200:
+                coins = resp.json().get('coins', [])
+                for coin in coins:
+                    if coin.get('symbol', '').upper() == symbol.upper():
+                        coin_id = coin.get('id', symbol.lower())
+                        self.cache[cache_key] = {'data': coin_id, 'time': time.time()}
+                        return coin_id
+        except:
+            pass
+        
+        return symbol.lower()
     
     def get_coingecko_coin_data(self, symbol: str) -> Dict:
         """CoinGecko tek coin detayı"""
