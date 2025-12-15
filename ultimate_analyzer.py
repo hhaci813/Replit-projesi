@@ -790,16 +790,26 @@ class UltimateAnalyzer:
         return report
     
     def scan_all_coins(self) -> List[Dict]:
-        major_coins = [
+        all_coins = [
             'BTC', 'ETH', 'SOL', 'XRP', 'DOGE', 'ADA', 'AVAX', 'DOT',
             'LINK', 'MATIC', 'UNI', 'ATOM', 'LTC', 'NEAR', 'APT', 'ARB',
             'OP', 'SUI', 'SEI', 'INJ', 'FIL', 'HBAR', 'VET', 'ALGO',
             'FTM', 'SAND', 'MANA', 'GALA', 'AAVE', 'MKR', 'GRT', 'RNDR',
-            'PEPE', 'WIF', 'BONK', 'FLOKI', 'SHIB', 'APE', 'CHZ', 'ENJ'
+            'PEPE', 'WIF', 'BONK', 'FLOKI', 'SHIB', 'APE', 'CHZ', 'ENJ',
+            'BCH', 'TRX', 'XLM', 'EOS', 'XMR', 'ETC', 'IMX', 'FLOW',
+            'KAVA', 'CAKE', 'CRV', 'YFI', 'BAT', 'ZIL', 'IOTA', 'ZEC',
+            'DASH', 'NEO', 'WAVES', 'KSM', 'CELO', 'ANKR', 'STORJ',
+            'OCEAN', 'FET', 'AGIX', 'WLD', 'STX', 'MINA', 'XTZ', 'THETA',
+            'EGLD', 'RUNE', 'COMP', 'SNX', 'LDO', 'GMX', 'DYDX', 'ENS',
+            'RPL', 'SSV', 'BLUR', 'MAGIC', 'CFX', 'JASMY', 'MASK',
+            'CELR', 'BAND', 'API3', 'TWT', 'QTUM', 'OMG', 'ICX', 'KLAY',
+            'LUNC', 'LUNA', 'BTT', 'WIN', 'SXP', 'RSR', 'RVN', 'SC',
+            'HIVE', 'STEEM', 'DGB', 'XEM', 'HOT', 'ONE', 'ZRX', 'BAL',
+            'SUSHI', 'RAY', 'ROSE', 'SKL', 'AUDIO', 'ICP'
         ]
         
         results = []
-        for coin in major_coins:
+        for coin in all_coins:
             try:
                 analysis = self.ultimate_analyze(coin)
                 if analysis.get('final_score'):

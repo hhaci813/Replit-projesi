@@ -1415,7 +1415,7 @@ def run_telegram_bot():
                             # /tarama - Tüm coinleri tara
                             elif cmd == '/tarama':
                                 if ultimate_analyzer:
-                                    send_telegram_to(chat_id, "🔍 40 coin taranıyor... (1-2 dk)")
+                                    send_telegram_to(chat_id, "🔍 100+ coin taranıyor... (2-3 dk)")
                                     try:
                                         results = ultimate_analyzer.scan_all_coins()
                                         msg = "🏆 <b>EN İYİ FIRSATLAR</b>\n━━━━━━━━━━━━━━\n\n"
