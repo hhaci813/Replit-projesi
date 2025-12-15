@@ -600,6 +600,72 @@ def get_usd_try_rate():
         pass
     return 34.5
 
+def run_pump_scan():
+    """PUMP ALERT - Her 10 dakikada ani hareketleri tara"""
+    logger.info("🔍 Pump taraması başlıyor...")
+    
+    try:
+        tickers = get_btcturk_data()
+        pumps = []
+        
+        for t in tickers:
+            pair = t.get('pairNormalized', '')
+            if '_TRY' not in pair:
+                continue
+            
+            symbol = pair.split('_')[0]
+            daily_change = float(t.get('dailyPercent', 0))
+            volume = float(t.get('volume', 0))
+            price = float(t.get('last', 0))
+            high = float(t.get('high', 0))
+            low = float(t.get('low', 0))
+            
+            # PUMP KRİTERLERİ
+            # 1. Günlük değişim %8+ (güçlü hareket)
+            # 2. Hacim 500K TL+ (likidite)
+            if daily_change >= 8 and volume >= 500000:
+                # Pump validator ile doğrula
+                if pump_validator:
+                    result = pump_validator.validate_pump(symbol)
+                    verdict = result.get('verdict', 'UNKNOWN')
+                    score = result.get('total_score', 0)
+                    
+                    pumps.append({
+                        'symbol': symbol,
+                        'price': price,
+                        'change': daily_change,
+                        'volume': volume,
+                        'verdict': verdict,
+                        'score': score,
+                        'high': high,
+                        'low': low
+                    })
+        
+        if pumps:
+            now = get_turkey_time()
+            msg = f"""🚨 <b>PUMP ALERT!</b>
+🕐 {now.strftime('%H:%M:%S')}
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+"""
+            for p in sorted(pumps, key=lambda x: x['change'], reverse=True)[:5]:
+                emoji = "🟢" if p['verdict'] == 'GERCEK_PUMP' else "🟡" if p['verdict'] == 'BELIRSIZ' else "🔴"
+                msg += f"""{emoji} <b>{p['symbol']}</b>
+💰 ₺{p['price']:,.6f} | +{p['change']:.1f}%
+📊 Skor: {p['score']}/100 | {p['verdict']}
+
+"""
+            msg += """⚠️ <i>Yüksek değişim = Yüksek risk!
+/pump COIN ile detaylı analiz yapın.</i>"""
+            
+            send_telegram_message(msg)
+            logger.info(f"🚨 {len(pumps)} pump tespit edildi!")
+        else:
+            logger.info("✅ Pump yok - piyasa sakin")
+            
+    except Exception as e:
+        logger.error(f"Pump scan hatası: {e}")
+
 def run_full_analysis():
     """TEK MESAJ - GELİŞMİŞ FORMAT"""
     logger.info("🔄 ULTRA Tam analiz başlıyor...")
@@ -2061,16 +2127,13 @@ def main():
     scheduler.add_job(run_full_analysis, IntervalTrigger(hours=2), id='full_analysis', replace_existing=True)
     logger.info("✅ Eski Sistem Aktif: Her 2 saatte bir analiz (grafik yok)")
     
-    # Hybrid Scalping Sistemi
-    if scalping_system:
-        # Sinyal tarama: Her 15 dakika
-        scheduler.add_job(scalping_system.run_scalp_scan, IntervalTrigger(minutes=15), id='scalping_scan', replace_existing=True)
-        # Pozisyon kontrolü: Her 5 dakika
-        scheduler.add_job(scalping_system.run_position_check, IntervalTrigger(minutes=5), id='scalping_check', replace_existing=True)
-        logger.info("⚡ Hybrid Scalping Aktif: Sinyal 15dk | Kontrol 5dk | Max 30dk")
+    # PUMP ALERT SİSTEMİ - Otomatik Tarama (Scalping kapatıldı)
+    if pump_validator:
+        scheduler.add_job(run_pump_scan, IntervalTrigger(minutes=10), id='pump_scan', replace_existing=True)
+        logger.info("🚀 Pump Alert Aktif: Her 10 dakikada ani hareketler taranıyor")
     
     scheduler.start()
-    logger.info("✅ Scheduler aktif (Alarm + Eski Sistem + Hybrid Scalping)")
+    logger.info("✅ Scheduler aktif (Alarm + Günlük Analiz + Pump Alert)")
     
     # Telegram bot
     bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)
