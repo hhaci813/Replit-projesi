@@ -534,10 +534,10 @@
     "target_price": 12.0030284,
     "stop_price": 10.67463,
     "timestamp": "2025-12-10 13:19",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "WIN",
+    "result": "HEDEF",
+    "result_percent": 1.28,
+    "closed_at": "2025-12-15 11:17"
   },
   {
     "id": 37,
