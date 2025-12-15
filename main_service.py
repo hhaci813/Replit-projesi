@@ -6,7 +6,14 @@ import requests
 import yfinance as yf
 import numpy as np
 from datetime import datetime
+import pytz
 from flask import Flask, jsonify, request
+
+TURKEY_TZ = pytz.timezone('Europe/Istanbul')
+
+def get_turkey_time():
+    """Türkiye saatini döndür"""
+    return datetime.now(TURKEY_TZ)
 from flask_cors import CORS
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
@@ -611,7 +618,7 @@ def run_full_analysis():
     if alert_system:
         alert_system.check_alerts()
     
-    now = datetime.now()
+    now = get_turkey_time()
     
     # BTC fiyatı
     btc_tl = 0
@@ -1874,7 +1881,7 @@ def api_analysis():
         'potential': analyze_potential_risers(tickers), 
         'btc': get_btc_technical_analysis(), 
         'global': get_global_market_sentiment(),
-        'timestamp': datetime.now().isoformat()
+        'timestamp': get_turkey_time().isoformat()
     })
 
 @app.route('/api/potential')
@@ -2006,7 +2013,7 @@ def api_status():
             'trade_history': trade_hist is not None
         },
         'total_modules': 15,
-        'timestamp': datetime.now().isoformat()
+        'timestamp': get_turkey_time().isoformat()
     })
 
 # ===================== MAIN =====================

@@ -11,6 +11,13 @@ import logging
 import time
 import os
 import json
+import pytz
+
+TURKEY_TZ = pytz.timezone('Europe/Istanbul')
+
+def get_turkey_time():
+    """Türkiye saatini döndür"""
+    return datetime.now(TURKEY_TZ)
 
 logger = logging.getLogger(__name__)
 
@@ -286,7 +293,7 @@ class ScalpingSystem:
             'stop_pct': stop_pct,
             'signals': signals,
             'warnings': warnings,
-            'entry_time': datetime.now().strftime("%H:%M:%S"),
+            'entry_time': get_turkey_time().strftime("%H:%M:%S"),
             'max_hold_time': 30
         }
     
@@ -302,7 +309,7 @@ class ScalpingSystem:
         
         opportunities.sort(key=lambda x: x['scalp_score'], reverse=True)
         
-        self.last_scan_time = datetime.now()
+        self.last_scan_time = get_turkey_time()
         
         return opportunities[:5]
     
@@ -336,7 +343,7 @@ class ScalpingSystem:
         still_active = []
         alerts = []
         
-        now = datetime.now()
+        now = get_turkey_time()
         
         for scalp in self.active_scalps:
             symbol = scalp['symbol']
@@ -405,7 +412,7 @@ class ScalpingSystem:
     
     def send_position_alert(self, alerts: List[str], completed: List[Dict], active: List[Dict]):
         """Pozisyon güncellemesi gönder"""
-        now = datetime.now()
+        now = get_turkey_time()
         
         msg = f"""📊 <b>SCALP POZİSYON GÜNCELLEMESİ</b>
 🕐 {now.strftime('%H:%M:%S')}
@@ -444,7 +451,7 @@ class ScalpingSystem:
     
     def format_scalp_message(self, opportunities: List[Dict]) -> str:
         """Telegram için scalp mesajı oluştur"""
-        now = datetime.now()
+        now = get_turkey_time()
         
         next_scan = (now + timedelta(minutes=15)).strftime('%H:%M')
         next_check = (now + timedelta(minutes=5)).strftime('%H:%M')
