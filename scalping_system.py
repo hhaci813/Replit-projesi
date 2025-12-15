@@ -446,8 +446,12 @@ class ScalpingSystem:
         """Telegram için scalp mesajı oluştur"""
         now = datetime.now()
         
+        next_scan = (now + timedelta(minutes=15)).strftime('%H:%M')
+        next_check = (now + timedelta(minutes=5)).strftime('%H:%M')
+        
         msg = f"""⚡ <b>HYBRİD SCALPING SİNYALLERİ</b>
-🕐 {now.strftime('%H:%M:%S')} | Kontrol: 5dk | Max: 30dk
+🕐 {now.strftime('%H:%M:%S')}
+📊 Sonraki tarama: {next_scan} | Kontrol: {next_check}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 """
