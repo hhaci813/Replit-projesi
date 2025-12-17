@@ -54,10 +54,10 @@
     "target_price": 0.02298555,
     "stop_price": 0.0197019,
     "timestamp": "2025-12-09 14:01",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "EXPIRED",
+    "result": "SÜRE DOLDU",
+    "result_percent": -6.18,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 5,
@@ -84,10 +84,10 @@
     "target_price": 26.28087,
     "stop_price": 21.483,
     "timestamp": "2025-12-09 14:02",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "EXPIRED",
+    "result": "SÜRE DOLDU",
+    "result_percent": -5.89,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 7,
@@ -159,10 +159,10 @@
     "target_price": 18.695635000000003,
     "stop_price": 15.507900000000001,
     "timestamp": "2025-12-09 15:54",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "EXPIRED",
+    "result": "SÜRE DOLDU",
+    "result_percent": -10.4,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 12,
@@ -249,10 +249,10 @@
     "target_price": 39.655,
     "stop_price": 34.65,
     "timestamp": "2025-12-09 16:57",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "EXPIRED",
+    "result": "SÜRE DOLDU",
+    "result_percent": -9.01,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 18,
@@ -264,10 +264,10 @@
     "target_price": 28.004227,
     "stop_price": 23.4891,
     "timestamp": "2025-12-09 17:10",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "EXPIRED",
+    "result": "SÜRE DOLDU",
+    "result_percent": -7.66,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 19,
@@ -459,10 +459,10 @@
     "target_price": 0.00038211796,
     "stop_price": 0.000326907,
     "timestamp": "2025-12-10 08:20",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "EXPIRED",
+    "result": "SÜRE DOLDU",
+    "result_percent": -8.82,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 32,
@@ -759,10 +759,10 @@
     "target_price": 11.604845999999998,
     "stop_price": 9.3087,
     "timestamp": "2025-12-11 11:29",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -10.35,
+    "closed_at": "2025-12-15 17:43"
   },
   {
     "id": 52,
@@ -804,10 +804,10 @@
     "target_price": 2.262,
     "stop_price": 1.8,
     "timestamp": "2025-12-11 14:49",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -11.35,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 55,
@@ -909,10 +909,10 @@
     "target_price": 2.0094,
     "stop_price": 1.773,
     "timestamp": "2025-12-12 10:33",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -10.0,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 62,
@@ -1074,10 +1074,10 @@
     "target_price": 1.433487,
     "stop_price": 1.1979,
     "timestamp": "2025-12-12 18:52",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -10.59,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 73,
@@ -1149,10 +1149,10 @@
     "target_price": 6.500071,
     "stop_price": 5.3523000000000005,
     "timestamp": "2025-12-13 10:39",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -10.02,
+    "closed_at": "2025-12-15 23:18"
   },
   {
     "id": 78,
@@ -1359,10 +1359,10 @@
     "target_price": 1.3494599999999999,
     "stop_price": 1.1907,
     "timestamp": "2025-12-14 08:59",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -10.05,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 92,
@@ -1479,10 +1479,10 @@
     "target_price": 5.51655,
     "stop_price": 4.41324,
     "timestamp": "2025-12-15 11:23",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -8.86,
+    "closed_at": "2025-12-17 09:23"
   },
   {
     "id": 100,
@@ -1569,6 +1569,96 @@
     "target_price": 3.792516,
     "stop_price": 3.2298899999999997,
     "timestamp": "2025-12-15 17:07",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 106,
+    "symbol": "RLC",
+    "signal_type": "POTENTIAL",
+    "entry_price": 28.926,
+    "target_percent": 13.7,
+    "stop_percent": -7,
+    "target_price": 32.888861999999996,
+    "stop_price": 26.901179999999997,
+    "timestamp": "2025-12-15 23:18",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 107,
+    "symbol": "HOT",
+    "signal_type": "POTENTIAL",
+    "entry_price": 0.020536,
+    "target_percent": 16.9,
+    "stop_percent": -7,
+    "target_price": 0.024006584,
+    "stop_price": 0.019098479999999998,
+    "timestamp": "2025-12-15 23:18",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 108,
+    "symbol": "OM",
+    "signal_type": "AL",
+    "entry_price": 3.32,
+    "target_percent": 12,
+    "stop_percent": -5,
+    "target_price": 3.7184000000000004,
+    "stop_price": 3.154,
+    "timestamp": "2025-12-17 09:23",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 109,
+    "symbol": "ETHW",
+    "signal_type": "STRONG_BUY",
+    "entry_price": 22.79,
+    "target_percent": 12,
+    "stop_percent": -5,
+    "target_price": 25.524800000000003,
+    "stop_price": 21.650499999999997,
+    "timestamp": "2025-12-17 09:23",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 110,
+    "symbol": "EOS",
+    "signal_type": "POTENTIAL",
+    "entry_price": 6.843,
+    "target_percent": 12.4,
+    "stop_percent": -7,
+    "target_price": 7.6915320000000005,
+    "stop_price": 6.363989999999999,
+    "timestamp": "2025-12-17 09:23",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 111,
+    "symbol": "TRX",
+    "signal_type": "POTENTIAL",
+    "entry_price": 11.9138,
+    "target_percent": 1.1,
+    "stop_percent": -7,
+    "target_price": 12.044851799999998,
+    "stop_price": 11.079834,
+    "timestamp": "2025-12-17 09:23",
     "status": "ACTIVE",
     "result": null,
     "result_percent": null,
