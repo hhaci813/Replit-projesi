@@ -84,38 +84,47 @@ class StockAnalyzer:
             if len(hist) < 20:
                 return {}
             
-            close = hist['Close'].values
+            close = hist['Close'].values.flatten().astype(float)
             
-            # RSI
-            delta = np.diff(close)
-            gain = np.where(delta > 0, delta, 0)
-            loss = np.where(delta < 0, -delta, 0)
-            avg_gain = np.mean(gain[-14:])
-            avg_loss = np.mean(loss[-14:])
-            rs = avg_gain / avg_loss if avg_loss != 0 else 100
-            rsi = 100 - (100 / (1 + rs))
+            # RSI (güvenli hesaplama)
+            if len(close) >= 14:
+                delta = np.diff(close)
+                gain = np.maximum(delta, 0)
+                loss = np.maximum(-delta, 0)
+                
+                avg_gain = np.mean(gain[-14:]) if len(gain) >= 14 else np.mean(gain)
+                avg_loss = np.mean(loss[-14:]) if len(loss) >= 14 else np.mean(loss)
+                
+                rs = avg_gain / avg_loss if avg_loss > 0 else 100
+                rsi = 100 - (100 / (1 + rs))
+            else:
+                rsi = 50
             
             # Moving Averages
-            sma20 = np.mean(close[-20:])
+            sma20 = np.mean(close[-20:]) if len(close) >= 20 else np.mean(close)
             sma50 = np.mean(close[-50:]) if len(close) >= 50 else sma20
             
-            # MACD
-            ema12 = self._ema(close, 12)
-            ema26 = self._ema(close, 26)
-            macd = ema12 - ema26
-            signal = self._ema(np.array([ema12 - ema26]), 9)
+            # MACD (simplified)
+            if len(close) >= 26:
+                ema12 = np.mean(close[-12:])
+                ema26 = np.mean(close[-26:])
+                macd = ema12 - ema26
+                signal_val = np.mean(close[-9:])
+            else:
+                macd = 0
+                signal_val = 0
             
             return {
                 'rsi': round(float(rsi), 2),
                 'sma20': round(float(sma20), 4),
                 'sma50': round(float(sma50), 4),
-                'macd': round(float(macd), 4),
-                'signal_line': round(float(signal[-1]) if len(signal) > 0 else 0, 4),
+                'macd': round(float(macd), 6),
+                'signal_line': round(float(signal_val), 6),
                 'price': round(float(close[-1]), 4)
             }
         except Exception as e:
             logger.error(f"Teknik İndikatör hatası ({symbol}): {e}")
-            return {}
+            return {'rsi': 50, 'sma20': 0, 'sma50': 0, 'macd': 0, 'signal_line': 0, 'price': 0}
     
     def _ema(self, data: np.ndarray, period: int) -> np.ndarray:
         """Exponential Moving Average hesaplayıcı"""
@@ -262,17 +271,29 @@ class StockAnalyzer:
             else:
                 signal = 'STRONG_SELL'
             
+            # Convert numpy types to Python types
+            if ml_pred:
+                ml_pred = {
+                    'current_price': float(ml_pred.get('current_price', 0)),
+                    'predicted_price': float(ml_pred.get('predicted_price', 0)),
+                    'change_percent': float(ml_pred.get('change_percent', 0)),
+                    'confidence': float(ml_pred.get('confidence', 0)),
+                    'signal': str(ml_pred.get('signal', 'N/A')),
+                    'timeframe': str(ml_pred.get('timeframe', '7 gün')),
+                    'ml_model': str(ml_pred.get('ml_model', 'Enhanced'))
+                }
+            
             return {
                 'symbol': symbol,
-                'current_price': price_data['current'],
-                'change_percent': price_data.get('change', 0),
-                'final_score': round(final_score, 2),
-                'signal': signal,
-                'technical_score': round(tech_score, 2),
+                'current_price': float(price_data['current']),
+                'change_percent': float(price_data.get('change', 0)),
+                'final_score': float(round(final_score, 2)),
+                'signal': str(signal),
+                'technical_score': float(round(tech_score, 2)),
                 'ml_prediction': ml_pred,
-                'news_sentiment': news['sentiment'],
-                'news_score': news['score'],
-                'volatility_score': round(volatility_score, 2),
+                'news_sentiment': str(news['sentiment']),
+                'news_score': float(news['score']),
+                'volatility_score': float(round(volatility_score, 2)),
                 'trend': 'YÜKSELEN' if price_data.get('change', 0) > 0 else 'DÜŞEN',
                 'recommendation': 'Satın Alabilirsiniz' if signal in ['BUY', 'STRONG_BUY'] else 
                                 'Elden Çıkarmayı Düşünün' if signal in ['SELL', 'STRONG_SELL'] else
@@ -284,16 +305,20 @@ class StockAnalyzer:
             return {}
     
     def scan_all_stocks(self) -> List[Dict]:
-        """Tüm Borsa İstanbul hisselerini tara, en iyileri bul"""
+        """En popüler 15 Borsa İstanbul hissesini tara"""
+        # Top hisseler (en likit + güvenli veri)
+        top_stocks = ['GARAN', 'ASELS', 'AKBNK', 'ISCTR', 'KCHOL', 'TUPRS', 
+                      'ARCLK', 'HALKB', 'THYAO', 'PETKM', 'SISE', 'AEFES', 'ZOREN', 'DOHOL', 'ENKAI']
+        
         results = []
-        for symbol in list(self.bist_codes.keys())[:50]:
+        for symbol in top_stocks:
             try:
                 analysis = self.ultimate_analyze(symbol)
                 if analysis.get('final_score'):
                     results.append(analysis)
-            except:
-                pass
-            time.sleep(0.2)
+            except Exception as e:
+                logger.debug(f"{symbol} analizi başarısız: {e}")
+            time.sleep(0.3)
         
         # Skora göre sırala
         return sorted(results, key=lambda x: x.get('final_score', 0), reverse=True)
