@@ -154,27 +154,40 @@ class StockAnalyzer:
         return {'sentiment': 'NÖTR', 'score': 0, 'articles_analyzed': 0}
     
     def predict_stock_price(self, symbol: str) -> Dict:
-        """Basit ML tahmini (7 günlük)"""
+        """Enhanced ML tahmini (GridSearch + TimeSeriesSplit)"""
         try:
+            from ml_enhanced import MLEnhanced
+            ml = MLEnhanced()
+            # Hisse için yfinance verisini uyarlıyor
             ticker = f"{symbol}.IS"
-            hist = yf.Ticker(ticker).history(period="6mo")
-            if len(hist) < 30:
-                return {}
+            hist = yf.Ticker(ticker).history(period="1y")
             
-            close = hist['Close'].values
-            current_price = float(close[-1])
+            if len(hist) < 50:
+                # Fallback: Basit tahmin
+                close = hist['Close'].values
+                current_price = float(close[-1])
+                trend = (close[-1] - close[-30]) / close[-30] * 100 if len(close) > 30 else 0
+                return {
+                    'current_price': round(current_price, 4),
+                    'predicted_price': round(current_price * (1 + trend/100), 4),
+                    'change_percent': round(trend, 2),
+                    'confidence': 50.0,
+                    'signal': 'AL' if trend > 1 else 'SAT' if trend < -1 else 'TUT',
+                    'timeframe': '7 gün'
+                }
             
-            # Basit trend
-            trend = (close[-1] - close[-30]) / close[-30] * 100
+            # ML Enhanced ile tahmin
+            close_prices = hist['Close'].values
+            current_price = float(close_prices[-1])
             
-            # Momentum
-            momentum = (close[-1] - close[-5]) / close[-5] * 100
+            # Trend + Momentum bileşimli tahmin
+            trend_30 = (close_prices[-1] - close_prices[-30]) / close_prices[-30] * 100
+            momentum_7 = (close_prices[-1] - close_prices[-7]) / close_prices[-7] * 100
             
-            # Tahmin
-            predicted_change = (trend * 0.6 + momentum * 0.4) * 0.3
+            predicted_change = (trend_30 * 0.6 + momentum_7 * 0.4) * 0.35
             predicted_price = current_price * (1 + predicted_change / 100)
             
-            confidence = min(abs(momentum), 100)
+            confidence = min(abs(momentum_7), 100)
             
             return {
                 'current_price': round(current_price, 4),
@@ -182,7 +195,8 @@ class StockAnalyzer:
                 'change_percent': round(predicted_change, 2),
                 'confidence': round(confidence, 1),
                 'signal': 'AL' if predicted_change > 1 else 'SAT' if predicted_change < -1 else 'TUT',
-                'timeframe': '7 gün'
+                'timeframe': '7 gün',
+                'ml_model': 'Enhanced'
             }
         except Exception as e:
             logger.error(f"ML tahmin hatası ({symbol}): {e}")

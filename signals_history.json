@@ -519,10 +519,10 @@
     "target_price": 91.94335199999999,
     "stop_price": 79.0344,
     "timestamp": "2025-12-10 13:19",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "EXPIRED",
+    "result": "SÜRE DOLDU",
+    "result_percent": -8.31,
+    "closed_at": "2025-12-17 17:18"
   },
   {
     "id": 36,
@@ -969,10 +969,10 @@
     "target_price": 22.694074000000004,
     "stop_price": 19.160100000000003,
     "timestamp": "2025-12-12 11:25",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -10.79,
+    "closed_at": "2025-12-17 17:18"
   },
   {
     "id": 66,
@@ -984,10 +984,10 @@
     "target_price": 0.3245979,
     "stop_price": 0.28557000000000005,
     "timestamp": "2025-12-12 11:25",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -12.8,
+    "closed_at": "2025-12-17 17:18"
   },
   {
     "id": 67,
@@ -1254,10 +1254,10 @@
     "target_price": 0.23500359999999998,
     "stop_price": 0.20124,
     "timestamp": "2025-12-13 19:05",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -12.08,
+    "closed_at": "2025-12-17 17:18"
   },
   {
     "id": 85,
@@ -1284,10 +1284,10 @@
     "target_price": 1.4603939999999997,
     "stop_price": 1.2798,
     "timestamp": "2025-12-13 20:00",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -11.67,
+    "closed_at": "2025-12-17 17:18"
   },
   {
     "id": 87,
@@ -1344,10 +1344,10 @@
     "target_price": 0.3177876,
     "stop_price": 0.28206000000000003,
     "timestamp": "2025-12-14 08:59",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -11.71,
+    "closed_at": "2025-12-17 17:18"
   },
   {
     "id": 91,
@@ -1614,10 +1614,10 @@
     "target_price": 3.7184000000000004,
     "stop_price": 3.154,
     "timestamp": "2025-12-17 09:23",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -5.42,
+    "closed_at": "2025-12-17 17:18"
   },
   {
     "id": 109,

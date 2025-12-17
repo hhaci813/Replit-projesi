@@ -208,6 +208,12 @@ try:
 except:
     stock_analyzer = None
 
+try:
+    from ml_enhanced import MLEnhanced
+    ml_enhanced = MLEnhanced()
+except:
+    ml_enhanced = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
