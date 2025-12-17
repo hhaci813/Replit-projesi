@@ -26,7 +26,7 @@ The Akıllı Yatırım Asistanı is built on a modular and robust architecture c
 - **Real-Time Data & Analysis:** Integrates BTCTurk for cryptocurrencies and YFinance for stock market data.
 - **ML Forecasting:** Utilizes LSTM and an ensemble of models (Random Forest, Gradient Boosting, Neural Networks) for price prediction.
 - **Technical Signals:** Calculates and interprets RSI, MACD, Moving Averages, Fibonacci, Ichimoku Cloud, and Volume Profile.
-- **Backtesting Engine:** Supports historical strategy analysis.
+- **Backtesting Engine:** Supports historical strategy analysis with RSI, MA Crossover, and Bollinger strategies.
 - **Pump Detection:** Identifies volume and price spikes.
 - **Sentiment Analysis:** Employs TextBlob with NewsAPI for news sentiment and deep research analyzing social media (Twitter, Reddit) for market consensus and expert opinions. Includes Fear & Greed Index and Funding Rates.
 - **Global Markets Analyzer:** Monitors major world indices and sectors with real-time technical analysis.
@@ -35,6 +35,13 @@ The Akıllı Yatırım Asistanı is built on a modular and robust architecture c
 - **Enhanced Auto System:** Orchestrates all automated features, managing schedules and reporting status.
 - **PRO Analysis System:** Combines 8 advanced modules for a comprehensive score (0-10) considering RSI, MACD, Bollinger Bands, Volume Spike, Fear & Greed, BTC Correlation, Whale Tracking, and Social Sentiment.
 - **User Management:** Includes features for portfolio tracking, watchlist management, risk profiling, and trade history.
+
+### Stock Market Modules (New - December 2024)
+- **Stock News Collector (stock_news_collector.py):** RSS-based news collection from BigPara, BloombergHT, Mynet Finans, Dünya Gazetesi with Turkish sentiment analysis.
+- **Macro Economic Data (stock_macro_data.py):** USD/TRY, EUR/TRY, GBP/TRY exchange rates, gold prices (ons/gram), BIST indices (XU100, XU030, XBANK, XUSIN), TCMB policy rates.
+- **Stock Portfolio Simulator (stock_portfolio.py):** Virtual trading with 100,000 TL starting capital, buy/sell stocks, stop-loss/take-profit, trade history, P&L tracking.
+- **Stock Backtesting Engine (stock_backtest.py):** Historical strategy testing with RSI, MA Crossover, Bollinger Bands strategies. Calculates win rate, Sharpe ratio, max drawdown, profit factor.
+- **Turkish Currency Parser:** Robust parsing for Turkish number formats (5.000 = 5000, 5,50 = 5.5, 10.000,50 = 10000.5).
 
 ### Feature Specifications
 - **Data Sources:** Supports 169+ cryptocurrencies, 50+ stocks, 10+ global indices, and 10 market sectors.
@@ -47,11 +54,31 @@ The Akıllı Yatırım Asistanı is built on a modular and robust architecture c
 - **Scalability:** Designed to handle multiple data sources and analytical tasks concurrently.
 - **Robustness:** Includes error handling and a data validation layer.
 
+### Stock Market Telegram Commands
+- `/ultimate-hisse [SYMBOL]` - Full technical analysis for a stock
+- `/tarama-hisse` - Scan top 15 BIST stocks
+- `/hisse-haber [SYMBOL]` - News sentiment analysis for stock/market
+- `/makro` - Macro economic data (FX, gold, BIST indices, rates)
+- `/hisse-portfoy` - Virtual portfolio status
+- `/hisse-al [SYMBOL] [TL]` - Buy stock (virtual) - supports Turkish formats
+- `/hisse-sat [SYMBOL] [%]` - Sell stock (virtual)
+- `/hisse-backtest [SYMBOL]` - Run backtesting strategies
+- `/hisse-sifirla` - Reset virtual portfolio
+
 ## External Dependencies
 - **BTCTurk:** Real-time cryptocurrency data.
-- **YFinance:** Real-time stock market data.
+- **YFinance:** Real-time stock market data and BIST stocks.
 - **Telegram Bot API:** For real-time alerts, portfolio tracking, forecasts, and daily recommendations.
 - **NewsAPI:** For fetching news articles for sentiment and expert opinion analysis.
+- **RSS Feeds:** BigPara, BloombergHT, Mynet Finans, Dünya Gazetesi for stock news.
 - **Gmail SMTP:** For sending daily market summary email digests.
 - **Discord Bot API:** For real-time alerts and notifications.
 - **Plotly:** For interactive data visualization in the web dashboard.
+
+## Recent Changes (December 2024)
+- Added stock_news_collector.py - RSS-based Turkish financial news with sentiment
+- Added stock_macro_data.py - Macro economic data module
+- Added stock_portfolio.py - Virtual stock trading simulator
+- Added stock_backtest.py - Strategy backtesting engine
+- Implemented robust Turkish currency parsing (5.000 / 5,50 / 10.000,50)
+- Added 8 new Telegram commands for stock market analysis
