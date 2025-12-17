@@ -1663,5 +1663,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 112,
+    "symbol": "XRP",
+    "signal_type": "POTENTIAL",
+    "entry_price": 80.383,
+    "target_percent": 5.4,
+    "stop_percent": -7,
+    "target_price": 84.723682,
+    "stop_price": 74.75618999999999,
+    "timestamp": "2025-12-17 17:18",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 113,
+    "symbol": "ENJ",
+    "signal_type": "POTENTIAL",
+    "entry_price": 1.173,
+    "target_percent": 4.9,
+    "stop_percent": -7,
+    "target_price": 1.230477,
+    "stop_price": 1.09089,
+    "timestamp": "2025-12-17 17:18",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]

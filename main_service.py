@@ -202,6 +202,12 @@ try:
 except:
     ultimate_analyzer = None
 
+try:
+    from stock_analyzer import StockAnalyzer
+    stock_analyzer = StockAnalyzer()
+except:
+    stock_analyzer = None
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1428,6 +1434,50 @@ def run_telegram_bot():
                                         send_telegram_to(chat_id, f"❌ Tarama hatası: {str(e)[:100]}")
                                 else:
                                     send_telegram_to(chat_id, "🔍 Tarama sistemi yükleniyor...")
+                            
+                            # /ultimate-hisse [HISSE] - Borsa hissesi analizi
+                            elif cmd == '/ultimate-hisse':
+                                symbol = args[0].upper() if args else 'GARAN'
+                                if stock_analyzer:
+                                    send_telegram_to(chat_id, f"🏛️ {symbol} için ULTIMATE HISSE ANALİZİ\n⏳ Teknik + ML + Haber + Volatilite")
+                                    try:
+                                        analysis = stock_analyzer.ultimate_analyze(symbol)
+                                        if analysis:
+                                            msg = f"🏛️ <b>{symbol} ANALİZİ</b>\n"
+                                            msg += "━━━━━━━━━━━━━━━━━\n\n"
+                                            msg += f"💹 Fiyat: ₺{analysis.get('current_price', 0):.4f}\n"
+                                            msg += f"📊 Değişim: {analysis.get('change_percent', 0):+.2f}%\n"
+                                            msg += f"🎯 Skor: {analysis.get('final_score', 0):.1f}/10\n"
+                                            msg += f"📈 İşaret: <b>{analysis.get('signal', 'N/A')}</b>\n"
+                                            msg += f"🔄 Trend: {analysis.get('trend', 'N/A')}\n"
+                                            msg += f"📰 Duygu: {analysis.get('news_sentiment', 'N/A')}\n"
+                                            msg += f"🤖 ML: {analysis.get('ml_prediction', {}).get('signal', 'N/A')}\n"
+                                            msg += f"\n💬 {analysis.get('recommendation', 'N/A')}"
+                                            send_telegram_to(chat_id, msg)
+                                        else:
+                                            send_telegram_to(chat_id, f"❌ {symbol} analiz edilemedi")
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Hisse analiz hatası: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "🏛️ Hisse analyzer yükleniyor...")
+                            
+                            # /tarama-hisse - Tüm BİST hisselerini tara
+                            elif cmd == '/tarama-hisse':
+                                if stock_analyzer:
+                                    send_telegram_to(chat_id, "🔍 BİST hisseleri taranıyor... (2-3 dk)")
+                                    try:
+                                        results = stock_analyzer.scan_all_stocks()
+                                        msg = "🏆 <b>EN İYİ HİSSELER</b>\n━━━━━━━━━━━━━━\n\n"
+                                        for i, r in enumerate(results[:10], 1):
+                                            emoji = "🟢" if r.get('change_percent', 0) > 0 else "🔴"
+                                            msg += f"{emoji} <b>{i}. {r['symbol']}</b> - Skor: {r['final_score']:.1f}\n"
+                                            msg += f"   📊 {r['signal']} | Değişim: {r.get('change_percent', 0):+.2f}%\n\n"
+                                        msg += "━━━━━━━━━━━━━━\n/ultimate-hisse HISSE ile detay"
+                                        send_telegram_to(chat_id, msg)
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Tarama hatası: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "🏛️ Hisse tarama sistemi yükleniyor...")
                             
                             # /piyasa - Global
                             elif cmd == '/piyasa':
