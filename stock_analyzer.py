@@ -136,59 +136,33 @@ class StockAnalyzer:
         return ema
     
     def _get_default_prediction(self, current_price: float, no_data: bool = False) -> Dict:
-        """Veri yoksa varsayılan tahmin döndür - gerçek fiyat ile"""
-        if current_price <= 0 or no_data:
-            return {
-                'current_price': 0,
-                'prediction_7d': {
-                    'price': 0,
-                    'change_percent': 0.0,
-                    'target': 0,
-                    'stop': 0,
-                    'signal': 'VERİ YOK',
-                    'no_data': True
-                },
-                'prediction_30d': {
-                    'price': 0,
-                    'change_percent': 0.0,
-                    'target': 0,
-                    'stop': 0,
-                    'signal': 'VERİ YOK',
-                    'no_data': True
-                },
-                'confidence': 0.0,
-                'volatility': 0.0,
-                'rsi': 50.0,
-                'volume_ratio': 1.0,
-                'momentum_5d': 0.0,
-                'trend_30d': 0.0,
-                'no_data': True
-            }
+        """Veri yoksa varsayılan tahmin döndür - no_data her zaman işaretlenmeli"""
+        price = current_price if current_price > 0 else 0
         return {
-            'current_price': current_price,
+            'current_price': price,
             'prediction_7d': {
-                'price': current_price,
+                'price': price,
                 'change_percent': 0.0,
-                'target': round(current_price * 1.05, 4),
-                'stop': round(current_price * 0.95, 4),
-                'signal': 'TUT',
-                'no_data': False
+                'target': 0,
+                'stop': 0,
+                'signal': 'VERİ YOK',
+                'no_data': True
             },
             'prediction_30d': {
-                'price': current_price,
+                'price': price,
                 'change_percent': 0.0,
-                'target': round(current_price * 1.10, 4),
-                'stop': round(current_price * 0.92, 4),
-                'signal': 'TUT',
-                'no_data': False
+                'target': 0,
+                'stop': 0,
+                'signal': 'VERİ YOK',
+                'no_data': True
             },
-            'confidence': 30.0,
-            'volatility': 5.0,
+            'confidence': 0.0,
+            'volatility': 0.0,
             'rsi': 50.0,
             'volume_ratio': 1.0,
             'momentum_5d': 0.0,
             'trend_30d': 0.0,
-            'no_data': False
+            'no_data': True
         }
     
     def get_news_sentiment(self, symbol: str) -> Dict:
@@ -224,13 +198,12 @@ class StockAnalyzer:
             ticker = f"{symbol}.IS"
             hist = yf.Ticker(ticker).history(period="1y")
             
-            # Fallback için minimum veri - gerçek fiyatı al
+            # Fallback için minimum veri - her zaman no_data olarak işaretle
             if len(hist) < 10:
-                # Kısa dönem fiyat al
                 short_hist = yf.Ticker(ticker).history(period="5d")
                 if len(short_hist) > 0:
                     current_price = float(short_hist['Close'].iloc[-1])
-                    return self._get_default_prediction(current_price)
+                    return self._get_default_prediction(current_price, no_data=True)
                 return self._get_default_prediction(0, no_data=True)
             
             # Kısa veri için basit tahmin
@@ -363,13 +336,13 @@ class StockAnalyzer:
             }
         except Exception as e:
             logger.error(f"ML tahmin hatası ({symbol}): {e}")
-            # Hata durumunda fiyat almayı dene
+            # Hata durumunda fiyat almayı dene - her zaman no_data işaretle
             try:
                 ticker = f"{symbol}.IS"
                 short_hist = yf.Ticker(ticker).history(period="5d")
                 if len(short_hist) > 0:
                     current_price = float(short_hist['Close'].iloc[-1])
-                    return self._get_default_prediction(current_price)
+                    return self._get_default_prediction(current_price, no_data=True)
             except:
                 pass
             return self._get_default_prediction(0, no_data=True)
