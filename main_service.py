@@ -623,6 +623,55 @@ def get_usd_try_rate():
         pass
     return 34.5
 
+def run_stock_analysis():
+    """Hisse analizi - Her 3 saatte bir"""
+    logger.info("🏛️ BİST Hisse analizi başlıyor...")
+    if not stock_analyzer:
+        logger.warning("Stock analyzer yok")
+        return
+    
+    try:
+        now = get_turkey_time()
+        results = stock_analyzer.scan_all_stocks()
+        
+        if not results:
+            logger.warning("Hisse sonuçları alınamadı")
+            return
+        
+        msg = f"""🏛️ <b>BİST ANALİZİ</b>
+📅 {now.strftime('%d.%m.%Y %H:%M')}
+━━━━━━━━━━━━━━━━━━━━━━━
+
+🏆 <b>EN İYİ FIRSATLAR</b>
+
+"""
+        for i, r in enumerate(results[:10], 1):
+            emoji = "🟢" if r.get('change_percent', 0) > 0 else "🔴"
+            msg += f"{emoji} <b>{i}. {r['symbol']}</b>\n"
+            msg += f"   💹 ₺{r.get('current_price', 0):.4f} ({r.get('change_percent', 0):+.2f}%)\n"
+            msg += f"   🎯 Skor: {r.get('final_score', 0):.1f}/10 | {r.get('signal', 'N/A')}\n"
+            msg += f"   📈 {r.get('trend', 'N/A')} | 📰 {r.get('news_sentiment', 'N/A')}\n\n"
+        
+        msg += "━━━━━━━━━━━━━━━━━━━━━━━\n/ultimate-hisse HISSE ile detay"
+        
+        TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+        TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
+        
+        if TELEGRAM_TOKEN and TELEGRAM_CHAT_ID:
+            url = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+            response = requests.post(url, json={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": msg,
+                "parse_mode": "HTML"
+            })
+            
+            if response.status_code == 200:
+                logger.info("✅ Hisse Analizi Telegram'a gönderildi!")
+            else:
+                logger.warning(f"Telegram gönderme hatası: {response.text}")
+    except Exception as e:
+        logger.error(f"Hisse analizi hatası: {e}")
+
 def run_pump_scan():
     """PUMP ALERT - Her 10 dakikada ani hareketleri tara"""
     logger.info("🔍 Pump taraması başlıyor...")
@@ -2234,17 +2283,21 @@ def main():
         scheduler.add_job(alert_system.check_alerts, IntervalTrigger(minutes=5), id='alerts', replace_existing=True)
         alert_system.start_monitoring()
     
-    # Eski sistem - run_full_analysis her 2 saatte bir (grafik yok)
+    # Kripto Analizi - Her 2 saatte bir
     scheduler.add_job(run_full_analysis, IntervalTrigger(hours=2), id='full_analysis', replace_existing=True)
-    logger.info("✅ Eski Sistem Aktif: Her 2 saatte bir analiz (grafik yok)")
+    logger.info("✅ Kripto Analizi: Her 2 saatte bir")
     
-    # PUMP ALERT SİSTEMİ - Otomatik Tarama (Scalping kapatıldı)
+    # Hisse Analizi - Her 3 saatte bir
+    scheduler.add_job(run_stock_analysis, IntervalTrigger(hours=3), id='stock_analysis', replace_existing=True)
+    logger.info("🏛️ Hisse Analizi: Her 3 saatte bir")
+    
+    # PUMP ALERT - Her 10 dakikada
     if pump_validator:
         scheduler.add_job(run_pump_scan, IntervalTrigger(minutes=10), id='pump_scan', replace_existing=True)
-        logger.info("🚀 Pump Alert Aktif: Her 10 dakikada ani hareketler taranıyor")
+        logger.info("🚀 Pump Alert: Her 10 dakikada")
     
     scheduler.start()
-    logger.info("✅ Scheduler aktif (Alarm + Günlük Analiz + Pump Alert)")
+    logger.info("✅ Scheduler aktif (Kripto + Hisse + Pump Alert)")
     
     # Telegram bot
     bot_thread = threading.Thread(target=run_telegram_bot, daemon=True)

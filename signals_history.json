@@ -1693,5 +1693,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 114,
+    "symbol": "ADA",
+    "signal_type": "POTENTIAL",
+    "entry_price": 16.024,
+    "target_percent": 6.6,
+    "stop_percent": -7,
+    "target_price": 17.081584000000003,
+    "stop_price": 14.90232,
+    "timestamp": "2025-12-17 17:25",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
