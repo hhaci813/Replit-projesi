@@ -214,6 +214,110 @@ try:
 except:
     ml_enhanced = None
 
+try:
+    from stock_news_collector import StockNewsCollector
+    stock_news = StockNewsCollector()
+except:
+    stock_news = None
+
+try:
+    from stock_macro_data import StockMacroData
+    stock_macro = StockMacroData()
+except:
+    stock_macro = None
+
+try:
+    from stock_portfolio import StockPortfolio
+    stock_portfolio = StockPortfolio()
+except:
+    stock_portfolio = None
+
+try:
+    from stock_backtest import StockBacktest
+    stock_backtest = StockBacktest()
+except:
+    stock_backtest = None
+
+# ===================== YARDIMCI FONKSİYONLAR =====================
+import re as _re_module
+
+def parse_turkish_currency(amount_str: str) -> float:
+    """
+    Türk para formatını parse et (regex ile güvenli):
+    - 5000 → 5000.0
+    - 5.000 → 5000.0 (binlik ayraç)
+    - 5,50 → 5.5 (ondalık virgül)
+    - 10.000,50 → 10000.5 (binlik nokta + ondalık virgül)
+    - 1.234.567,89 → 1234567.89
+    """
+    s = amount_str.replace('₺', '').replace('TL', '').replace(' ', '').strip()
+    
+    if not s:
+        raise ValueError("Boş miktar")
+    
+    # Sadece rakam, nokta, virgül içermeli
+    if not _re_module.match(r'^[\d.,]+$', s):
+        raise ValueError(f"Geçersiz format: {s}")
+    
+    # Birden fazla virgül = hata
+    if s.count(',') > 1:
+        raise ValueError(f"Birden fazla virgül: {s}")
+    
+    # Pattern 1: Türk formatı - virgül ondalık ayracı (5,50 veya 10.000,50)
+    if ',' in s:
+        parts = s.split(',')
+        if len(parts) != 2:
+            raise ValueError(f"Geçersiz virgül formatı: {s}")
+        
+        int_str = parts[0]
+        decimal_part = parts[1]
+        
+        # Ondalık kısım sadece rakam olmalı ve 1-2 hane (TL formatı)
+        if not decimal_part.isdigit() or len(decimal_part) > 2:
+            raise ValueError(f"Geçersiz ondalık kısım (max 2 hane): {s}")
+        
+        # Integer kısmında nokta varsa, binlik format doğrulaması
+        if '.' in int_str:
+            dot_parts = int_str.split('.')
+            # İlk grup 1-3 hane, sonraki gruplar tam 3 hane olmalı
+            if not (1 <= len(dot_parts[0]) <= 3 and dot_parts[0].isdigit()):
+                raise ValueError(f"Geçersiz binlik format: {s}")
+            for dp in dot_parts[1:]:
+                if len(dp) != 3 or not dp.isdigit():
+                    raise ValueError(f"Geçersiz binlik format: {s}")
+            integer_part = int_str.replace('.', '')
+        else:
+            if not int_str.isdigit():
+                raise ValueError(f"Geçersiz rakamlar: {s}")
+            integer_part = int_str
+        
+        return float(f"{integer_part}.{decimal_part}")
+    
+    # Pattern 2: Sadece nokta var
+    elif '.' in s:
+        parts = s.split('.')
+        
+        # Tüm parçalar (sonuncusu hariç) 3 hane olmalı = binlik format (1.234.567)
+        if len(parts) > 1:
+            # Son parça 3 hane ise ve ilk parça 1-3 hane ise = binlik
+            all_middle_3_digits = all(len(p) == 3 for p in parts[1:])
+            first_valid = 1 <= len(parts[0]) <= 3
+            
+            if all_middle_3_digits and first_valid and len(parts) >= 2:
+                # Binlik format: 10.000 veya 1.234.567
+                return float(s.replace('.', ''))
+            else:
+                # US ondalık format: 10.5 veya 100.25
+                return float(s)
+        else:
+            return float(s)
+    
+    # Pattern 3: Sadece rakam
+    else:
+        if not s.isdigit():
+            raise ValueError(f"Geçersiz rakam: {s}")
+        return float(s)
+
 # ===================== TEKNIK ANALİZ =====================
 def calculate_rsi(prices, period=14):
     if len(prices) < period + 1:
@@ -1533,6 +1637,96 @@ def run_telegram_bot():
                                         send_telegram_to(chat_id, f"❌ Tarama hatası: {str(e)[:100]}")
                                 else:
                                     send_telegram_to(chat_id, "🏛️ Hisse tarama sistemi yükleniyor...")
+                            
+                            # /hisse-haber [HISSE] - Hisse haberleri
+                            elif cmd == '/hisse-haber':
+                                if stock_news:
+                                    symbol = args[0].upper() if args else None
+                                    send_telegram_to(chat_id, f"📰 {'Hisse' if symbol else 'Piyasa'} haberleri analiz ediliyor...")
+                                    try:
+                                        report = stock_news.generate_news_report(symbol)
+                                        send_telegram_to(chat_id, report)
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Haber hatası: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "📰 Haber modülü yükleniyor...")
+                            
+                            # /makro - Makro ekonomik veriler
+                            elif cmd == '/makro':
+                                if stock_macro:
+                                    send_telegram_to(chat_id, "🌍 Makro veriler alınıyor...")
+                                    try:
+                                        report = stock_macro.generate_macro_report()
+                                        send_telegram_to(chat_id, report)
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Makro hata: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "🌍 Makro modülü yükleniyor...")
+                            
+                            # /hisse-portfoy - Hisse portföyü durumu
+                            elif cmd == '/hisse-portfoy':
+                                if stock_portfolio:
+                                    try:
+                                        report = stock_portfolio.generate_report()
+                                        send_telegram_to(chat_id, report)
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Portföy hata: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "💼 Portföy modülü yükleniyor...")
+                            
+                            # /hisse-al [HISSE] [TL] - Hisse al (sanal)
+                            elif cmd == '/hisse-al':
+                                if stock_portfolio and len(args) >= 2:
+                                    symbol = args[0].upper()
+                                    try:
+                                        amount = parse_turkish_currency(args[1])
+                                        result = stock_portfolio.buy_stock(symbol, amount)
+                                        if result['success']:
+                                            send_telegram_to(chat_id, f"✅ {symbol} alındı!\n📊 {result['shares']:.4f} lot @ ₺{result['price']:.4f}\n💰 Toplam: ₺{result['total']:,.2f}\n💵 Kalan: ₺{result['remaining_cash']:,.2f}")
+                                        else:
+                                            send_telegram_to(chat_id, f"❌ {result['error']}")
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Format: /hisse-al GARAN 5000\nHata: {str(e)[:50]}")
+                                else:
+                                    send_telegram_to(chat_id, "📝 Kullanım: /hisse-al GARAN 5000 (TL)")
+                            
+                            # /hisse-sat [HISSE] - Hisse sat (sanal)
+                            elif cmd == '/hisse-sat':
+                                if stock_portfolio and args:
+                                    symbol = args[0].upper()
+                                    percent = float(args[1]) if len(args) > 1 else None
+                                    try:
+                                        result = stock_portfolio.sell_stock(symbol, percent=percent)
+                                        if result['success']:
+                                            pnl_emoji = "🟢" if result['pnl'] >= 0 else "🔴"
+                                            send_telegram_to(chat_id, f"✅ {symbol} satıldı!\n📊 {result['shares']:.4f} lot @ ₺{result['price']:.4f}\n💰 Toplam: ₺{result['total']:,.2f}\n{pnl_emoji} Kar/Zarar: ₺{result['pnl']:+,.2f} ({result['pnl_percent']:+.2f}%)")
+                                        else:
+                                            send_telegram_to(chat_id, f"❌ {result['error']}")
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Satış hatası: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "📝 Kullanım: /hisse-sat GARAN [yüzde]")
+                            
+                            # /hisse-backtest [HISSE] - Backtest
+                            elif cmd == '/hisse-backtest':
+                                symbol = args[0].upper() if args else 'GARAN'
+                                if stock_backtest:
+                                    send_telegram_to(chat_id, f"📊 {symbol} backtest başlıyor...")
+                                    try:
+                                        report = stock_backtest.generate_report(symbol)
+                                        send_telegram_to(chat_id, report)
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Backtest hata: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "📊 Backtest modülü yükleniyor...")
+                            
+                            # /hisse-sifirla - Portföyü sıfırla
+                            elif cmd == '/hisse-sifirla':
+                                if stock_portfolio:
+                                    result = stock_portfolio.reset_portfolio()
+                                    send_telegram_to(chat_id, f"✅ {result['message']}\n💰 Başlangıç: ₺100,000")
+                                else:
+                                    send_telegram_to(chat_id, "💼 Portföy modülü yükleniyor...")
                             
                             # /piyasa - Global
                             elif cmd == '/piyasa':

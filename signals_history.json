@@ -1629,10 +1629,10 @@
     "target_price": 25.524800000000003,
     "stop_price": 21.650499999999997,
     "timestamp": "2025-12-17 09:23",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -5.0,
+    "closed_at": "2025-12-17 17:44"
   },
   {
     "id": 110,
@@ -1704,6 +1704,21 @@
     "target_price": 17.081584000000003,
     "stop_price": 14.90232,
     "timestamp": "2025-12-17 17:25",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 115,
+    "symbol": "OMG",
+    "signal_type": "STRONG_BUY",
+    "entry_price": 3.603,
+    "target_percent": 12,
+    "stop_percent": -5,
+    "target_price": 4.035360000000001,
+    "stop_price": 3.42285,
+    "timestamp": "2025-12-17 17:39",
     "status": "ACTIVE",
     "result": null,
     "result_percent": null,
