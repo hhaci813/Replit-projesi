@@ -728,7 +728,7 @@ def get_usd_try_rate():
     return 34.5
 
 def run_stock_analysis():
-    """Hisse analizi - Her 3 saatte bir"""
+    """Hisse analizi - Her 3 saatte bir (KRİPTO KALİTESİNDE)"""
     logger.info("🏛️ BİST Hisse analizi başlıyor...")
     if not stock_analyzer:
         logger.warning("Stock analyzer yok")
@@ -742,21 +742,58 @@ def run_stock_analysis():
             logger.warning("Hisse sonuçları alınamadı")
             return
         
-        msg = f"""🏛️ <b>BİST ANALİZİ</b>
+        # En iyi AL sinyalleri
+        buy_signals = [r for r in results if r.get('signal') in ['GÜÇLÜ AL', 'AL']]
+        hold_signals = [r for r in results if r.get('signal') == 'TUT']
+        sell_signals = [r for r in results if r.get('signal') in ['SAT', 'GÜÇLÜ SAT']]
+        
+        msg = f"""🏛️ <b>BİST HİSSE RAPORU</b>
 📅 {now.strftime('%d.%m.%Y %H:%M')}
-━━━━━━━━━━━━━━━━━━━━━━━
-
-🏆 <b>EN İYİ FIRSATLAR</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
 
 """
-        for i, r in enumerate(results[:10], 1):
-            emoji = "🟢" if r.get('change_percent', 0) > 0 else "🔴"
-            msg += f"{emoji} <b>{i}. {r['symbol']}</b>\n"
-            msg += f"   💹 ₺{r.get('current_price', 0):.4f} ({r.get('change_percent', 0):+.2f}%)\n"
-            msg += f"   🎯 Skor: {r.get('final_score', 0):.1f}/10 | {r.get('signal', 'N/A')}\n"
-            msg += f"   📈 {r.get('trend', 'N/A')} | 📰 {r.get('news_sentiment', 'N/A')}\n\n"
+        # AL sinyalleri
+        if buy_signals:
+            msg += "🟢 <b>AL SİNYALLERİ</b>\n\n"
+            for r in buy_signals[:5]:
+                price = r.get('current_price', 0)
+                change = r.get('daily_change', 0)
+                pred_7 = r.get('prediction_7d', {})
+                target = pred_7.get('target', price * 1.05)
+                stop = pred_7.get('stop', price * 0.95)
+                
+                msg += f"<b>{r.get('signal_emoji', '🟢')} {r['symbol']}</b>\n"
+                msg += f"   💰 ₺{price:,.4f} | {'+' if change >= 0 else ''}{change:.2f}%\n"
+                msg += f"   🎯 Skor: {r.get('final_score', 0):.1f}/10\n"
+                msg += f"   📈 7G Hedef: ₺{target:.4f}\n"
+                msg += f"   🛑 Stop: ₺{stop:.4f}\n\n"
+        else:
+            msg += "🟢 <b>AL SİNYALLERİ:</b> Şu an yok\n\n"
         
-        msg += "━━━━━━━━━━━━━━━━━━━━━━━\n/ultimate-hisse HISSE ile detay"
+        msg += "━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        
+        # TUT sinyalleri (en iyi 3)
+        if hold_signals:
+            msg += "🟡 <b>BEKLEMEDE</b>\n"
+            for r in hold_signals[:3]:
+                msg += f"   • {r['symbol']} ₺{r.get('current_price', 0):.4f} (Skor: {r.get('final_score', 0):.1f})\n"
+            msg += "\n"
+        
+        # SAT sinyalleri
+        if sell_signals:
+            msg += "🔴 <b>DİKKAT - SAT</b>\n"
+            for r in sell_signals[:3]:
+                msg += f"   • {r['symbol']} ₺{r.get('current_price', 0):.4f} ({r.get('daily_change', 0):+.2f}%)\n"
+            msg += "\n"
+        
+        msg += f"""━━━━━━━━━━━━━━━━━━━━━━━━
+📊 <b>Özet:</b> {len(buy_signals)} AL | {len(hold_signals)} TUT | {len(sell_signals)} SAT
+
+💡 <i>Detaylı analiz:</i> /ultimate-hisse [HISSE]
+📰 <i>Haberler:</i> /hisse-haber [HISSE]
+
+⏰ Sonraki rapor: 3 saat
+⚠️ <i>Bu yatırım tavsiyesi değildir.</i>"""
         
         TELEGRAM_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
         TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
@@ -770,7 +807,7 @@ def run_stock_analysis():
             })
             
             if response.status_code == 200:
-                logger.info("✅ Hisse Analizi Telegram'a gönderildi!")
+                logger.info("✅ Hisse Raporu Telegram'a gönderildi!")
             else:
                 logger.warning(f"Telegram gönderme hatası: {response.text}")
     except Exception as e:
@@ -1594,24 +1631,81 @@ def run_telegram_bot():
                                 else:
                                     send_telegram_to(chat_id, "🔍 Tarama sistemi yükleniyor...")
                             
-                            # /ultimate-hisse [HISSE] - Borsa hissesi analizi
+                            # /ultimate-hisse [HISSE] - Borsa hissesi analizi (KRİPTO KALİTESİNDE)
                             elif cmd == '/ultimate-hisse':
                                 symbol = args[0].upper() if args else 'GARAN'
                                 if stock_analyzer:
-                                    send_telegram_to(chat_id, f"🏛️ {symbol} için ULTIMATE HISSE ANALİZİ\n⏳ Teknik + ML + Haber + Volatilite")
+                                    send_telegram_to(chat_id, f"🏛️ {symbol} için ULTIMATE HISSE ANALİZİ\n⏳ Teknik + ML + Haber + 7G/30G Tahmin")
                                     try:
                                         analysis = stock_analyzer.ultimate_analyze(symbol)
                                         if analysis:
-                                            msg = f"🏛️ <b>{symbol} ANALİZİ</b>\n"
-                                            msg += "━━━━━━━━━━━━━━━━━\n\n"
-                                            msg += f"💹 Fiyat: ₺{analysis.get('current_price', 0):.4f}\n"
-                                            msg += f"📊 Değişim: {analysis.get('change_percent', 0):+.2f}%\n"
-                                            msg += f"🎯 Skor: {analysis.get('final_score', 0):.1f}/10\n"
-                                            msg += f"📈 İşaret: <b>{analysis.get('signal', 'N/A')}</b>\n"
-                                            msg += f"🔄 Trend: {analysis.get('trend', 'N/A')}\n"
-                                            msg += f"📰 Duygu: {analysis.get('news_sentiment', 'N/A')}\n"
-                                            msg += f"🤖 ML: {analysis.get('ml_prediction', {}).get('signal', 'N/A')}\n"
-                                            msg += f"\n💬 {analysis.get('recommendation', 'N/A')}"
+                                            # Kripto kalitesinde detaylı mesaj
+                                            company = analysis.get('company_name', symbol)
+                                            price = analysis.get('current_price', 0)
+                                            change = analysis.get('daily_change', 0)
+                                            score = analysis.get('final_score', 0)
+                                            signal = analysis.get('signal', 'TUT')
+                                            signal_emoji = analysis.get('signal_emoji', '🟡')
+                                            
+                                            tech = analysis.get('technical', {})
+                                            pred_7 = analysis.get('prediction_7d', {})
+                                            pred_30 = analysis.get('prediction_30d', {})
+                                            news = analysis.get('news', {})
+                                            
+                                            msg = f"""🏛️ <b>{symbol} - {company}</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+💰 <b>Güncel Fiyat:</b> ₺{price:,.4f}
+📊 <b>Günlük Değişim:</b> {'+' if change >= 0 else ''}{change:.2f}%
+🎯 <b>Skor:</b> {score:.1f}/10
+
+{signal_emoji} <b>SİNYAL: {signal}</b>
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+📈 <b>TEKNİK ANALİZ</b>
+
+   RSI: {tech.get('rsi', 50):.1f} {'(Aşırı Satım)' if tech.get('rsi', 50) < 30 else '(Aşırı Alım)' if tech.get('rsi', 50) > 70 else '(Normal)'}
+   SMA20: ₺{tech.get('sma20', 0):.4f}
+   SMA50: ₺{tech.get('sma50', 0):.4f}
+   Trend: {'📈 Yükseliş' if price > tech.get('sma20', 0) > tech.get('sma50', 0) else '📉 Düşüş' if price < tech.get('sma20', 0) else '➡️ Yatay'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+🔮 <b>7 GÜNLÜK TAHMİN</b>
+{"" if not pred_7.get('no_data') else "   ⚠️ Yeterli veri yok"}
+{f'''   📍 Tahmini Fiyat: ₺{pred_7.get('price', price):.4f}
+   📊 Beklenen Değişim: {'+' if pred_7.get('change', 0) >= 0 else ''}{pred_7.get('change', 0):.2f}%
+   🎯 Hedef: ₺{pred_7.get('target', price * 1.05):.4f}
+   🛑 Stop Loss: ₺{pred_7.get('stop', price * 0.95):.4f}
+   ➡️ Sinyal: <b>{pred_7.get('signal', 'TUT')}</b>''' if not pred_7.get('no_data') else ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+📅 <b>30 GÜNLÜK TAHMİN</b>
+{"" if not pred_30.get('no_data') else "   ⚠️ Yeterli veri yok"}
+{f'''   📍 Tahmini Fiyat: ₺{pred_30.get('price', price):.4f}
+   📊 Beklenen Değişim: {'+' if pred_30.get('change', 0) >= 0 else ''}{pred_30.get('change', 0):.2f}%
+   🎯 Hedef: ₺{pred_30.get('target', price * 1.10):.4f}
+   🛑 Stop Loss: ₺{pred_30.get('stop', price * 0.92):.4f}
+   ➡️ Sinyal: <b>{pred_30.get('signal', 'TUT')}</b>''' if not pred_30.get('no_data') else ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+📰 <b>HABER ANALİZİ</b>
+
+   Duygu: {news.get('sentiment', 'NÖTR')}
+   Skor: {news.get('score', 0):+.2f}
+   Haber Sayısı: {news.get('articles', 0)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+📊 <b>EK VERİLER</b>
+
+   🎲 Volatilite: %{analysis.get('volatility', 0):.1f}
+   📈 52H Pozisyon: %{analysis.get('position_52w', 50):.0f}
+   🔥 Güven: %{analysis.get('confidence', 50):.0f}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+💬 <b>ÖNERİ:</b> {analysis.get('recommendation', 'Beklemede kalın')}
+
+⚠️ <i>Bu analiz yatırım tavsiyesi değildir.
+/hisse-haber {symbol} ile şirket haberlerine bakın.</i>"""
                                             send_telegram_to(chat_id, msg)
                                         else:
                                             send_telegram_to(chat_id, f"❌ {symbol} analiz edilemedi")
@@ -1620,18 +1714,36 @@ def run_telegram_bot():
                                 else:
                                     send_telegram_to(chat_id, "🏛️ Hisse analyzer yükleniyor...")
                             
-                            # /tarama-hisse - Tüm BİST hisselerini tara
+                            # /tarama-hisse - Tüm BİST hisselerini tara (KRİPTO KALİTESİNDE)
                             elif cmd == '/tarama-hisse':
                                 if stock_analyzer:
                                     send_telegram_to(chat_id, "🔍 BİST hisseleri taranıyor... (2-3 dk)")
                                     try:
                                         results = stock_analyzer.scan_all_stocks()
-                                        msg = "🏆 <b>EN İYİ HİSSELER</b>\n━━━━━━━━━━━━━━\n\n"
-                                        for i, r in enumerate(results[:10], 1):
-                                            emoji = "🟢" if r.get('change_percent', 0) > 0 else "🔴"
-                                            msg += f"{emoji} <b>{i}. {r['symbol']}</b> - Skor: {r['final_score']:.1f}\n"
-                                            msg += f"   📊 {r['signal']} | Değişim: {r.get('change_percent', 0):+.2f}%\n\n"
-                                        msg += "━━━━━━━━━━━━━━\n/ultimate-hisse HISSE ile detay"
+                                        now = get_turkey_time()
+                                        msg = f"""🏆 <b>BİST HİSSE TARAMASI</b>
+📅 {now.strftime('%d.%m.%Y %H:%M')}
+━━━━━━━━━━━━━━━━━━━━━━━━
+
+"""
+                                        for i, r in enumerate(results[:8], 1):
+                                            signal_emoji = r.get('signal_emoji', '🟡')
+                                            signal = r.get('signal', 'TUT')
+                                            price = r.get('current_price', 0)
+                                            change = r.get('daily_change', 0)
+                                            pred_7 = r.get('prediction_7d', {})
+                                            target = pred_7.get('target', price * 1.05)
+                                            
+                                            msg += f"{signal_emoji} <b>{i}. {r['symbol']}</b>\n"
+                                            msg += f"   💰 ₺{price:,.4f} | {'+' if change >= 0 else ''}{change:.2f}%\n"
+                                            msg += f"   🎯 Skor: {r.get('final_score', 0):.1f}/10 | {signal}\n"
+                                            msg += f"   📈 7G Hedef: ₺{target:.4f} ({'+' if pred_7.get('change', 0) >= 0 else ''}{pred_7.get('change', 0):.1f}%)\n\n"
+                                        
+                                        msg += """━━━━━━━━━━━━━━━━━━━━━━━━
+💡 <i>Detaylı analiz için:</i>
+/ultimate-hisse [HISSE]
+
+⚠️ <i>Bu yatırım tavsiyesi değildir.</i>"""
                                         send_telegram_to(chat_id, msg)
                                     except Exception as e:
                                         send_telegram_to(chat_id, f"❌ Tarama hatası: {str(e)[:100]}")

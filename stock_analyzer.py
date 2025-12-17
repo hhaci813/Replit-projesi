@@ -135,6 +135,62 @@ class StockAnalyzer:
             ema[i] = data[i] * multiplier + ema[i-1] * (1 - multiplier)
         return ema
     
+    def _get_default_prediction(self, current_price: float, no_data: bool = False) -> Dict:
+        """Veri yoksa varsayılan tahmin döndür - gerçek fiyat ile"""
+        if current_price <= 0 or no_data:
+            return {
+                'current_price': 0,
+                'prediction_7d': {
+                    'price': 0,
+                    'change_percent': 0.0,
+                    'target': 0,
+                    'stop': 0,
+                    'signal': 'VERİ YOK',
+                    'no_data': True
+                },
+                'prediction_30d': {
+                    'price': 0,
+                    'change_percent': 0.0,
+                    'target': 0,
+                    'stop': 0,
+                    'signal': 'VERİ YOK',
+                    'no_data': True
+                },
+                'confidence': 0.0,
+                'volatility': 0.0,
+                'rsi': 50.0,
+                'volume_ratio': 1.0,
+                'momentum_5d': 0.0,
+                'trend_30d': 0.0,
+                'no_data': True
+            }
+        return {
+            'current_price': current_price,
+            'prediction_7d': {
+                'price': current_price,
+                'change_percent': 0.0,
+                'target': round(current_price * 1.05, 4),
+                'stop': round(current_price * 0.95, 4),
+                'signal': 'TUT',
+                'no_data': False
+            },
+            'prediction_30d': {
+                'price': current_price,
+                'change_percent': 0.0,
+                'target': round(current_price * 1.10, 4),
+                'stop': round(current_price * 0.92, 4),
+                'signal': 'TUT',
+                'no_data': False
+            },
+            'confidence': 30.0,
+            'volatility': 5.0,
+            'rsi': 50.0,
+            'volume_ratio': 1.0,
+            'momentum_5d': 0.0,
+            'trend_30d': 0.0,
+            'no_data': False
+        }
+    
     def get_news_sentiment(self, symbol: str) -> Dict:
         """Haber tabanlı duygu analizi"""
         sentiment_scores = []
@@ -163,141 +219,338 @@ class StockAnalyzer:
         return {'sentiment': 'NÖTR', 'score': 0, 'articles_analyzed': 0}
     
     def predict_stock_price(self, symbol: str) -> Dict:
-        """Enhanced ML tahmini (GridSearch + TimeSeriesSplit)"""
+        """Gelişmiş ML tahmini - 7 gün ve 30 gün hedefler"""
         try:
-            from ml_enhanced import MLEnhanced
-            ml = MLEnhanced()
-            # Hisse için yfinance verisini uyarlıyor
             ticker = f"{symbol}.IS"
             hist = yf.Ticker(ticker).history(period="1y")
             
+            # Fallback için minimum veri - gerçek fiyatı al
+            if len(hist) < 10:
+                # Kısa dönem fiyat al
+                short_hist = yf.Ticker(ticker).history(period="5d")
+                if len(short_hist) > 0:
+                    current_price = float(short_hist['Close'].iloc[-1])
+                    return self._get_default_prediction(current_price)
+                return self._get_default_prediction(0, no_data=True)
+            
+            # Kısa veri için basit tahmin
             if len(hist) < 50:
-                # Fallback: Basit tahmin
-                close = hist['Close'].values
+                close = hist['Close'].values.astype(float)
                 current_price = float(close[-1])
-                trend = (close[-1] - close[-30]) / close[-30] * 100 if len(close) > 30 else 0
+                simple_change = ((close[-1] - close[0]) / close[0] * 100) / len(close) * 7
                 return {
                     'current_price': round(current_price, 4),
-                    'predicted_price': round(current_price * (1 + trend/100), 4),
-                    'change_percent': round(trend, 2),
-                    'confidence': 50.0,
-                    'signal': 'AL' if trend > 1 else 'SAT' if trend < -1 else 'TUT',
-                    'timeframe': '7 gün'
+                    'prediction_7d': {
+                        'price': round(current_price * (1 + simple_change / 100), 4),
+                        'change_percent': round(simple_change, 2),
+                        'target': round(current_price * 1.05, 4),
+                        'stop': round(current_price * 0.95, 4),
+                        'signal': 'AL' if simple_change > 1 else 'SAT' if simple_change < -1 else 'TUT'
+                    },
+                    'prediction_30d': {
+                        'price': round(current_price * (1 + simple_change * 4 / 100), 4),
+                        'change_percent': round(simple_change * 4, 2),
+                        'target': round(current_price * 1.10, 4),
+                        'stop': round(current_price * 0.92, 4),
+                        'signal': 'AL' if simple_change > 0.5 else 'SAT' if simple_change < -0.5 else 'TUT'
+                    },
+                    'confidence': 40.0,
+                    'volatility': 5.0,
+                    'rsi': 50.0,
+                    'volume_ratio': 1.0,
+                    'momentum_5d': 0.0,
+                    'trend_30d': round(simple_change * 4, 2)
                 }
             
-            # ML Enhanced ile tahmin
-            close_prices = hist['Close'].values
-            current_price = float(close_prices[-1])
+            close = hist['Close'].values.astype(float)
+            volume = hist['Volume'].values.astype(float)
+            current_price = float(close[-1])
             
-            # Trend + Momentum bileşimli tahmin
-            trend_30 = (close_prices[-1] - close_prices[-30]) / close_prices[-30] * 100
-            momentum_7 = (close_prices[-1] - close_prices[-7]) / close_prices[-7] * 100
+            # Trend analizi
+            trend_7 = (close[-1] - close[-7]) / close[-7] * 100 if len(close) >= 7 else 0
+            trend_30 = (close[-1] - close[-30]) / close[-30] * 100 if len(close) >= 30 else 0
+            trend_90 = (close[-1] - close[-90]) / close[-90] * 100 if len(close) >= 90 else 0
             
-            predicted_change = (trend_30 * 0.6 + momentum_7 * 0.4) * 0.35
-            predicted_price = current_price * (1 + predicted_change / 100)
+            # Momentum hesapla
+            momentum_5 = (close[-1] - close[-5]) / close[-5] * 100 if len(close) >= 5 else 0
+            momentum_20 = (close[-1] - close[-20]) / close[-20] * 100 if len(close) >= 20 else 0
             
-            confidence = min(abs(momentum_7), 100)
+            # RSI hesapla
+            delta = np.diff(close[-15:])
+            gains = np.where(delta > 0, delta, 0)
+            losses = np.where(delta < 0, -delta, 0)
+            avg_gain = np.mean(gains)
+            avg_loss = np.mean(losses)
+            rs = avg_gain / avg_loss if avg_loss > 0 else 100
+            rsi = 100 - (100 / (1 + rs))
+            
+            # Volatilite (20 günlük standart sapma)
+            volatility = np.std(close[-20:]) / np.mean(close[-20:]) * 100 if len(close) >= 20 else 5
+            
+            # Hacim trendi
+            avg_vol_20 = np.mean(volume[-20:]) if len(volume) >= 20 else 1
+            vol_ratio = volume[-1] / avg_vol_20 if avg_vol_20 > 0 else 1
+            
+            # 7 günlük tahmin
+            pred_7_change = (momentum_5 * 0.4 + trend_7 * 0.3 + (50 - rsi) * 0.03) * 0.8
+            pred_7_price = current_price * (1 + pred_7_change / 100)
+            
+            # 30 günlük tahmin
+            pred_30_change = (trend_30 * 0.4 + momentum_20 * 0.3 + trend_90 * 0.1 + (50 - rsi) * 0.05) * 0.6
+            pred_30_price = current_price * (1 + pred_30_change / 100)
+            
+            # Güven seviyesi
+            confidence = 50
+            if abs(momentum_5) < 3 and abs(trend_7) < 5:
+                confidence += 20  # Stabil trend = yüksek güven
+            if vol_ratio > 1.5:
+                confidence += 10  # Yüksek hacim = güvenilir hareket
+            if rsi > 30 and rsi < 70:
+                confidence += 15  # Normal RSI bölgesi
+            confidence = min(confidence, 85)
+            
+            # Hedef ve stop seviyeler
+            target_7 = current_price * (1 + max(pred_7_change, volatility) / 100)
+            stop_7 = current_price * (1 - volatility / 100)
+            target_30 = current_price * (1 + max(pred_30_change, volatility * 1.5) / 100)
+            stop_30 = current_price * (1 - volatility * 1.2 / 100)
+            
+            # Sinyal belirleme
+            if pred_7_change > 3 and rsi < 60:
+                signal_7 = 'GÜÇLÜ AL'
+            elif pred_7_change > 1:
+                signal_7 = 'AL'
+            elif pred_7_change < -3 and rsi > 40:
+                signal_7 = 'GÜÇLÜ SAT'
+            elif pred_7_change < -1:
+                signal_7 = 'SAT'
+            else:
+                signal_7 = 'TUT'
+            
+            if pred_30_change > 5:
+                signal_30 = 'GÜÇLÜ AL'
+            elif pred_30_change > 2:
+                signal_30 = 'AL'
+            elif pred_30_change < -5:
+                signal_30 = 'GÜÇLÜ SAT'
+            elif pred_30_change < -2:
+                signal_30 = 'SAT'
+            else:
+                signal_30 = 'TUT'
             
             return {
                 'current_price': round(current_price, 4),
-                'predicted_price': round(predicted_price, 4),
-                'change_percent': round(predicted_change, 2),
+                'prediction_7d': {
+                    'price': round(pred_7_price, 4),
+                    'change_percent': round(pred_7_change, 2),
+                    'target': round(target_7, 4),
+                    'stop': round(stop_7, 4),
+                    'signal': signal_7
+                },
+                'prediction_30d': {
+                    'price': round(pred_30_price, 4),
+                    'change_percent': round(pred_30_change, 2),
+                    'target': round(target_30, 4),
+                    'stop': round(stop_30, 4),
+                    'signal': signal_30
+                },
                 'confidence': round(confidence, 1),
-                'signal': 'AL' if predicted_change > 1 else 'SAT' if predicted_change < -1 else 'TUT',
-                'timeframe': '7 gün',
-                'ml_model': 'Enhanced'
+                'volatility': round(volatility, 2),
+                'rsi': round(rsi, 1),
+                'volume_ratio': round(vol_ratio, 2),
+                'momentum_5d': round(momentum_5, 2),
+                'trend_30d': round(trend_30, 2)
             }
         except Exception as e:
             logger.error(f"ML tahmin hatası ({symbol}): {e}")
-            return {}
+            # Hata durumunda fiyat almayı dene
+            try:
+                ticker = f"{symbol}.IS"
+                short_hist = yf.Ticker(ticker).history(period="5d")
+                if len(short_hist) > 0:
+                    current_price = float(short_hist['Close'].iloc[-1])
+                    return self._get_default_prediction(current_price)
+            except:
+                pass
+            return self._get_default_prediction(0, no_data=True)
     
     def ultimate_analyze(self, symbol: str) -> Dict:
-        """Tüm analizleri birleştir - 6 faktör:
+        """Kripto kalitesinde detaylı hisse analizi:
         Teknik %30 + ML %25 + Haber %15 + Volatilite %15 + Trend %10 + Volume %5
         """
         try:
             symbol = symbol.upper()
+            company_name = self.bist_codes.get(symbol, symbol)
             
-            # Fiyat
+            # Fiyat verisi
             price_data = self.get_stock_price(symbol)
             if price_data['current'] == 0:
                 return {}
             
+            current_price = float(price_data['current'])
+            daily_change = float(price_data.get('change', 0))
+            high_52w = float(price_data.get('high_52w', current_price))
+            low_52w = float(price_data.get('low_52w', current_price))
+            volume = int(price_data.get('volume', 0))
+            
+            # 52 haftalık pozisyon
+            range_52w = high_52w - low_52w
+            position_52w = ((current_price - low_52w) / range_52w * 100) if range_52w > 0 else 50
+            
             # Teknik İndikatörler
             tech = self.calculate_technical_indicators(symbol)
-            tech_score = 5.0
-            if tech:
-                rsi = tech.get('rsi', 50)
-                tech_score = 2 + (rsi / 50) + (5 if tech.get('sma20', 0) > tech.get('sma50', 0) else 0)
+            rsi = tech.get('rsi', 50) if tech else 50
+            sma20 = tech.get('sma20', current_price) if tech else current_price
+            sma50 = tech.get('sma50', current_price) if tech else current_price
+            macd = tech.get('macd', 0) if tech else 0
             
-            # ML Tahmini
+            # Teknik skor
+            tech_score = 5.0
+            if rsi < 30:
+                tech_score = 8.0  # Aşırı satım = AL fırsatı
+            elif rsi > 70:
+                tech_score = 2.0  # Aşırı alım = SAT
+            else:
+                tech_score = 5 + (50 - rsi) * 0.05
+            
+            if current_price > sma20 > sma50:
+                tech_score += 1.5  # Yükseliş trendi
+            elif current_price < sma20 < sma50:
+                tech_score -= 1.5  # Düşüş trendi
+            
+            # ML Tahmini (7 gün ve 30 gün)
             ml_pred = self.predict_stock_price(symbol)
+            
+            # ml_pred her zaman bir değer döndürür (fallback ile)
+            pred_7d = ml_pred.get('prediction_7d', self._get_default_prediction(current_price).get('prediction_7d'))
+            pred_30d = ml_pred.get('prediction_30d', self._get_default_prediction(current_price).get('prediction_30d'))
+            confidence = ml_pred.get('confidence', 50)
+            
+            # ML skor: tahmin yönüne göre
             ml_score = 5.0
-            if ml_pred:
-                ml_score = 2.5 + (ml_pred.get('confidence', 50) / 20)
+            change_7 = pred_7d.get('change_percent', 0) if pred_7d else 0
+            if change_7 > 3:
+                ml_score = 8.0
+            elif change_7 > 1:
+                ml_score = 6.5
+            elif change_7 < -3:
+                ml_score = 2.0
+            elif change_7 < -1:
+                ml_score = 3.5
             
             # Haber Duygusu
             news = self.get_news_sentiment(symbol)
-            news_score = 1.5 if news['sentiment'] == 'POZİTİF' else 0.5 if news['sentiment'] == 'NEGATİF' else 2.5
+            news_sentiment = news.get('sentiment', 'NÖTR')
+            news_article_count = news.get('articles_analyzed', 0)
+            if news_sentiment == 'POZİTİF':
+                news_score = 7.5
+            elif news_sentiment == 'NEGATİF':
+                news_score = 2.5
+            else:
+                news_score = 5.0
             
-            # Volatilite
-            volatility_score = 5.0 - min(abs(price_data.get('change', 0)), 5)
+            # Volatilite skoru (düşük volatilite = yüksek skor)
+            volatility = ml_pred.get('volatility', 5) if ml_pred else 5
+            volatility_score = max(2, 8 - volatility * 0.5)
             
-            # Trend
-            trend_score = 7 if price_data.get('change', 0) > 2 else 3 if price_data.get('change', 0) < -2 else 5
+            # Trend skoru
+            if daily_change > 3:
+                trend_score = 8.0
+            elif daily_change > 1:
+                trend_score = 6.5
+            elif daily_change < -3:
+                trend_score = 2.0
+            elif daily_change < -1:
+                trend_score = 3.5
+            else:
+                trend_score = 5.0
             
-            # Hacim/Likidite
-            volume_score = 5.0
+            # Hacim skoru
+            vol_ratio = ml_pred.get('volume_ratio', 1) if ml_pred else 1
+            volume_score = min(8, 5 + vol_ratio)
             
-            # Ağırlıklı skor
+            # Ağırlıklı final skor
             final_score = (
                 tech_score * 0.30 +
                 ml_score * 0.25 +
-                news_score * 1.0 +
+                news_score * 0.15 +
                 volatility_score * 0.15 +
-                trend_score * 0.15 +
+                trend_score * 0.10 +
                 volume_score * 0.05
             )
             
-            # İşaret
+            # Sinyal belirleme
             if final_score >= 7.5:
-                signal = 'STRONG_BUY'
-            elif final_score >= 6:
-                signal = 'BUY'
-            elif final_score >= 4:
-                signal = 'HOLD'
-            elif final_score >= 2.5:
-                signal = 'SELL'
+                signal = 'GÜÇLÜ AL'
+                signal_emoji = '🟢🟢'
+            elif final_score >= 6.0:
+                signal = 'AL'
+                signal_emoji = '🟢'
+            elif final_score >= 4.5:
+                signal = 'TUT'
+                signal_emoji = '🟡'
+            elif final_score >= 3.0:
+                signal = 'SAT'
+                signal_emoji = '🔴'
             else:
-                signal = 'STRONG_SELL'
+                signal = 'GÜÇLÜ SAT'
+                signal_emoji = '🔴🔴'
             
-            # Convert numpy types to Python types
-            if ml_pred:
-                ml_pred = {
-                    'current_price': float(ml_pred.get('current_price', 0)),
-                    'predicted_price': float(ml_pred.get('predicted_price', 0)),
-                    'change_percent': float(ml_pred.get('change_percent', 0)),
-                    'confidence': float(ml_pred.get('confidence', 0)),
-                    'signal': str(ml_pred.get('signal', 'N/A')),
-                    'timeframe': str(ml_pred.get('timeframe', '7 gün')),
-                    'ml_model': str(ml_pred.get('ml_model', 'Enhanced'))
-                }
+            # Hedef ve stop hesapla
+            target_7 = pred_7d.get('target', current_price * 1.05) if pred_7d else current_price * 1.05
+            stop_7 = pred_7d.get('stop', current_price * 0.95) if pred_7d else current_price * 0.95
+            target_30 = pred_30d.get('target', current_price * 1.10) if pred_30d else current_price * 1.10
+            stop_30 = pred_30d.get('stop', current_price * 0.92) if pred_30d else current_price * 0.92
+            
+            # Öneri metni
+            if signal in ['GÜÇLÜ AL', 'AL']:
+                recommendation = f"Alım fırsatı! 7 günlük hedef: ₺{target_7:.2f}"
+            elif signal in ['GÜÇLÜ SAT', 'SAT']:
+                recommendation = f"Satış düşünün. Stop: ₺{stop_7:.2f}"
+            else:
+                recommendation = "Beklemede kalın, net sinyal yok"
             
             return {
                 'symbol': symbol,
-                'current_price': float(price_data['current']),
-                'change_percent': float(price_data.get('change', 0)),
-                'final_score': float(round(final_score, 2)),
-                'signal': str(signal),
-                'technical_score': float(round(tech_score, 2)),
-                'ml_prediction': ml_pred,
-                'news_sentiment': str(news['sentiment']),
-                'news_score': float(news['score']),
-                'volatility_score': float(round(volatility_score, 2)),
-                'trend': 'YÜKSELEN' if price_data.get('change', 0) > 0 else 'DÜŞEN',
-                'recommendation': 'Satın Alabilirsiniz' if signal in ['BUY', 'STRONG_BUY'] else 
-                                'Elden Çıkarmayı Düşünün' if signal in ['SELL', 'STRONG_SELL'] else
-                                'Bekleme Modu',
+                'company_name': company_name,
+                'current_price': current_price,
+                'daily_change': daily_change,
+                'volume': volume,
+                'high_52w': high_52w,
+                'low_52w': low_52w,
+                'position_52w': round(position_52w, 1),
+                'final_score': round(final_score, 2),
+                'signal': signal,
+                'signal_emoji': signal_emoji,
+                'technical': {
+                    'rsi': round(rsi, 1),
+                    'sma20': round(sma20, 4),
+                    'sma50': round(sma50, 4),
+                    'macd': round(macd, 6),
+                    'score': round(tech_score, 2)
+                },
+                'prediction_7d': {
+                    'price': round(pred_7d.get('price', current_price), 4),
+                    'change': round(pred_7d.get('change_percent', 0), 2),
+                    'target': round(target_7, 4),
+                    'stop': round(stop_7, 4),
+                    'signal': pred_7d.get('signal', 'TUT')
+                },
+                'prediction_30d': {
+                    'price': round(pred_30d.get('price', current_price), 4),
+                    'change': round(pred_30d.get('change_percent', 0), 2),
+                    'target': round(target_30, 4),
+                    'stop': round(stop_30, 4),
+                    'signal': pred_30d.get('signal', 'TUT')
+                },
+                'confidence': confidence,
+                'volatility': round(volatility, 2),
+                'news': {
+                    'sentiment': news_sentiment,
+                    'score': round(news.get('score', 0), 3),
+                    'articles': news_article_count
+                },
+                'recommendation': recommendation,
                 'timestamp': datetime.now().isoformat()
             }
         except Exception as e:
