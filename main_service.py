@@ -1314,10 +1314,31 @@ def run_telegram_bot():
                         chat_id = message.get('chat', {}).get('id')
                         text = message.get('text', '').strip()
                         
-                        # ===================== GRAFİK ANALIZI =====================
+                        # ===================== GRAFİK ANALIZI (FİYAT + HEDEF + STOP + NEDEN) =====================
                         if 'photo' in message:
                             try:
                                 photo = message.get('photo', [])
+                                caption = message.get('caption', '').strip().upper()
+                                
+                                symbol = None
+                                current_price = 0.0
+                                
+                                if caption:
+                                    import re
+                                    match = re.search(r'([A-Z]{2,10})', caption)
+                                    if match:
+                                        symbol = match.group(1)
+                                        try:
+                                            ticker_resp = requests.get(
+                                                f"https://api.btcturk.com/api/v2/ticker?pairSymbol={symbol}TRY",
+                                                timeout=10
+                                            )
+                                            ticker_data = ticker_resp.json()
+                                            if ticker_data.get('data') and len(ticker_data['data']) > 0:
+                                                current_price = float(ticker_data['data'][0].get('last', 0))
+                                        except:
+                                            pass
+                                
                                 if photo:
                                     file_id = photo[-1]['file_id']
                                     file_resp = requests.get(f"{api_url}/getFile", params={'file_id': file_id}, timeout=10)
@@ -1338,7 +1359,11 @@ def run_telegram_bot():
                                             try:
                                                 from chart_analyzer import ChartAnalyzer
                                                 analyzer = ChartAnalyzer()
-                                                summary = analyzer.get_summary(str(local_path))
+                                                summary = analyzer.get_summary(
+                                                    image_path=str(local_path),
+                                                    symbol=symbol,
+                                                    current_price=current_price
+                                                )
                                                 send_telegram_to(chat_id, summary)
                                                 
                                                 try:
@@ -1548,28 +1573,41 @@ def run_telegram_bot():
                                 
                                 send_telegram_to(chat_id, msg or "⚠️ Sinyal yok")
                             
-                            # /ultimate [COIN] - GRAFİK ANALIZ + KESIN SİNYAL
+                            # /ultimate [COIN] - GRAFİK ANALIZ + KESIN SİNYAL + FİYAT + HEDEF + STOP
                             elif cmd == '/ultimate':
                                 symbol = args[0].upper() if args else 'BTC'
                                 try:
-                                    send_telegram_to(chat_id, f"📊 {symbol} analiz ediliyor... (grafik çekiliyor)")
+                                    send_telegram_to(chat_id, f"📊 {symbol} kapsamlı analiz yapılıyor...\n⏳ Grafik çekiliyor, fiyat alınıyor...")
                                     
                                     from chart_generator import ChartGenerator
                                     from chart_analyzer import ChartAnalyzer
                                     
-                                    # Grafik oluştur
+                                    current_price = 0.0
+                                    try:
+                                        ticker_resp = requests.get(
+                                            f"https://api.btcturk.com/api/v2/ticker?pairSymbol={symbol}TRY",
+                                            timeout=10
+                                        )
+                                        ticker_data = ticker_resp.json()
+                                        if ticker_data.get('data') and len(ticker_data['data']) > 0:
+                                            current_price = float(ticker_data['data'][0].get('last', 0))
+                                    except Exception as price_err:
+                                        logger.warning(f"Fiyat çekme hatası {symbol}: {price_err}")
+                                    
                                     chart_gen = ChartGenerator()
                                     chart_path = chart_gen.create_price_chart(symbol, days=30)
                                     
                                     if not chart_path:
-                                        send_telegram_to(chat_id, f"⚠️ {symbol} grafiği oluşturulamadı")
+                                        send_telegram_to(chat_id, f"⚠️ {symbol} grafiği oluşturulamadı. BTCTurk'te {symbol}TRY paritesi olmayabilir.")
                                     else:
-                                        # Analiz yap
                                         analyzer = ChartAnalyzer()
-                                        summary = analyzer.get_summary(chart_path)
+                                        summary = analyzer.get_summary(
+                                            image_path=chart_path,
+                                            symbol=symbol,
+                                            current_price=current_price
+                                        )
                                         send_telegram_to(chat_id, summary)
                                         
-                                        # Temizle
                                         try:
                                             import os
                                             os.remove(chart_path)

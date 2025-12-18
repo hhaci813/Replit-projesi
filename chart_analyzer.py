@@ -972,8 +972,13 @@ class ChartAnalyzer:
             logger.error(f"Sinyal üretme hatası: {e}")
             return {'signal': "❓ Belirsiz", 'action': 'UNKNOWN', 'score': 5}
     
-    def get_summary(self, image_path: str) -> str:
-        """Grafik analiz özetini Telegram mesajı olarak döndür"""
+    def get_summary(self, image_path: str, symbol: str = None, current_price: float = None) -> str:
+        """
+        📊 KAPSAMLI GRAFİK ANALİZ RAPORU
+        - Fiyat bilgisi, hedef, stop-loss
+        - Neden AL / Neden UZAK DUR
+        - Zaman tahmini
+        """
         try:
             results = self.analyze_chart(image_path)
             
@@ -981,77 +986,191 @@ class ChartAnalyzer:
                 return f"❌ Grafik analiz edilemedi: {results['error']}"
             
             signal = results.get('signal', {})
-            
-            msg = f"""📊 <b>GRAFİK ANALİZİ v2.0</b>
-{'━' * 25}
-
-🎯 <b>SİNYAL:</b> {signal.get('signal', '?')} {signal.get('emoji', '')}
-📊 <b>SKOR:</b> {signal.get('score', 5)}/10
-
-"""
+            score = signal.get('score', 5)
+            action = signal.get('action', 'HOLD')
             
             trend = results.get('trend', {})
-            msg += f"📈 <b>TREND:</b> {trend.get('trend', '?')}\n"
-            msg += f"💪 <b>GÜÇ:</b> %{trend.get('strength', 0):.0f}\n\n"
-            
-            patterns = results.get('candle_patterns', [])
-            if patterns:
-                msg += "🕯️ <b>MUM FORMASYONLARI:</b>\n"
-                for p in patterns[:3]:
-                    msg += f"   • {p.get('name', '?')} → {p.get('signal', '?')}\n"
-                    if p.get('desc'):
-                        msg += f"     <i>{p.get('desc')}</i>\n"
-                msg += "\n"
-            
-            formations = results.get('chart_formations', [])
-            if formations:
-                msg += "📐 <b>GRAFİK FORMASYONLARI:</b>\n"
-                for f in formations[:2]:
-                    msg += f"   • {f.get('name', '?')} → {f.get('signal', '?')}\n"
-                    if f.get('description'):
-                        msg += f"     <i>{f.get('description')}</i>\n"
-                    if f.get('target'):
-                        msg += f"     🎯 Hedef: {f.get('target')}\n"
-                msg += "\n"
-            
-            macd = results.get('macd_signals', {})
-            if macd.get('signal') != 'Bilinmiyor':
-                msg += f"📊 <b>MACD:</b> {macd.get('signal', '?')}\n"
-                if macd.get('description'):
-                    msg += f"   <i>{macd.get('description')}</i>\n\n"
-            
-            divergence = results.get('divergence', {})
-            if divergence.get('type') not in ['none', 'unknown']:
-                msg += f"🔀 <b>UYUŞMAZLIK:</b> {divergence.get('name', '?')}\n"
-                if divergence.get('description'):
-                    msg += f"   <i>{divergence.get('description')}</i>\n\n"
+            trend_dir = trend.get('direction', 'NEUTRAL')
+            trend_strength = trend.get('strength', 50)
             
             rsi = results.get('rsi_zone', {})
+            rsi_val = rsi.get('rsi_estimate', 50)
+            
             volume = results.get('volume_signal', {})
-            colors = results.get('color_analysis', {})
             momentum = results.get('momentum', {})
+            patterns = results.get('candle_patterns', [])
+            formations = results.get('chart_formations', [])
             
-            msg += f"📉 <b>RSI:</b> {rsi.get('name', 'Nötr')} (~{rsi.get('rsi_estimate', 50)})\n"
-            msg += f"📊 <b>HACİM:</b> {volume.get('trend', '?')} ({volume.get('strength', '?')})\n"
-            msg += f"⚡ <b>MOMENTUM:</b> {momentum.get('strength', '?')}\n"
-            msg += f"🎨 <b>PİYASA:</b> {colors.get('sentiment', '?')}\n\n"
+            if current_price and current_price > 0:
+                if action in ['STRONG_BUY', 'BUY']:
+                    target_pct = 15 if action == 'STRONG_BUY' else 10
+                    stop_pct = 5 if action == 'STRONG_BUY' else 7
+                    target_price = current_price * (1 + target_pct/100)
+                    stop_loss = current_price * (1 - stop_pct/100)
+                elif action in ['STRONG_SELL', 'SELL']:
+                    target_pct = -10 if action == 'STRONG_SELL' else -5
+                    stop_pct = 3
+                    target_price = current_price * (1 + target_pct/100)
+                    stop_loss = current_price * (1 + stop_pct/100)
+                else:
+                    target_price = current_price * 1.05
+                    stop_loss = current_price * 0.95
+            else:
+                target_price = None
+                stop_loss = None
             
-            sr = results.get('support_resistance', {})
-            msg += f"🔹 <b>DESTEK:</b> {sr.get('support_strength', '?')}\n"
-            msg += f"🔸 <b>DİRENÇ:</b> {sr.get('resistance_strength', '?')}\n\n"
+            if action == 'STRONG_BUY':
+                time_est = "24-48 saat"
+                if trend_strength > 70:
+                    time_est = "12-24 saat"
+            elif action == 'BUY':
+                time_est = "2-5 gün"
+                if rsi_val < 35:
+                    time_est = "1-3 gün"
+            elif action == 'SELL':
+                time_est = "1-3 gün içinde düşüş"
+            elif action == 'STRONG_SELL':
+                time_est = "24-48 saat içinde düşüş"
+            else:
+                time_est = "Belirsiz - Bekle"
             
-            channels = results.get('trend_channels', {})
-            if channels.get('channel') and channels.get('channel') != 'Yok':
-                msg += f"📏 <b>KANAL:</b> {channels.get('channel')}\n"
-                if channels.get('action'):
-                    msg += f"   <i>{channels.get('action')}</i>\n\n"
+            reasons_buy = []
+            reasons_avoid = []
             
-            if signal.get('reasons'):
-                msg += "💡 <b>SEBEPLER:</b>\n"
-                for reason in signal['reasons'][:5]:
-                    msg += f"   • {reason}\n"
+            if trend_dir == 'UP':
+                reasons_buy.append(f"📈 Yükseliş trendi aktif (Güç: %{trend_strength:.0f})")
+            elif trend_dir == 'DOWN':
+                reasons_avoid.append(f"📉 Düşüş trendi aktif (Güç: %{trend_strength:.0f})")
             
-            msg += "\n⚠️ <i>Bu analiz yatırım tavsiyesi değildir. DYOR!</i>"
+            if rsi_val < 30:
+                reasons_buy.append(f"🟢 RSI aşırı satım bölgesinde ({rsi_val}) - Toparlanma beklenir")
+            elif rsi_val > 70:
+                reasons_avoid.append(f"🔴 RSI aşırı alım bölgesinde ({rsi_val}) - Düşüş riski")
+            
+            for p in patterns[:2]:
+                if 'AL' in p.get('signal', ''):
+                    reasons_buy.append(f"🕯️ {p.get('name', '')} formasyonu - Alım sinyali")
+                elif 'SAT' in p.get('signal', ''):
+                    reasons_avoid.append(f"🕯️ {p.get('name', '')} formasyonu - Satış sinyali")
+            
+            for f in formations[:2]:
+                if f.get('signal') in ['AL', 'GÜÇLÜ AL']:
+                    reasons_buy.append(f"📐 {f.get('name', '')} - Yükseliş formasyonu")
+                elif f.get('signal') in ['SAT', 'GÜÇLÜ SAT']:
+                    reasons_avoid.append(f"📐 {f.get('name', '')} - Düşüş formasyonu")
+            
+            macd = results.get('macd_signals', {})
+            if macd.get('signal') == 'MACD Boğa Kesişimi':
+                reasons_buy.append("📊 MACD boğa kesişimi - Güçlü alım sinyali")
+            elif macd.get('signal') == 'MACD Ayı Kesişimi':
+                reasons_avoid.append("📊 MACD ayı kesişimi - Satış sinyali")
+            
+            if volume.get('trend') == '📈 Artan':
+                reasons_buy.append("📊 Hacim artıyor - Hareket güçlü")
+            elif volume.get('trend') == '📉 Azalan':
+                reasons_avoid.append("📊 Hacim azalıyor - Trend zayıflıyor")
+            
+            symbol_text = f" - {symbol}" if symbol else ""
+            
+            if action == 'STRONG_BUY':
+                verdict = "🚀 <b>KESİN AL!</b>"
+                verdict_desc = "Tüm göstergeler pozitif. Hemen alım yapılabilir!"
+            elif action == 'BUY':
+                verdict = "🟢 <b>AL</b>"
+                verdict_desc = "İyi fırsat. Alım düşünülebilir."
+            elif action == 'HOLD':
+                verdict = "⏸️ <b>BEKLE</b>"
+                verdict_desc = "Net sinyal yok. Beklemede kal."
+            elif action == 'SELL':
+                verdict = "🔴 <b>UZAK DUR</b>"
+                verdict_desc = "Riskli görünüyor. Almayı düşünme."
+            else:
+                verdict = "🚨 <b>KESİNLİKLE UZAK DUR!</b>"
+                verdict_desc = "Tehlike! Bu coindan uzak dur!"
+            
+            msg = f"""📊 <b>KAPSAMLI GRAFİK ANALİZİ{symbol_text}</b>
+{'═' * 30}
+
+{verdict}
+<i>{verdict_desc}</i>
+
+📊 <b>SKOR:</b> {score}/10
+"""
+            
+            if current_price and target_price and stop_loss:
+                msg += f"""
+{'─' * 25}
+💰 <b>FİYAT BİLGİLERİ</b>
+{'─' * 25}
+💵 <b>Güncel Fiyat:</b> ₺{current_price:,.2f}
+🎯 <b>Hedef Fiyat:</b> ₺{target_price:,.2f}
+🛑 <b>Stop-Loss:</b> ₺{stop_loss:,.2f}
+"""
+                if action in ['STRONG_BUY', 'BUY']:
+                    profit_pct = ((target_price - current_price) / current_price) * 100
+                    loss_pct = ((current_price - stop_loss) / current_price) * 100
+                    msg += f"📈 <b>Kar Potansiyeli:</b> +%{profit_pct:.1f}\n"
+                    msg += f"📉 <b>Risk:</b> -%{loss_pct:.1f}\n"
+            
+            msg += f"""
+{'─' * 25}
+⏰ <b>ZAMAN TAHMİNİ</b>
+{'─' * 25}
+🕐 <b>Beklenen Hareket:</b> {time_est}
+"""
+            
+            if action in ['STRONG_BUY', 'BUY'] and reasons_buy:
+                msg += f"""
+{'─' * 25}
+✅ <b>NEDEN ALMALISIN?</b>
+{'─' * 25}
+"""
+                for r in reasons_buy[:4]:
+                    msg += f"• {r}\n"
+            
+            elif action in ['STRONG_SELL', 'SELL'] and reasons_avoid:
+                msg += f"""
+{'─' * 25}
+❌ <b>NEDEN UZAK DURMALISIN?</b>
+{'─' * 25}
+"""
+                for r in reasons_avoid[:4]:
+                    msg += f"• {r}\n"
+            
+            else:
+                if reasons_buy:
+                    msg += f"\n✅ <b>Olumlu:</b>\n"
+                    for r in reasons_buy[:2]:
+                        msg += f"• {r}\n"
+                if reasons_avoid:
+                    msg += f"\n⚠️ <b>Dikkat:</b>\n"
+                    for r in reasons_avoid[:2]:
+                        msg += f"• {r}\n"
+            
+            msg += f"""
+{'─' * 25}
+📈 <b>TEKNİK DURUM</b>
+{'─' * 25}
+📈 Trend: {trend.get('trend', '?')}
+📉 RSI: {rsi.get('name', 'Nötr')} (~{rsi_val})
+📊 Hacim: {volume.get('trend', '?')}
+⚡ Momentum: {momentum.get('strength', '?')}
+"""
+            
+            if patterns:
+                msg += f"\n🕯️ <b>Tespit Edilen Mumlar:</b>\n"
+                for p in patterns[:3]:
+                    msg += f"   • {p.get('name', '?')} ({p.get('signal', '?')})\n"
+            
+            if formations:
+                msg += f"\n📐 <b>Grafik Formasyonları:</b>\n"
+                for f in formations[:2]:
+                    msg += f"   • {f.get('name', '?')} ({f.get('signal', '?')})\n"
+            
+            msg += f"""
+{'═' * 30}
+{verdict}
+⚠️ <i>Yatırım tavsiyesi değildir. DYOR!</i>"""
             
             return msg
             
