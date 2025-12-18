@@ -2602,6 +2602,117 @@ def main():
         scheduler.add_job(run_pump_scan, IntervalTrigger(minutes=10), id='pump_scan', replace_existing=True)
         logger.info("🚀 Pump Alert: Her 10 dakikada")
     
+    # 5-15-30 DAKİKA ANALİZ SİSTEMİ
+    def run_quick_analysis():
+        """5 dakikada bir hızlı piyasa kontrolü"""
+        try:
+            from ultimate_analyzer import UltimateAnalyzer
+            analyzer = UltimateAnalyzer()
+            
+            top_coins = ['BTC', 'ETH', 'XRP', 'SOL', 'AVAX']
+            results = []
+            
+            for coin in top_coins:
+                try:
+                    data = analyzer.get_coin_data(f"{coin}USDT")
+                    if data:
+                        change = data.get('change_24h', 0)
+                        if abs(change) > 3:
+                            results.append({'symbol': coin, 'change': change})
+                except:
+                    pass
+            
+            if results:
+                msg = "⚡ <b>5 DAKİKA KONTROL</b>\n\n"
+                for r in results:
+                    emoji = "🟢" if r['change'] > 0 else "🔴"
+                    msg += f"{emoji} {r['symbol']}: {r['change']:+.2f}%\n"
+                send_telegram(msg)
+                logger.info(f"✅ 5dk kontrol: {len(results)} hareket")
+        except Exception as e:
+            logger.error(f"5dk kontrol hatası: {e}")
+    
+    def run_15min_analysis():
+        """15 dakikada bir orta vadeli analiz"""
+        try:
+            from ultimate_analyzer import UltimateAnalyzer
+            analyzer = UltimateAnalyzer()
+            
+            coins = ['BTC', 'ETH', 'XRP', 'SOL', 'AVAX', 'DOGE', 'ADA']
+            signals = []
+            
+            for coin in coins:
+                try:
+                    result = analyzer.analyze(f"{coin}USDT")
+                    if result:
+                        signal = result.get('signal', 'TUT')
+                        score = result.get('score', 5)
+                        if signal in ['AL', 'GÜÇLÜ AL'] or score >= 7:
+                            signals.append({'symbol': coin, 'signal': signal, 'score': score})
+                        elif signal in ['SAT', 'GÜÇLÜ SAT'] or score <= 3:
+                            signals.append({'symbol': coin, 'signal': signal, 'score': score})
+                except:
+                    pass
+            
+            if signals:
+                msg = "📊 <b>15 DAKİKA ANALİZ</b>\n\n"
+                for s in signals:
+                    emoji = "🟢" if s['signal'] in ['AL', 'GÜÇLÜ AL'] else "🔴"
+                    msg += f"{emoji} {s['symbol']}: {s['signal']} ({s['score']:.1f}/10)\n"
+                send_telegram(msg)
+                logger.info(f"✅ 15dk analiz: {len(signals)} sinyal")
+        except Exception as e:
+            logger.error(f"15dk analiz hatası: {e}")
+    
+    def run_30min_analysis():
+        """30 dakikada bir detaylı analiz"""
+        try:
+            from ultimate_analyzer import UltimateAnalyzer
+            analyzer = UltimateAnalyzer()
+            
+            coins = ['BTC', 'ETH', 'XRP', 'SOL', 'AVAX', 'DOGE', 'ADA', 'MATIC', 'DOT', 'LINK']
+            all_results = []
+            
+            for coin in coins:
+                try:
+                    result = analyzer.analyze(f"{coin}USDT")
+                    if result:
+                        all_results.append({
+                            'symbol': coin,
+                            'signal': result.get('signal', 'TUT'),
+                            'score': result.get('score', 5),
+                            'rsi': result.get('rsi', 50),
+                            'change': result.get('change_24h', 0)
+                        })
+                except:
+                    pass
+            
+            if all_results:
+                msg = "📈 <b>30 DAKİKA DETAYLI ANALİZ</b>\n"
+                msg += f"🕐 {datetime.now().strftime('%H:%M')}\n\n"
+                
+                for r in sorted(all_results, key=lambda x: x['score'], reverse=True)[:5]:
+                    emoji = "🟢" if r['change'] > 0 else "🔴"
+                    rsi_emoji = "🔥" if r['rsi'] > 70 else "❄️" if r['rsi'] < 30 else "➡️"
+                    msg += f"{emoji} <b>{r['symbol']}</b>\n"
+                    msg += f"   Skor: {r['score']:.1f}/10 | {r['signal']}\n"
+                    msg += f"   RSI: {r['rsi']:.0f} {rsi_emoji} | 24s: {r['change']:+.2f}%\n\n"
+                
+                send_telegram(msg)
+                logger.info(f"✅ 30dk detaylı analiz gönderildi")
+        except Exception as e:
+            logger.error(f"30dk analiz hatası: {e}")
+    
+    # 5-15-30 dakika scheduler ekle
+    scheduler.add_job(run_quick_analysis, IntervalTrigger(minutes=5), id='quick_5min', replace_existing=True)
+    logger.info("⚡ Hızlı Kontrol: Her 5 dakikada")
+    
+    scheduler.add_job(run_15min_analysis, IntervalTrigger(minutes=15), id='analysis_15min', replace_existing=True)
+    logger.info("📊 Orta Analiz: Her 15 dakikada")
+    
+    scheduler.add_job(run_30min_analysis, IntervalTrigger(minutes=30), id='analysis_30min', replace_existing=True)
+    logger.info("📈 Detaylı Analiz: Her 30 dakikada")
+    
     scheduler.start()
     logger.info("✅ Scheduler aktif (Kripto + Hisse + Pump Alert)")
     
