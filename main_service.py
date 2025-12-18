@@ -7,6 +7,7 @@ import yfinance as yf
 import numpy as np
 from datetime import datetime
 import pytz
+from pathlib import Path
 from flask import Flask, jsonify, request
 
 TURKEY_TZ = pytz.timezone('Europe/Istanbul')
