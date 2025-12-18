@@ -1313,7 +1313,45 @@ def run_telegram_bot():
                         chat_id = message.get('chat', {}).get('id')
                         text = message.get('text', '').strip()
                         
-                        if text.startswith('/'):
+                        # ===================== GRAFİK ANALIZI =====================
+                        if 'photo' in message:
+                            try:
+                                photo = message.get('photo', [])
+                                if photo:
+                                    file_id = photo[-1]['file_id']
+                                    file_resp = requests.get(f"{api_url}/getFile", params={'file_id': file_id}, timeout=10)
+                                    
+                                    if file_resp.status_code == 200:
+                                        file_path = file_resp.json()['result']['file_path']
+                                        file_url = f"https://api.telegram.org/file/bot{TELEGRAM_TOKEN}/{file_path}"
+                                        file_data = requests.get(file_url, timeout=10)
+                                        
+                                        if file_data.status_code == 200:
+                                            temp_dir = Path('/tmp/telegram_charts')
+                                            temp_dir.mkdir(exist_ok=True)
+                                            local_path = temp_dir / f"{file_id}.jpg"
+                                            
+                                            with open(local_path, 'wb') as f:
+                                                f.write(file_data.content)
+                                            
+                                            try:
+                                                from chart_analyzer import ChartAnalyzer
+                                                analyzer = ChartAnalyzer()
+                                                summary = analyzer.get_summary(str(local_path))
+                                                send_telegram_to(chat_id, summary)
+                                                
+                                                try:
+                                                    os.remove(str(local_path))
+                                                except:
+                                                    pass
+                                            except Exception as e:
+                                                logger.error(f"Chart analiz hatası: {e}")
+                                                send_telegram_to(chat_id, f"❌ Grafik analiz hatası: {str(e)[:100]}")
+                            except Exception as e:
+                                logger.error(f"Fotoğraf işleme hatası: {e}")
+                                send_telegram_to(chat_id, f"❌ Grafik indirilemedi: {str(e)[:100]}")
+                        
+                        elif text.startswith('/'):
                             parts = text.split()
                             cmd = parts[0].lower().split('@')[0]
                             args = parts[1:] if len(parts) > 1 else []
