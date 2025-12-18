@@ -832,98 +832,140 @@ class ChartAnalyzer:
             return {'zone': 'unknown', 'rsi_estimate': 50}
     
     def _generate_signal(self, results: dict) -> Dict:
-        """Tüm analizlerden sinyal üret"""
+        """⚡ GÜÇLÜ SİNYAL ÜRETIMI - NET AL/SAT TAVSIYELERI"""
         try:
             score = 5.0
             signals = []
             
+            # ===== TRENDİ KONTROL ET =====
             trend = results.get('trend', {})
             if trend.get('direction') == 'UP':
-                score += 1.5
-                signals.append(f"📈 {trend.get('trend', '')}")
+                score += 2.0  # KUAT trend artırımı
+                signals.append(f"📈 <b>{trend.get('trend', '')}</b> (Güç: {trend.get('strength', 0):.0f}%)")
             elif trend.get('direction') == 'DOWN':
-                score -= 1.5
-                signals.append(f"📉 {trend.get('trend', '')}")
+                score -= 2.0
+                signals.append(f"📉 <b>{trend.get('trend', '')}</b> (Güç: {trend.get('strength', 0):.0f}%)")
             
-            colors = results.get('color_analysis', {})
-            if colors.get('dominant') == 'BULLISH':
-                score += 1
-                signals.append("🟢 Yeşil mumlar baskın")
-            elif colors.get('dominant') == 'BEARISH':
-                score -= 1
-                signals.append("🔴 Kırmızı mumlar baskın")
-            
+            # ===== MUM FORMASYONLARI =====
             patterns = results.get('candle_patterns', [])
-            for pattern in patterns[:2]:
-                if 'AL' in pattern.get('signal', ''):
+            for pattern in patterns[:3]:
+                if 'GÜÇLÜ AL' in pattern.get('signal', ''):
+                    score += 2.0
+                    signals.append(f"🕯️ <b>{pattern.get('name', '')} (GÜÇLÜ AL!)</b>")
+                elif 'AL' in pattern.get('signal', ''):
                     score += 1.5
-                    signals.append(f"🕯️ {pattern.get('name', '')}")
+                    signals.append(f"🕯️ {pattern.get('name', '')} (AL)")
+                elif 'GÜÇLÜ SAT' in pattern.get('signal', ''):
+                    score -= 2.0
+                    signals.append(f"🕯️ <b>{pattern.get('name', '')} (GÜÇLÜ SAT!)</b>")
                 elif 'SAT' in pattern.get('signal', ''):
                     score -= 1.5
-                    signals.append(f"🕯️ {pattern.get('name', '')}")
+                    signals.append(f"🕯️ {pattern.get('name', '')} (SAT)")
             
+            # ===== GRAFİK FORMASYONLARI =====
             formations = results.get('chart_formations', [])
             for formation in formations[:2]:
-                if formation.get('signal') == 'AL' or formation.get('signal') == 'GÜÇLÜ AL':
+                if formation.get('signal') == 'GÜÇLÜ AL':
+                    score += 2.0
+                    signals.append(f"📐 <b>{formation.get('name', '')} → GÜÇLÜ AL!</b>")
+                elif formation.get('signal') == 'AL':
                     score += 1.5
-                    signals.append(f"📐 {formation.get('name', '')}")
-                elif formation.get('signal') == 'SAT' or formation.get('signal') == 'GÜÇLÜ SAT':
+                    signals.append(f"📐 {formation.get('name', '')} → AL")
+                elif formation.get('signal') == 'GÜÇLÜ SAT':
+                    score -= 2.0
+                    signals.append(f"📐 <b>{formation.get('name', '')} → GÜÇLÜ SAT!</b>")
+                elif formation.get('signal') == 'SAT':
                     score -= 1.5
-                    signals.append(f"📐 {formation.get('name', '')}")
+                    signals.append(f"📐 {formation.get('name', '')} → SAT")
             
+            # ===== MACD SİNYALLERİ =====
             macd = results.get('macd_signals', {})
-            if macd.get('action') == 'AL':
+            if macd.get('signal') == 'MACD Boğa Kesişimi':
+                score += 1.5
+                signals.append(f"📊 <b>{macd.get('signal', '')} - GÜÇLÜ AL!</b>")
+            elif macd.get('signal') == 'MACD Ayı Kesişimi':
+                score -= 1.5
+                signals.append(f"📊 <b>{macd.get('signal', '')} - GÜÇLÜ SAT!</b>")
+            elif macd.get('action') == 'AL':
                 score += 1
                 signals.append(f"📊 {macd.get('signal', '')}")
             elif macd.get('action') == 'SAT':
                 score -= 1
                 signals.append(f"📊 {macd.get('signal', '')}")
             
+            # ===== DIVERGENCE (UYUŞMAZLIK) =====
             divergence = results.get('divergence', {})
-            if divergence.get('signal') == 'AL':
-                score += 1.5
-                signals.append(f"🔀 {divergence.get('name', '')}")
-            elif divergence.get('signal') == 'SAT':
+            if divergence.get('type') == 'bearish_divergence':
                 score -= 1.5
-                signals.append(f"🔀 {divergence.get('name', '')}")
+                signals.append(f"🔀 <b>{divergence.get('name', '')} - UYARI!</b>")
+            elif divergence.get('type') == 'bullish_divergence':
+                score += 1.5
+                signals.append(f"🔀 <b>{divergence.get('name', '')} - FIRSAT!</b>")
             
+            # ===== RSI ANALİZİ =====
             rsi = results.get('rsi_zone', {})
             if rsi.get('zone') == 'oversold':
-                score += 1
-                signals.append("📉 RSI Aşırı Satım")
+                score += 1.5
+                signals.append(f"📉 <b>RSI Aşırı Satım - AL FIRASAT!</b>")
             elif rsi.get('zone') == 'overbought':
-                score -= 1
-                signals.append("📈 RSI Aşırı Alım")
+                score -= 1.5
+                signals.append(f"📈 <b>RSI Aşırı Alım - SAT UYARISI!</b>")
             
+            # ===== RENKLERİN GÜÇ ANALİZİ =====
+            colors = results.get('color_analysis', {})
+            green_pct = colors.get('green_percent', 50)
+            red_pct = colors.get('red_percent', 50)
+            
+            if green_pct > 70:
+                score += 1
+                signals.append(f"🟢 Yeşil Mumlar Baskın (%{green_pct:.0f})")
+            elif red_pct > 70:
+                score -= 1
+                signals.append(f"🔴 Kırmızı Mumlar Baskın (%{red_pct:.0f})")
+            
+            # ===== HAMİ VE MOMENTUMü =====
+            volume = results.get('volume_signal', {})
+            if volume.get('trend') == '📈 Artan' and 'Güçlü' in volume.get('strength', ''):
+                score += 0.5
+            elif volume.get('trend') == '📉 Azalan':
+                score -= 0.5
+            
+            # ===== FİNAL SKOR HESAPLAMA =====
             score = max(0, min(10, score))
             
-            if score >= 7.5:
-                signal = "🟢 GÜÇLÜ AL"
+            if score >= 8:
+                signal = "🚀 <b>GÜÇLÜ AL - HEMEN AL!</b>"
                 action = "STRONG_BUY"
                 emoji = "🚀"
-            elif score >= 6:
-                signal = "🟢 AL"
+                instruction = "<b>⚡ KESİN TAV"
+            elif score >= 6.5:
+                signal = "🟢 <b>AL - ALMALI</b>"
                 action = "BUY"
                 emoji = "📈"
-            elif score >= 4:
-                signal = "⚪ TUT"
+                instruction = "<b>✅ ALIM SİNYALİ</b>"
+            elif score >= 4.5:
+                signal = "⚪ <b>TUT - BEKLEME</b>"
                 action = "HOLD"
                 emoji = "➡️"
+                instruction = "<b>⏸️ BEKLEME DURUMU</b>"
             elif score >= 2.5:
-                signal = "🔴 SAT"
+                signal = "🔴 <b>SAT - SATMALI</b>"
                 action = "SELL"
                 emoji = "📉"
+                instruction = "<b>⚠️ SATIŞ SİNYALİ</b>"
             else:
-                signal = "🔴 GÜÇLÜ SAT"
+                signal = "🚨 <b>GÜÇLÜ SAT - HEMEN SAT!</b>"
                 action = "STRONG_SELL"
-                emoji = "⚠️"
+                emoji = "🚨"
+                instruction = "<b>🚨 KESİN SATIŞ TAVS"
             
             return {
                 'signal': signal,
                 'action': action,
                 'score': round(score, 1),
                 'emoji': emoji,
-                'reasons': signals[:6]
+                'instruction': instruction,
+                'reasons': signals[:8]
             }
                 
         except Exception as e:

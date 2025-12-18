@@ -1548,6 +1548,37 @@ def run_telegram_bot():
                                 
                                 send_telegram_to(chat_id, msg or "⚠️ Sinyal yok")
                             
+                            # /ultimate [COIN] - GRAFİK ANALIZ + KESIN SİNYAL
+                            elif cmd == '/ultimate':
+                                symbol = args[0].upper() if args else 'BTC'
+                                try:
+                                    send_telegram_to(chat_id, f"📊 {symbol} analiz ediliyor... (grafik çekiliyor)")
+                                    
+                                    from chart_generator import ChartGenerator
+                                    from chart_analyzer import ChartAnalyzer
+                                    
+                                    # Grafik oluştur
+                                    chart_gen = ChartGenerator()
+                                    chart_path = chart_gen.create_price_chart(symbol, days=30)
+                                    
+                                    if not chart_path:
+                                        send_telegram_to(chat_id, f"⚠️ {symbol} grafiği oluşturulamadı")
+                                    else:
+                                        # Analiz yap
+                                        analyzer = ChartAnalyzer()
+                                        summary = analyzer.get_summary(chart_path)
+                                        send_telegram_to(chat_id, summary)
+                                        
+                                        # Temizle
+                                        try:
+                                            import os
+                                            os.remove(chart_path)
+                                        except:
+                                            pass
+                                except Exception as e:
+                                    logger.error(f"Ultimate analiz hatası: {e}")
+                                    send_telegram_to(chat_id, f"❌ Ultimate analiz hatası: {str(e)[:100]}")
+                            
                             # /analiz [COIN] - Detaylı analiz (TL)
                             elif cmd == '/analiz':
                                 symbol = args[0].upper() if args else 'BTC'

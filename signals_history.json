@@ -1918,5 +1918,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 129,
+    "symbol": "GLMR",
+    "signal_type": "POTENTIAL",
+    "entry_price": 1.0413,
+    "target_percent": 14.2,
+    "stop_percent": -7,
+    "target_price": 1.1891645999999998,
+    "stop_price": 0.9684089999999999,
+    "timestamp": "2025-12-18 14:20",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
