@@ -1324,8 +1324,7 @@ def run_telegram_bot():
                                 current_price = 0.0
                                 
                                 if caption:
-                                    import re
-                                    match = re.search(r'([A-Z]{2,10})', caption)
+                                    match = _re_module.search(r'([A-Z]{2,10})', caption)
                                     if match:
                                         symbol = match.group(1)
                                         try:
@@ -1969,6 +1968,217 @@ def run_telegram_bot():
                                     send_telegram_to(chat_id, report)
                                 else:
                                     send_telegram_to(chat_id, "🐋 Whale tracker yükleniyor...")
+                            
+                            # ==================== YENİ TİCARET KOMUTLARI ====================
+                            
+                            # /bakiye - Gerçek hesap bakiyesi (BTCTurk)
+                            elif cmd == '/bakiye':
+                                try:
+                                    from real_trader import BTCTurkTrader
+                                    trader = BTCTurkTrader()
+                                    msg = trader.format_balance_message()
+                                    send_telegram_to(chat_id, msg)
+                                except Exception as e:
+                                    send_telegram_to(chat_id, f"❌ Bakiye hatası: {str(e)[:100]}")
+                            
+                            # /al [COIN] [TL] - Gerçek market order (BTCTurk) - GÜVENLİK KONTROLÜ
+                            elif cmd == '/al':
+                                if len(args) >= 2:
+                                    symbol = args[0].upper()
+                                    try:
+                                        amount_tl = float(args[1].replace(',', '.'))
+                                        from real_trader import BTCTurkTrader
+                                        trader = BTCTurkTrader()
+                                        
+                                        if not trader.is_authorized(chat_id):
+                                            send_telegram_to(chat_id, "🚫 Bu komutu kullanma yetkiniz yok. Sadece hesap sahibi kullanabilir.")
+                                            continue
+                                        
+                                        validation = trader.validate_order(symbol, amount_tl=amount_tl)
+                                        if not validation.get('valid'):
+                                            send_telegram_to(chat_id, validation.get('error'))
+                                            continue
+                                        
+                                        result = trader.place_market_order(symbol, 'buy', amount_tl=amount_tl)
+                                        if result.get('success'):
+                                            trader.save_trade_to_db(result)
+                                            send_telegram_to(chat_id, f"✅ {symbol} ALIM BAŞARILI!\n💰 ₺{result['total_tl']:,.2f}\n📊 Miktar: {result['quantity']:.8f}\n💵 Fiyat: ₺{result['price']:,.2f}")
+                                        else:
+                                            send_telegram_to(chat_id, f"❌ Alım hatası: {result.get('error', 'Bilinmeyen')}")
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Format: /al BTC 1000\nHata: {str(e)[:80]}")
+                                else:
+                                    send_telegram_to(chat_id, "📝 Kullanım: /al BTC 1000 (TL cinsinden)")
+                            
+                            # /sat [COIN] [MİKTAR] - Gerçek market sell (BTCTurk) - GÜVENLİK KONTROLÜ
+                            elif cmd == '/sat':
+                                if len(args) >= 2:
+                                    symbol = args[0].upper()
+                                    try:
+                                        quantity = float(args[1].replace(',', '.'))
+                                        from real_trader import BTCTurkTrader
+                                        trader = BTCTurkTrader()
+                                        
+                                        if not trader.is_authorized(chat_id):
+                                            send_telegram_to(chat_id, "🚫 Bu komutu kullanma yetkiniz yok. Sadece hesap sahibi kullanabilir.")
+                                            continue
+                                        
+                                        validation = trader.validate_order(symbol, quantity=quantity)
+                                        if not validation.get('valid'):
+                                            send_telegram_to(chat_id, validation.get('error'))
+                                            continue
+                                        
+                                        result = trader.place_market_order(symbol, 'sell', quantity=quantity)
+                                        if result.get('success'):
+                                            trader.save_trade_to_db(result)
+                                            send_telegram_to(chat_id, f"✅ {symbol} SATIM BAŞARILI!\n💰 ₺{result['total_tl']:,.2f}\n📊 Miktar: {result['quantity']:.8f}\n💵 Fiyat: ₺{result['price']:,.2f}")
+                                        else:
+                                            send_telegram_to(chat_id, f"❌ Satım hatası: {result.get('error', 'Bilinmeyen')}")
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Format: /sat BTC 0.001\nHata: {str(e)[:80]}")
+                                else:
+                                    send_telegram_to(chat_id, "📝 Kullanım: /sat BTC 0.001 (coin miktarı)")
+                            
+                            # /orderlar - Açık orderlar
+                            elif cmd == '/orderlar':
+                                try:
+                                    from real_trader import BTCTurkTrader
+                                    trader = BTCTurkTrader()
+                                    orders = trader.get_open_orders()
+                                    if orders:
+                                        msg = "📋 <b>AÇIK ORDERLAR</b>\n━━━━━━━━━━━━━━━━━━━━━━\n\n"
+                                        for o in orders[:10]:
+                                            msg += f"• {o.get('pairSymbol', 'N/A')}\n  {o.get('type', '')} @ ₺{float(o.get('price', 0)):,.2f}\n\n"
+                                        send_telegram_to(chat_id, msg)
+                                    else:
+                                        send_telegram_to(chat_id, "📋 Açık order yok")
+                                except Exception as e:
+                                    send_telegram_to(chat_id, f"❌ Order hatası: {str(e)[:100]}")
+                            
+                            # /binance - Binance global piyasa
+                            elif cmd == '/binance':
+                                try:
+                                    from binance_trader import BinanceTrader
+                                    binance = BinanceTrader()
+                                    msg = binance.format_market_overview()
+                                    send_telegram_to(chat_id, msg)
+                                except Exception as e:
+                                    send_telegram_to(chat_id, f"❌ Binance hatası: {str(e)[:100]}")
+                            
+                            # /karsilastir [COIN] - BTCTurk vs Binance fiyat
+                            elif cmd in ['/karsilastir', '/karşılaştır']:
+                                symbol = args[0].upper() if args else 'BTC'
+                                try:
+                                    from binance_trader import MultiExchangeAggregator
+                                    agg = MultiExchangeAggregator()
+                                    msg = agg.format_comparison(symbol)
+                                    send_telegram_to(chat_id, msg)
+                                except Exception as e:
+                                    send_telegram_to(chat_id, f"❌ Karşılaştırma hatası: {str(e)[:100]}")
+                            
+                            # /stratejiler - Strateji listesi
+                            elif cmd == '/stratejiler':
+                                try:
+                                    from strategy_builder import StrategyBuilder
+                                    builder = StrategyBuilder()
+                                    msg = builder.format_strategy_list()
+                                    send_telegram_to(chat_id, msg)
+                                except Exception as e:
+                                    send_telegram_to(chat_id, f"❌ Strateji hatası: {str(e)[:100]}")
+                            
+                            # /hazir-stratejiler - Hazır şablonlar
+                            elif cmd == '/hazir-stratejiler':
+                                try:
+                                    from strategy_builder import format_prebuilt_strategies
+                                    msg = format_prebuilt_strategies()
+                                    send_telegram_to(chat_id, msg)
+                                except Exception as e:
+                                    send_telegram_to(chat_id, f"❌ Hata: {str(e)[:100]}")
+                            
+                            # /strateji-ekle [NUMARA] - Hazır strateji ekle
+                            elif cmd == '/strateji-ekle':
+                                if args:
+                                    try:
+                                        num = int(args[0])
+                                        from strategy_builder import StrategyBuilder, PrebuiltStrategies
+                                        builder = StrategyBuilder()
+                                        
+                                        templates = {
+                                            1: PrebuiltStrategies.rsi_oversold_strategy(),
+                                            2: PrebuiltStrategies.macd_crossover_strategy(),
+                                            3: PrebuiltStrategies.bollinger_bounce_strategy(),
+                                            4: PrebuiltStrategies.volume_breakout_strategy(),
+                                            5: PrebuiltStrategies.triple_confirmation_strategy()
+                                        }
+                                        
+                                        if num in templates:
+                                            strat = templates[num]
+                                            result = builder.create_strategy(
+                                                name=strat['name'],
+                                                description=strat['description'],
+                                                buy_conditions=strat['buy_conditions'],
+                                                sell_conditions=strat['sell_conditions'],
+                                                risk_params=strat['risk_params']
+                                            )
+                                            send_telegram_to(chat_id, f"✅ {strat['name']} stratejisi eklendi!")
+                                        else:
+                                            send_telegram_to(chat_id, "❌ Geçersiz numara (1-5)")
+                                    except Exception as e:
+                                        send_telegram_to(chat_id, f"❌ Hata: {str(e)[:100]}")
+                                else:
+                                    send_telegram_to(chat_id, "📝 Kullanım: /strateji-ekle 1\n/hazir-stratejiler ile listele")
+                            
+                            # /sinyal-performans - Sinyal başarı oranı
+                            elif cmd in ['/sinyal-performans', '/performans']:
+                                try:
+                                    from real_trader import SignalTracker
+                                    tracker = SignalTracker()
+                                    msg = tracker.format_stats_message()
+                                    send_telegram_to(chat_id, msg)
+                                except Exception as e:
+                                    send_telegram_to(chat_id, f"❌ Performans hatası: {str(e)[:100]}")
+                            
+                            # /gelismis-backtest [COIN] - Gelişmiş backtest
+                            elif cmd == '/gelismis-backtest':
+                                symbol = args[0].upper() if args else 'BTC'
+                                try:
+                                    from advanced_backtest import AdvancedBacktester, explain_metrics
+                                    send_telegram_to(chat_id, f"📊 {symbol} için gelişmiş backtest...\n⏳ Sharpe, Sortino, Max DD hesaplanıyor...")
+                                    
+                                    backtester = AdvancedBacktester()
+                                    
+                                    resp = requests.get(f"https://api.btcturk.com/api/v2/ohlcs?pair={symbol}TRY&resolution=1d", timeout=15)
+                                    prices = []
+                                    if resp.status_code == 200:
+                                        ohlc = resp.json().get('data', [])
+                                        prices = [float(c.get('close', 0)) for c in ohlc[-90:]]
+                                    
+                                    if len(prices) < 10:
+                                        send_telegram_to(chat_id, f"❌ {symbol} için yeterli veri yok")
+                                    else:
+                                        mock_trades = [{'pnl': (prices[i+1] - prices[i]) / prices[i] * 100} for i in range(0, len(prices)-1, 5)]
+                                        
+                                        result = backtester.run_backtest(
+                                            symbol=symbol,
+                                            strategy_name='RSI + MACD',
+                                            prices=prices,
+                                            trades=mock_trades,
+                                            initial_capital=10000
+                                        )
+                                        
+                                        msg = backtester.format_report(result)
+                                        send_telegram_to(chat_id, msg)
+                                except Exception as e:
+                                    send_telegram_to(chat_id, f"❌ Backtest hatası: {str(e)[:100]}")
+                            
+                            # /backtest-aciklama - Metrikleri açıkla
+                            elif cmd == '/backtest-aciklama':
+                                try:
+                                    from advanced_backtest import explain_metrics
+                                    msg = explain_metrics()
+                                    send_telegram_to(chat_id, msg)
+                                except Exception as e:
+                                    send_telegram_to(chat_id, f"❌ Hata: {str(e)[:100]}")
                             
                             # /haber - AI Haberci
                             elif cmd == '/haber':

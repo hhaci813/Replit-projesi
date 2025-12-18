@@ -103,3 +103,44 @@ The Akıllı Yatırım Asistanı is built on a modular and robust architecture c
 - Integrated multi-interval scheduler system (7 concurrent jobs)
 - Added trend detection, support/resistance level finding, volume analysis, and momentum detection from images
 - System now provides visual signals: 🟢 GÜÇLÜ AL, 🟢 AL, ⚪ TUT, 🔴 SAT, 🔴 GÜÇLÜ SAT based on image analysis
+
+### NEW FEATURES (December 2024 - Major Update)
+1. **Real Trading System (real_trader.py)**
+   - BTCTurk API integration for real buy/sell orders
+   - Market, limit, and stop-loss order support
+   - Balance checking and trade history tracking
+   - Commands: /bakiye, /al, /sat, /orderlar
+
+2. **Multi-Exchange Support (binance_trader.py)**
+   - Binance API integration for global market data
+   - Price comparison between BTCTurk and Binance
+   - Top gainers/losers, volume analysis
+   - Commands: /binance, /karsilastir
+
+3. **Custom Strategy Builder (strategy_builder.py)**
+   - User-defined trading strategies
+   - 5 prebuilt strategy templates (RSI, MACD, Bollinger, Volume, Triple Confirmation)
+   - Strategy activation/deactivation
+   - Commands: /stratejiler, /hazir-stratejiler, /strateji-ekle
+
+4. **Advanced Backtest Engine (advanced_backtest.py)**
+   - Sharpe Ratio, Sortino Ratio, Calmar Ratio
+   - Max Drawdown, Profit Factor calculations
+   - Win rate, expectancy metrics
+   - Commands: /gelismis-backtest, /backtest-aciklama
+
+5. **Web Dashboard & REST API (web_dashboard.py)**
+   - Real-time web control panel at port 5000
+   - REST API endpoints for all features
+   - Portfolio, signals, strategies, market data APIs
+   - Trade execution via API
+
+6. **Signal Performance Tracking**
+   - Historical signal success rate monitoring
+   - Win/loss ratio calculation
+   - Total PnL tracking
+   - Command: /sinyal-performans
+
+7. **PostgreSQL Database Integration**
+   - trades, signals, strategies, backtest_results tables
+   - Persistent data storage for all modules

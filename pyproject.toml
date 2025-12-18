@@ -22,6 +22,7 @@ dependencies = [
     "pillow>=12.0.0",
     "plotly>=6.5.0",
     "praw>=7.8.1",
+    "psycopg2-binary>=2.9.11",
     "pytelegrambotapi>=4.29.1",
     "pytz>=2025.2",
     "requests>=2.32.5",
