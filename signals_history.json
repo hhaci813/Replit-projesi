@@ -1858,5 +1858,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 125,
+    "symbol": "AIXBT",
+    "signal_type": "POTENTIAL",
+    "entry_price": 1.2421,
+    "target_percent": 20,
+    "stop_percent": -7,
+    "target_price": 1.4905199999999998,
+    "stop_price": 1.1551529999999999,
+    "timestamp": "2025-12-18 13:48",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
