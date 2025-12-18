@@ -1828,5 +1828,35 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 123,
+    "symbol": "ADA",
+    "signal_type": "POTENTIAL",
+    "entry_price": 15.838,
+    "target_percent": 7.8,
+    "stop_percent": -7,
+    "target_price": 17.073364,
+    "stop_price": 14.729339999999999,
+    "timestamp": "2025-12-18 13:18",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 124,
+    "symbol": "SPELL",
+    "signal_type": "POTENTIAL",
+    "entry_price": 0.010195,
+    "target_percent": 5.2,
+    "stop_percent": -7,
+    "target_price": 0.01072514,
+    "stop_price": 0.009481349999999998,
+    "timestamp": "2025-12-18 13:18",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]

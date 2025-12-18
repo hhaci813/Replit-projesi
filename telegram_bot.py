@@ -1,10 +1,12 @@
 """📱 TELEGRAM INTERACTIVE BOT - İNTERAKTİF KOMUTLAR
-/btc, /analiz, /tahmin, /piyasa komutları
+/btc, /analiz, /tahmin, /piyasa komutları + Grafik Analizi
 """
 import requests
 import threading
 import time
 from datetime import datetime
+import os
+from pathlib import Path
 
 TELEGRAM_TOKEN = "8268294938:AAGCvDDNHhb5-pKFQYPJrZIJTxMVmu79oYo"
 TELEGRAM_CHAT_ID = "8391537149"
@@ -246,6 +248,80 @@ Her 2 saatte bir analiz raporu gelir.
         except Exception as e:
             return f"❌ Piyasa hatası: {str(e)}"
     
+    def download_file(self, file_id, chat_id):
+        """Telegram'dan dosya indir"""
+        try:
+            # File info al
+            url = f"{self.api_url}/getFile"
+            resp = requests.get(url, params={'file_id': file_id}, timeout=10)
+            
+            if resp.status_code != 200:
+                return None
+            
+            file_path = resp.json()['result']['file_path']
+            
+            # Dosyayı indir
+            file_url = f"https://api.telegram.org/file/bot{self.token}/{file_path}"
+            file_resp = requests.get(file_url, timeout=10)
+            
+            if file_resp.status_code != 200:
+                return None
+            
+            # Geçici klasör oluştur
+            temp_dir = Path('/tmp/telegram_charts')
+            temp_dir.mkdir(exist_ok=True)
+            
+            # Dosyayı kaydet
+            local_path = temp_dir / f"{file_id}.jpg"
+            with open(local_path, 'wb') as f:
+                f.write(file_resp.content)
+            
+            return str(local_path)
+            
+        except Exception as e:
+            print(f"Dosya indirme hatası: {e}")
+            return None
+    
+    def process_photo(self, message):
+        """Fotoğrafı işle ve analiz et"""
+        try:
+            chat_id = message.get('chat', {}).get('id')
+            caption = message.get('caption', '').strip()
+            
+            # En yüksek kaliteli fotoğrafı seç
+            photo = message.get('photo', [])
+            if not photo:
+                return
+            
+            file_id = photo[-1]['file_id']
+            
+            # Dosyayı indir
+            local_path = self.download_file(file_id, chat_id)
+            if not local_path:
+                self.send_message(chat_id, "❌ Grafik indirilemedi")
+                return
+            
+            # Chart analyzer'ı çağır
+            from chart_analyzer import ChartAnalyzer
+            analyzer = ChartAnalyzer()
+            summary = analyzer.get_summary(local_path)
+            
+            # Sonucu gönder
+            if caption:
+                summary = f"<b>Grafik Adı:</b> {caption}\n\n" + summary
+            
+            self.send_message(chat_id, summary)
+            
+            # Dosyayı sil
+            try:
+                os.remove(local_path)
+            except:
+                pass
+                
+        except Exception as e:
+            print(f"Fotoğraf işleme hatası: {e}")
+            self.send_message(chat_id, f"❌ Analiz hatası: {str(e)}")
+    
     def process_message(self, message):
         """Mesajı işle"""
         chat_id = message.get('chat', {}).get('id')
@@ -275,7 +351,15 @@ Her 2 saatte bir analiz raporu gelir.
                     self.last_update_id = update['update_id']
                     
                     if 'message' in update:
-                        self.process_message(update['message'])
+                        message = update['message']
+                        
+                        # Metin mesajı
+                        if 'text' in message:
+                            self.process_message(message)
+                        
+                        # Fotoğraf
+                        elif 'photo' in message:
+                            self.process_photo(message)
                 
                 time.sleep(1)
                 
