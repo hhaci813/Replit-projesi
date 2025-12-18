@@ -1873,5 +1873,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 126,
+    "symbol": "INTER",
+    "signal_type": "POTENTIAL",
+    "entry_price": 14.818,
+    "target_percent": 2.6,
+    "stop_percent": -7,
+    "target_price": 15.203268,
+    "stop_price": 13.780739999999998,
+    "timestamp": "2025-12-18 13:58",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]

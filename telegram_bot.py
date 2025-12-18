@@ -153,10 +153,10 @@ Her 2 saatte bir analiz raporu gelir.
             msg = f"""📊 <b>{symbol} TEKNİK ANALİZ</b>
 
 <b>Göstergeler:</b>
-📈 RSI: {result['rsi']}
-📉 MACD: {result['macd']['trend']}
-📊 Bollinger: {result['bollinger']['position']}
-📈 MA Trend: {result['moving_averages'].get('trend', 'N/A')}
+📈 RSI: {result.get('rsi', 'N/A')}
+📉 MACD: {result.get('macd', {}).get('trend', 'N/A')}
+📊 Bollinger: {result.get('bollinger', {}).get('position', 'N/A')}
+📈 MA Trend: {result.get('moving_averages', {}).get('trend', 'N/A')}
 
 <b>Skor:</b> {result['score']}/100
 <b>Tavsiye:</b> {result['recommendation']}
@@ -284,6 +284,7 @@ Her 2 saatte bir analiz raporu gelir.
     
     def process_photo(self, message):
         """Fotoğrafı işle ve analiz et"""
+        chat_id = None
         try:
             chat_id = message.get('chat', {}).get('id')
             caption = message.get('caption', '').strip()
@@ -320,7 +321,8 @@ Her 2 saatte bir analiz raporu gelir.
                 
         except Exception as e:
             print(f"Fotoğraf işleme hatası: {e}")
-            self.send_message(chat_id, f"❌ Analiz hatası: {str(e)}")
+            if chat_id:
+                self.send_message(chat_id, f"❌ Analiz hatası: {str(e)}")
     
     def process_message(self, message):
         """Mesajı işle"""
