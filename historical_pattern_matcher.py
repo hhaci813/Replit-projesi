@@ -18,27 +18,13 @@ class HistoricalPatternMatcher:
         self.pattern_history = {}
         
     def fetch_historical_data(self, symbol: str, days: int = 365) -> List[Dict]:
-        """yfinance ile tarihsel veri çek (daha güvenilir)"""
+        """yfinance ile tarihsel veri çek - TÜM COİNLER DESTEKLİ"""
         try:
             import yfinance as yf
             
-            ticker_map = {
-                'BTC': 'BTC-USD',
-                'ETH': 'ETH-USD',
-                'XRP': 'XRP-USD',
-                'SOL': 'SOL-USD',
-                'AVAX': 'AVAX-USD',
-                'DOGE': 'DOGE-USD',
-                'ADA': 'ADA-USD',
-                'DOT': 'DOT-USD',
-                'MATIC': 'MATIC-USD',
-                'LINK': 'LINK-USD',
-                'UNI': 'UNI-USD',
-                'ATOM': 'ATOM-USD',
-                'LTC': 'LTC-USD',
-            }
+            symbol_upper = symbol.upper().replace('TRY', '').replace('USDT', '').strip()
             
-            yf_symbol = ticker_map.get(symbol.upper(), f"{symbol.upper()}-USD")
+            yf_symbol = f"{symbol_upper}-USD"
             
             ticker = yf.Ticker(yf_symbol)
             df = ticker.history(period=f"{days}d")
