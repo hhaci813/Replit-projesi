@@ -894,10 +894,10 @@
     "target_price": 12.030008299999999,
     "stop_price": 10.62513,
     "timestamp": "2025-12-12 10:33",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "EXPIRED",
+    "result": "SÜRE DOLDU",
+    "result_percent": 0.89,
+    "closed_at": "2025-12-19 11:38"
   },
   {
     "id": 61,
@@ -954,10 +954,10 @@
     "target_price": 61.157,
     "stop_price": 48.9256,
     "timestamp": "2025-12-12 11:25",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "EXPIRED",
+    "result": "SÜRE DOLDU",
+    "result_percent": -6.66,
+    "closed_at": "2025-12-19 11:38"
   },
   {
     "id": 65,
@@ -2154,10 +2154,10 @@
     "target_price": 0.0938448,
     "stop_price": 0.0796005,
     "timestamp": "2025-12-19 08:45",
-    "status": "ACTIVE",
-    "result": null,
-    "result_percent": null,
-    "closed_at": null
+    "status": "LOSS",
+    "result": "STOP",
+    "result_percent": -9.26,
+    "closed_at": "2025-12-19 11:39"
   },
   {
     "id": 145,
@@ -2169,6 +2169,21 @@
     "target_price": 4.9512860000000005,
     "stop_price": 4.17849,
     "timestamp": "2025-12-19 08:45",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
+  },
+  {
+    "id": 146,
+    "symbol": "LUNA",
+    "signal_type": "POTENTIAL",
+    "entry_price": 4.683,
+    "target_percent": 13.8,
+    "stop_percent": -7,
+    "target_price": 5.329254,
+    "stop_price": 4.3551899999999995,
+    "timestamp": "2025-12-19 11:38",
     "status": "ACTIVE",
     "result": null,
     "result_percent": null,
