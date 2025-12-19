@@ -1546,31 +1546,39 @@ def run_telegram_bot():
 🤖 15 modül 24/7 aktif çalışmaktadır"""
                                 send_telegram_to(chat_id, help_msg4)
                             
-                            # /btc - Yükselecekler (TL)
-                            elif cmd == '/btc':
-                                tickers = get_btcturk_data()
-                                potential = analyze_potential_risers(tickers)
-                                rising = analyze_rising_cryptos(tickers)
-                                
-                                msg = "🔮 <b>YÜKSELECEK KRİPTOLAR (TL)</b>\n\n"
-                                
-                                if potential:
-                                    for i, p in enumerate(potential[:7], 1):
-                                        msg += f"""<b>{i}. 🎯 {p['symbol']}</b>
-   💰 ₺{p['price']:,.2f} TL
-   📈 Potansiyel: +{p['potential']}%
-   🎯 Hedef: ₺{p['target']:,.2f} TL
-   🛑 Stop: ₺{p['stop']:,.2f} TL
-   ⏱️ {p.get('days_estimate', '3-7 gün')}
-   
-"""
-                                
-                                if rising:
-                                    msg += "\n🔥 <b>ŞU AN YÜKSELENLER:</b>\n"
-                                    for r in rising[:3]:
-                                        msg += f"• {r['symbol']} +{r['change']:.1f}% | ₺{r['price']:,.2f}\n"
-                                
-                                send_telegram_to(chat_id, msg or "⚠️ Sinyal yok")
+                            # /btc - Yükselecekler (TL) - MEGA ANALİZ
+                            elif cmd in ['/btc', '/yukselecekler', '/potansiyel']:
+                                send_telegram_to(chat_id, "🔮 Mega analiz yapılıyor...\n⏳ Tüm sistemler çalışıyor...")
+                                try:
+                                    from mega_analyzer import mega_analyzer
+                                    msg = mega_analyzer.get_potential_message()
+                                    send_telegram_to(chat_id, msg)
+                                except Exception as e:
+                                    logger.error(f"Mega analiz hatası: {e}")
+                                    tickers = get_btcturk_data()
+                                    potential = analyze_potential_risers(tickers)
+                                    msg = "🔮 <b>YÜKSELECEK KRİPTOLAR (TL)</b>\n\n"
+                                    if potential:
+                                        for i, p in enumerate(potential[:7], 1):
+                                            msg += f"<b>{i}. 🎯 {p['symbol']}</b> ₺{p['price']:,.2f}\n"
+                                    send_telegram_to(chat_id, msg or "⚠️ Sinyal yok")
+                            
+                            # /yukselenler - Şu an yükselenler MEGA ANALİZ
+                            elif cmd in ['/yukselenler', '/rising', '/ates']:
+                                send_telegram_to(chat_id, "🔥 Yükselenler mega analiz...\n⏳ Tüm sistemler çalışıyor...")
+                                try:
+                                    from mega_analyzer import mega_analyzer
+                                    msg = mega_analyzer.get_rising_message()
+                                    send_telegram_to(chat_id, msg)
+                                except Exception as e:
+                                    logger.error(f"Mega yükselenler hatası: {e}")
+                                    tickers = get_btcturk_data()
+                                    rising = analyze_rising_cryptos(tickers)
+                                    msg = "🔥 <b>ŞU AN YÜKSELENLER:</b>\n"
+                                    if rising:
+                                        for r in rising[:7]:
+                                            msg += f"• {r['symbol']} +{r['change']:.1f}% | ₺{r['price']:,.2f}\n"
+                                    send_telegram_to(chat_id, msg or "⚠️ Sinyal yok")
                             
                             # /ultimate [COIN] - GRAFİK ANALIZ + KESIN SİNYAL + FİYAT + HEDEF + STOP + TARİHSEL
                             elif cmd == '/ultimate':
