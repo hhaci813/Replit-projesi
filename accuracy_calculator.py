@@ -35,10 +35,12 @@ class SignalAccuracy:
         
         for sig in signals:
             total += 1
-            status = sig.get('status', '').upper()
-            result = sig.get('result', '').upper()
+            status = (sig.get('status') or '').upper()
+            result = (sig.get('result') or '').upper()
             sig_type = sig.get('signal_type', 'POTENTIAL')
-            pnl = sig.get('result_percent', 0)
+            pnl = sig.get('result_percent') or 0
+            if pnl is None:
+                pnl = 0
             symbol = sig.get('symbol', 'UNKNOWN')
             
             profit_loss.append({'symbol': symbol, 'pnl': pnl, 'type': sig_type})

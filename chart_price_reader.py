@@ -117,10 +117,57 @@ class ChartPriceReader:
             logger.error(f"S/R çıkarma hatası: {e}")
             return {'error': str(e)}
     
-    def get_analysis_message(self, image_path: str) -> str:
-        """Grafik analiz mesajı oluştur"""
+    def calculate_target_and_stop(self, image_path: str, current_price: float, pattern_signal: str) -> Dict:
+        """Grafik patternine göre target ve stop-loss hesapla"""
+        sr = self.extract_support_resistance(image_path)
+        price_zones = self.read_price_zones(image_path)
+        
+        if 'error' in sr or 'error' in price_zones:
+            return {'error': 'Analiz başarısız'}
+        
+        # Support/Resistance seviyeleri
+        top_resistance = sr.get('top_resistance', 0)
+        bottom_support = sr.get('bottom_support', 0)
+        
+        # Pattern tipine göre hedef belirle
+        if 'AL' in pattern_signal.upper():
+            # BUY sinyali için
+            target_percent = 0.15  # +15% hedef
+            stop_percent = -0.08   # -8% stop-loss
+            
+            target_price = current_price * (1 + target_percent)
+            stop_price = current_price * (1 + stop_percent)
+            
+        else:  # SELL sinyali
+            target_percent = -0.15  # -15% hedef
+            stop_percent = 0.08     # +8% stop-loss
+            
+            target_price = current_price * (1 + target_percent)
+            stop_price = current_price * (1 + stop_percent)
+        
+        # Support/Resistance ile ayarla
+        if top_resistance and target_price > current_price:
+            target_price = min(target_price, top_resistance * 1.02)
+        if bottom_support and stop_price < current_price:
+            stop_price = max(stop_price, bottom_support * 0.98)
+        
+        risk_reward = abs((target_price - current_price) / (current_price - stop_price)) if stop_price != current_price else 0
+        
+        return {
+            'current_price': round(current_price, 2),
+            'target_price': round(target_price, 2),
+            'stop_price': round(stop_price, 2),
+            'target_percent': round((target_price - current_price) / current_price * 100, 2),
+            'stop_percent': round((stop_price - current_price) / current_price * 100, 2),
+            'risk_reward_ratio': round(risk_reward, 2),
+            'support': round(bottom_support, 2) if bottom_support else None,
+            'resistance': round(top_resistance, 2) if top_resistance else None,
+        }
+    
+    def get_analysis_message(self, image_path: str, current_price: float = None, pattern_signal: str = 'AL') -> str:
+        """Grafik analiz mesajı oluştur - hedefe + stop loss ile"""
         msg = "📊 GRAFİK FİYAT ANALİZİ\n"
-        msg += f"{'='*40}\n"
+        msg += f"{'='*45}\n"
         
         price_zones = self.read_price_zones(image_path)
         if 'error' not in price_zones:
@@ -130,7 +177,20 @@ class ChartPriceReader:
         if 'error' not in sr:
             msg += f"\n{sr['message']}\n"
         
-        msg += f"\n💡 NOT: Yapay zeka tabanlı tahmin\n"
-        msg += f"Gerçek fiyat seviyeleri için grafik inceleyiniz"
+        # Target ve Stop hesapla (eğer fiyat sağlandıysa)
+        if current_price:
+            targets = self.calculate_target_and_stop(image_path, current_price, pattern_signal)
+            if 'error' not in targets:
+                msg += f"\n{'TARGET & STOP-LOSS':-^45}\n"
+                msg += f"📍 Mevcut: ₺{targets['current_price']:,.2f}\n"
+                msg += f"🎯 Hedef: ₺{targets['target_price']:,.2f} ({targets['target_percent']:+.1f}%)\n"
+                msg += f"🛑 Stop-Loss: ₺{targets['stop_price']:,.2f} ({targets['stop_percent']:+.1f}%)\n"
+                msg += f"⚖️  Risk/Reward: 1:{targets['risk_reward_ratio']}\n"
+                if targets['support']:
+                    msg += f"📉 Destek: ₺{targets['support']:,.2f}\n"
+                if targets['resistance']:
+                    msg += f"📈 Direnç: ₺{targets['resistance']:,.2f}\n"
+        
+        msg += f"\n💡 NOT: AI tahmin - gerçek fiyatları teyit edin"
         
         return msg
