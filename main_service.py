@@ -1580,7 +1580,6 @@ def run_telegram_bot():
                                     
                                     from chart_generator import ChartGenerator
                                     from chart_analyzer import ChartAnalyzer
-                                    from historical_pattern_matcher import HistoricalPatternMatcher
                                     
                                     current_price = 0.0
                                     try:
@@ -1607,13 +1606,6 @@ def run_telegram_bot():
                                             current_price=current_price
                                         )
                                         send_telegram_to(chat_id, summary)
-                                        
-                                        try:
-                                            matcher = HistoricalPatternMatcher()
-                                            historical_msg = matcher.get_comparison_message(symbol)
-                                            send_telegram_to(chat_id, historical_msg)
-                                        except Exception as hist_err:
-                                            logger.warning(f"Tarihsel analiz hatası {symbol}: {hist_err}")
                                         
                                         try:
                                             import os

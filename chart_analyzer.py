@@ -978,6 +978,7 @@ class ChartAnalyzer:
         - Fiyat bilgisi, hedef, stop-loss
         - Neden AL / Neden UZAK DUR
         - Zaman tahmini
+        - TARİHSEL VERİ ANALİZİ (arka planda)
         """
         try:
             results = self.analyze_chart(image_path)
@@ -988,6 +989,30 @@ class ChartAnalyzer:
             signal = results.get('signal', {})
             score = signal.get('score', 5)
             action = signal.get('action', 'HOLD')
+            
+            historical_data = None
+            historical_confidence = ""
+            historical_win_rate = 50
+            try:
+                if symbol:
+                    from historical_pattern_matcher import HistoricalPatternMatcher
+                    matcher = HistoricalPatternMatcher()
+                    hist_result = matcher.analyze_and_compare(symbol)
+                    if 'historical_data' in hist_result:
+                        historical_data = hist_result['historical_data']
+                        historical_win_rate = historical_data.get('win_rate', 50)
+                        total_occ = historical_data.get('total_occurrences', 0)
+                        
+                        if historical_win_rate > 60 and total_occ >= 5:
+                            score = min(10, score + 1.0)
+                            historical_confidence = f"📜 Tarihsel: %{historical_win_rate:.0f} başarı ({total_occ} örnek)"
+                        elif historical_win_rate < 40 and total_occ >= 5:
+                            score = max(0, score - 1.0)
+                            historical_confidence = f"📜 Tarihsel: %{historical_win_rate:.0f} başarı ({total_occ} örnek)"
+                        elif total_occ >= 3:
+                            historical_confidence = f"📜 Tarihsel: %{historical_win_rate:.0f} başarı ({total_occ} örnek)"
+            except Exception as hist_err:
+                logger.warning(f"Tarihsel analiz atlandı: {hist_err}")
             
             trend = results.get('trend', {})
             trend_dir = trend.get('direction', 'NEUTRAL')
@@ -1156,6 +1181,16 @@ class ChartAnalyzer:
 📊 Hacim: {volume.get('trend', '?')}
 ⚡ Momentum: {momentum.get('strength', '?')}
 """
+            if historical_confidence:
+                msg += f"{historical_confidence}\n"
+            
+            if historical_data:
+                avg_gain = historical_data.get('avg_max_gain', 0)
+                avg_loss = historical_data.get('avg_max_loss', 0)
+                prediction = historical_data.get('prediction', 'NEUTRAL')
+                pred_emoji = "🟢" if prediction == 'BULLISH' else "🔴" if prediction == 'BEARISH' else "⚪"
+                msg += f"📊 Geçmiş ort. kar: +%{avg_gain:.1f} | zarar: %{avg_loss:.1f}\n"
+                msg += f"{pred_emoji} Tarihsel tahmin: {prediction}\n"
             
             if patterns:
                 msg += f"\n🕯️ <b>Tespit Edilen Mumlar:</b>\n"
