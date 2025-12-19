@@ -1572,14 +1572,15 @@ def run_telegram_bot():
                                 
                                 send_telegram_to(chat_id, msg or "⚠️ Sinyal yok")
                             
-                            # /ultimate [COIN] - GRAFİK ANALIZ + KESIN SİNYAL + FİYAT + HEDEF + STOP
+                            # /ultimate [COIN] - GRAFİK ANALIZ + KESIN SİNYAL + FİYAT + HEDEF + STOP + TARİHSEL
                             elif cmd == '/ultimate':
                                 symbol = args[0].upper() if args else 'BTC'
                                 try:
-                                    send_telegram_to(chat_id, f"📊 {symbol} kapsamlı analiz yapılıyor...\n⏳ Grafik çekiliyor, fiyat alınıyor...")
+                                    send_telegram_to(chat_id, f"📊 {symbol} ULTRA analiz yapılıyor...\n⏳ Grafik + Tarihsel veri çekiliyor...")
                                     
                                     from chart_generator import ChartGenerator
                                     from chart_analyzer import ChartAnalyzer
+                                    from historical_pattern_matcher import HistoricalPatternMatcher
                                     
                                     current_price = 0.0
                                     try:
@@ -1606,6 +1607,13 @@ def run_telegram_bot():
                                             current_price=current_price
                                         )
                                         send_telegram_to(chat_id, summary)
+                                        
+                                        try:
+                                            matcher = HistoricalPatternMatcher()
+                                            historical_msg = matcher.get_comparison_message(symbol)
+                                            send_telegram_to(chat_id, historical_msg)
+                                        except Exception as hist_err:
+                                            logger.warning(f"Tarihsel analiz hatası {symbol}: {hist_err}")
                                         
                                         try:
                                             import os
