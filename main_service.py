@@ -881,107 +881,130 @@ def run_pump_scan():
         logger.error(f"Pump scan hatası: {e}")
 
 def run_full_analysis():
-    """TEK MESAJ - GELİŞMİŞ FORMAT"""
-    logger.info("🔄 ULTRA Tam analiz başlıyor...")
+    """MEGA ANALİZ - TEK MESAJ SİSTEMİ"""
+    logger.info("🔄 MEGA Tam analiz başlıyor...")
     
-    tickers = get_btcturk_data()
-    rising = analyze_rising_cryptos(tickers)
-    potential = analyze_potential_risers(tickers)
-    btc_analysis = get_btc_technical_analysis()
-    
-    # USD/TRY kuru
-    usd_try = get_usd_try_rate()
-    
-    logger.info(f"📊 {len(tickers)} kripto analiz edildi | USD/TRY: {usd_try:.2f}")
-    
-    # Alarm kontrolü
-    if alert_system:
-        alert_system.check_alerts()
-    
-    now = get_turkey_time()
-    
-    # BTC fiyatı
-    btc_tl = 0
-    for t in tickers:
-        if t.get('pairNormalized') == 'BTC_TRY':
-            btc_tl = float(t.get('last', 0))
-            break
-    btc_usd = btc_tl / usd_try if usd_try > 0 else 0
-    
-    # Fear & Greed
-    fg_value = 50
-    fg_text = "Nötr"
-    if pro_analyzer:
-        try:
-            fg = pro_analyzer.get_fear_greed_index()
-            fg_value = fg.get('value', 50)
-            fg_text = fg.get('classification', 'Neutral')
-        except:
-            pass
-    
-    fg_emoji = "😱" if fg_value < 30 else "😨" if fg_value < 45 else "😐" if fg_value < 55 else "😊" if fg_value < 75 else "🤑"
-    
-    # ==================== TEK GELİŞMİŞ MESAJ ====================
-    msg = f"""🚀 <b>AKILLI YATIRIM ASİSTANI</b>
+    try:
+        from mega_analyzer import MegaAnalyzer
+        mega = MegaAnalyzer()
+        
+        tickers = get_btcturk_data()
+        usd_try = get_usd_try_rate()
+        
+        logger.info(f"📊 {len(tickers)} kripto analiz edildi | USD/TRY: {usd_try:.2f}")
+        
+        if alert_system:
+            alert_system.check_alerts()
+        
+        now = get_turkey_time()
+        
+        btc_tl = 0
+        for t in tickers:
+            if t.get('pairNormalized') == 'BTC_TRY':
+                btc_tl = float(t.get('last', 0))
+                break
+        btc_usd = btc_tl / usd_try if usd_try > 0 else 0
+        
+        fg_value = 50
+        fg_text = "Nötr"
+        if pro_analyzer:
+            try:
+                fg = pro_analyzer.get_fear_greed_index()
+                fg_value = fg.get('value', 50)
+                fg_text = fg.get('classification', 'Neutral')
+            except:
+                pass
+        
+        fg_emoji = "😱" if fg_value < 30 else "😨" if fg_value < 45 else "😐" if fg_value < 55 else "😊" if fg_value < 75 else "🤑"
+        
+        msg = f"""🚀 <b>MEGA ANALİZ RAPORU</b>
 📅 {now.strftime('%d.%m.%Y %H:%M')}
 ━━━━━━━━━━━━━━━━━━━━━━━━
 
 💰 <b>BTC:</b> ₺{btc_tl:,.0f} | ${btc_usd:,.0f}
 {fg_emoji} <b>Piyasa:</b> {fg_value} - {fg_text}
+
+━━━━━━━━━━━━━━━━━━━━━━━━
+🔥 <b>YÜKSELENLER (MEGA ANALİZ)</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
 """
-    
-    # BTC Teknik
-    if btc_analysis:
-        msg += f"📊 RSI: {btc_analysis['rsi']} | {btc_analysis['recommendation']}\n"
-    
-    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    
-    # Yükselen coinler
-    if rising:
-        msg += "🟢 <b>YÜKSELEN - AL SİNYALİ</b>\n"
-        for c in rising[:5]:
-            price_tl = c.get('price', 0)
-            price_usd = price_tl / usd_try if usd_try > 0 else 0
-            change = c.get('change', 0)
-            target = price_tl * 1.10
-            stop = price_tl * 0.95
-            msg += f"\n<b>{c['symbol']}</b> +{change:.1f}%\n"
-            msg += f"   ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
-            msg += f"   🎯 ₺{target:,.4f} | 🛑 ₺{stop:,.4f}\n"
-    
-    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    
-    # Potansiyel coinler
-    if potential:
-        msg += "🔵 <b>YÜKSELECEK - TAHMİN</b>\n"
-        for p in potential[:5]:
-            price_tl = p.get('price', 0)
-            price_usd = price_tl / usd_try if usd_try > 0 else 0
-            pot = p.get('potential', 0)
-            risk = p.get('risk', 5)
+        
+        rising_coins = mega.find_rising_coins(5)
+        
+        for coin in rising_coins:
+            symbol = coin['symbol']
+            score = coin['score']
+            signal = coin['signal']
+            price = coin.get('price_tl', 0)
             
-            if risk <= 3:
-                risk_icon = "🟢"
-            elif risk <= 5:
-                risk_icon = "🟡"
+            if signal == 'GÜÇLÜ AL':
+                signal_emoji = "🟢🟢"
+            elif signal == 'AL':
+                signal_emoji = "🟢"
+            elif signal == 'TUT':
+                signal_emoji = "⏸️"
             else:
-                risk_icon = "🔴"
+                signal_emoji = "🔴"
             
-            msg += f"\n{risk_icon} <b>{p['symbol']}</b> +{pot}%\n"
-            msg += f"   ₺{price_tl:,.4f} | ${price_usd:,.4f}\n"
+            msg += f"\n{signal_emoji} <b>{symbol}</b> - {score:.1f}/10\n"
+            
+            if price > 0:
+                msg += f"   💰 ₺{price:,.2f}"
+                tech = coin.get('technical', {})
+                if tech:
+                    msg += f" | RSI: {tech.get('rsi', '-')}"
+                msg += "\n"
+            
+            hist = coin.get('historical', {})
+            if hist and hist.get('total_occurrences', 0) > 0:
+                msg += f"   📜 Tarihsel: %{hist.get('win_rate', 0):.0f} başarı\n"
+            
+            if coin.get('target', 0) > 0:
+                msg += f"   🎯 ₺{coin['target']:,.2f} | 🛑 ₺{coin['stop_loss']:,.2f}\n"
+            
+            reasons_buy = coin.get('reasons_buy', [])[:1]
+            reasons_avoid = coin.get('reasons_avoid', [])[:1]
+            if reasons_buy and signal in ['GÜÇLÜ AL', 'AL']:
+                msg += f"   ✅ {reasons_buy[0]}\n"
+            elif reasons_avoid and signal in ['GÜÇLÜ SAT', 'SAT']:
+                msg += f"   ❌ {reasons_avoid[0]}\n"
+        
+        msg += """
+━━━━━━━━━━━━━━━━━━━━━━━━
+🔮 <b>YÜKSELECEK POTANSİYELİ</b>
+━━━━━━━━━━━━━━━━━━━━━━━━
+"""
+        
+        potential_coins = mega.find_potential_risers(3)
+        
+        for coin in potential_coins:
+            symbol = coin['symbol']
+            score = coin['score']
+            price = coin.get('price_tl', 0)
+            
+            msg += f"\n🔵 <b>{symbol}</b> - {score:.1f}/10\n"
+            if price > 0:
+                msg += f"   💰 ₺{price:,.2f}\n"
+            if coin.get('target', 0) > 0:
+                msg += f"   🎯 ₺{coin['target']:,.2f}\n"
+            
+            reasons = coin.get('reasons_buy', [])[:1]
+            if reasons:
+                msg += f"   ✅ {reasons[0]}\n"
+        
+        msg += """
+━━━━━━━━━━━━━━━━━━━━━━━━
+⏰ Sonraki rapor: 2 saat
+⚠️ <i>Yatırım tavsiyesi değildir</i>
+"""
+        
+        send_telegram(msg)
+        logger.info("✅ MEGA Rapor Telegram'a gönderildi!")
+        return
+        
+    except Exception as e:
+        logger.error(f"MEGA analiz hatası: {e}")
     
-    if not rising and not potential:
-        msg += "\n⏸ Şu an güçlü sinyal yok - beklemede kal\n"
-    
-    msg += "\n━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    msg += "⏰ Sonraki analiz: 2 saat"
-    
-    # YENİ TEK MESAJ DEVRE DIŞI - ESKİ SİSTEM AKTİF
-    # send_telegram(msg)
-    # logger.info("✅ ULTRA Rapor Telegram'a gönderildi!")
-    # return
-    
-    # ESKİ SİSTEM AKTİF
     stocks = []
     strong_stocks = []
     global_sentiment = {'sentiment': '', 'crypto_impact': '', 'indices': {}}
