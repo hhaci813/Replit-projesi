@@ -2218,5 +2218,20 @@
     "result": null,
     "result_percent": null,
     "closed_at": null
+  },
+  {
+    "id": 149,
+    "symbol": "USDT",
+    "signal_type": "POTENTIAL",
+    "entry_price": 42.717,
+    "target_percent": 0.1,
+    "stop_percent": -7,
+    "target_price": 42.759716999999995,
+    "stop_price": 39.72680999999999,
+    "timestamp": "2025-12-19 12:10",
+    "status": "ACTIVE",
+    "result": null,
+    "result_percent": null,
+    "closed_at": null
   }
 ]
