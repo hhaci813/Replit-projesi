@@ -1969,6 +1969,18 @@ def run_telegram_bot():
                                 else:
                                     send_telegram_to(chat_id, "🐋 Whale tracker yükleniyor...")
                             
+                            # /gecmis [COIN] - Tarihsel pattern karşılaştırması
+                            elif cmd in ['/gecmis', '/tarih', '/karsilastir-gecmis']:
+                                symbol = args[0].upper() if args else 'BTC'
+                                send_telegram_to(chat_id, f"📜 {symbol} tarihsel analiz yapılıyor...\n⏳ 1 yıllık veri inceleniyor...")
+                                try:
+                                    from historical_pattern_matcher import HistoricalPatternMatcher
+                                    matcher = HistoricalPatternMatcher()
+                                    result = matcher.get_comparison_message(symbol)
+                                    send_telegram_to(chat_id, result)
+                                except Exception as e:
+                                    send_telegram_to(chat_id, f"❌ Tarihsel analiz hatası: {str(e)[:100]}")
+                            
                             # ==================== YENİ TİCARET KOMUTLARI ====================
                             
                             # /bakiye - Gerçek hesap bakiyesi (BTCTurk)
