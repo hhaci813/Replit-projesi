@@ -2971,73 +2971,70 @@ def main():
             logger.error(f"5dk kontrol hatası: {e}")
     
     def run_15min_analysis():
-        """15 dakikada bir orta vadeli analiz"""
+        """15 dakikada bir orta vadeli analiz - MEGA ANALİZ"""
         try:
-            from ultimate_analyzer import UltimateAnalyzer
-            analyzer = UltimateAnalyzer()
-            
-            coins = ['BTC', 'ETH', 'XRP', 'SOL', 'AVAX', 'DOGE', 'ADA']
-            signals = []
-            
-            for coin in coins:
-                try:
-                    result = analyzer.analyze(f"{coin}USDT")
-                    if result:
-                        signal = result.get('signal', 'TUT')
-                        score = result.get('score', 5)
-                        if signal in ['AL', 'GÜÇLÜ AL'] or score >= 7:
-                            signals.append({'symbol': coin, 'signal': signal, 'score': score})
-                        elif signal in ['SAT', 'GÜÇLÜ SAT'] or score <= 3:
-                            signals.append({'symbol': coin, 'signal': signal, 'score': score})
-                except:
-                    pass
-            
-            if signals:
-                msg = "📊 <b>15 DAKİKA ANALİZ</b>\n\n"
-                for s in signals:
-                    emoji = "🟢" if s['signal'] in ['AL', 'GÜÇLÜ AL'] else "🔴"
-                    msg += f"{emoji} {s['symbol']}: {s['signal']} ({s['score']:.1f}/10)\n"
-                send_telegram(msg)
-                logger.info(f"✅ 15dk analiz: {len(signals)} sinyal")
+            from mega_analyzer import mega_analyzer
+            msg = mega_analyzer.get_rising_message()
+            send_telegram(msg)
+            logger.info("✅ 15dk MEGA analiz gönderildi")
         except Exception as e:
             logger.error(f"15dk analiz hatası: {e}")
     
     def run_30min_analysis():
-        """30 dakikada bir detaylı analiz"""
+        """30 dakikada bir detaylı analiz - MEGA ANALİZ"""
         try:
-            from ultimate_analyzer import UltimateAnalyzer
-            analyzer = UltimateAnalyzer()
+            from mega_analyzer import mega_analyzer
             
-            coins = ['BTC', 'ETH', 'XRP', 'SOL', 'AVAX', 'DOGE', 'ADA', 'MATIC', 'DOT', 'LINK']
-            all_results = []
+            msg = f"📈 <b>30 DAKİKA MEGA ANALİZ</b>\n"
+            msg += f"🕐 {datetime.now().strftime('%H:%M')}\n\n"
             
-            for coin in coins:
-                try:
-                    result = analyzer.analyze(f"{coin}USDT")
-                    if result:
-                        all_results.append({
-                            'symbol': coin,
-                            'signal': result.get('signal', 'TUT'),
-                            'score': result.get('score', 5),
-                            'rsi': result.get('rsi', 50),
-                            'change': result.get('change_24h', 0)
-                        })
-                except:
-                    pass
+            rising_coins = mega_analyzer.find_rising_coins(5)
             
-            if all_results:
-                msg = "📈 <b>30 DAKİKA DETAYLI ANALİZ</b>\n"
-                msg += f"🕐 {datetime.now().strftime('%H:%M')}\n\n"
-                
-                for r in sorted(all_results, key=lambda x: x['score'], reverse=True)[:5]:
-                    emoji = "🟢" if r['change'] > 0 else "🔴"
-                    rsi_emoji = "🔥" if r['rsi'] > 70 else "❄️" if r['rsi'] < 30 else "➡️"
-                    msg += f"{emoji} <b>{r['symbol']}</b>\n"
-                    msg += f"   Skor: {r['score']:.1f}/10 | {r['signal']}\n"
-                    msg += f"   RSI: {r['rsi']:.0f} {rsi_emoji} | 24s: {r['change']:+.2f}%\n\n"
-                
-                send_telegram(msg)
-                logger.info(f"✅ 30dk detaylı analiz gönderildi")
+            if rising_coins:
+                for coin in rising_coins:
+                    symbol = coin['symbol']
+                    score = coin['score']
+                    signal = coin['signal']
+                    price = coin.get('price_tl', 0)
+                    
+                    if signal == 'GÜÇLÜ AL':
+                        signal_emoji = "🟢🟢"
+                    elif signal == 'AL':
+                        signal_emoji = "🟢"
+                    elif signal == 'TUT':
+                        signal_emoji = "⏸️"
+                    else:
+                        signal_emoji = "🔴"
+                    
+                    msg += f"{signal_emoji} <b>{symbol}</b> - {score:.1f}/10\n"
+                    
+                    if price > 0:
+                        msg += f"   💰 ₺{price:,.2f}"
+                        tech = coin.get('technical', {})
+                        if tech:
+                            msg += f" | RSI: {tech.get('rsi', '-')}"
+                        msg += "\n"
+                    
+                    hist = coin.get('historical', {})
+                    if hist and hist.get('total_occurrences', 0) > 0:
+                        msg += f"   📜 Tarihsel: %{hist.get('win_rate', 0):.0f} başarı\n"
+                    
+                    if coin.get('target', 0) > 0:
+                        msg += f"   🎯 ₺{coin['target']:,.2f} | 🛑 ₺{coin['stop_loss']:,.2f}\n"
+                    
+                    reasons = coin.get('reasons_buy', [])[:1] or coin.get('reasons_avoid', [])[:1]
+                    if reasons:
+                        msg += f"   {reasons[0]}\n"
+                    
+                    msg += "\n"
+            else:
+                msg += "⚠️ Analiz için yeterli veri yok\n"
+            
+            msg += "━━━━━━━━━━━━━━━━━━━━\n"
+            msg += "⚠️ <i>Yatırım tavsiyesi değildir</i>"
+            
+            send_telegram(msg)
+            logger.info("✅ 30dk MEGA analiz gönderildi")
         except Exception as e:
             logger.error(f"30dk analiz hatası: {e}")
     
